@@ -44,13 +44,25 @@ namespace polphasing {
 		vi_type& index_b1 = pkg->index_b1;
 		vi_type& index_b2 = pkg->index_b2;
 
+
+		/*
+		 * m  is 2 * polar_baselines
+		 * hm is polar_baselines
+		 *
+		 * data, model, index_b1, index_b2 all are complex length=hm
+		 *
+		 * but LMSolver sees real residuals
+		 * we do this kind of for loop
+		 */
+		int hm     = m / 2;
+
 		if ( iflag == 0 ) {
 
 		} /* printing */
 		else if ( iflag == 1 ) {
 			/* fvec computation */
 
-			for (int im = 0; im < m; im+=2) {
+			for (int im = 0; im < hm; im++) {
 				/* get antenna indices */
 				int ib1 = index_b1 [ im ];
 				int ib2 = index_b2 [ im ];
@@ -69,8 +81,8 @@ namespace polphasing {
 				complex_type res      = idata - observed;
 				/* error = DATA - MODEL */
 				/* saving as real and imaginary part */
-				fvec [im]    = res.real();
-				fvec [im+1]  = res.imag();
+				fvec [2*im]    = res.real();
+				fvec [2*im+1]  = res.imag();
 
 			} /* for every polar_baseline */
 
@@ -78,7 +90,15 @@ namespace polphasing {
 		else if ( iflag == 2 ) {
 			/* fjac computation */
 
-			for (int im = 0; im < m; im+=2) {
+			/*
+			 * i reiterate, 
+			 * m  is 2*polar_baselines
+			 * hm is polar_baselines
+			 *
+			 * data,model,indices are size=hm
+			 */
+			for (int im = 0; im < hm; im++) {
+
 				/* get antenna indices */
 				int ib1   = index_b1 [ im ];
 				int ib2   = index_b2 [ im ];
@@ -140,20 +160,20 @@ namespace polphasing {
 				 */
 
 				/* gpr|hpr / re|im */
-				fjac [ ldfjac*i1r + im   ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
-				fjac [ ldfjac*i1r + im+1 ] = - 1.0 * (-imodelr*s2r + imodeli*s2r );
+				fjac [ ldfjac*i1r + 2*im   ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
+				fjac [ ldfjac*i1r + 2*im+1 ] = - 1.0 * (-imodelr*s2r + imodeli*s2r );
 
 				/* gpi|hpi */
-				fjac [ ldfjac*i1i + im   ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
-				fjac [ ldfjac*i1i + im+1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
+				fjac [ ldfjac*i1i + 2*im   ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
+				fjac [ ldfjac*i1i + 2*im+1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
 
 				/* gqr|hqr */
-				fjac [ ldfjac*i2r + im   ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
-				fjac [ ldfjac*i2r + im+1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				fjac [ ldfjac*i2r + 2*im   ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
+				fjac [ ldfjac*i2r + 2*im+1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
 
 				/* gqi|hqi */
-				fjac [ ldfjac*i2i + im   ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
-				fjac [ ldfjac*i2i + im+1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+				fjac [ ldfjac*i2i + 2*im   ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				fjac [ ldfjac*i2i + 2*im+1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
 
 			} /* for every polar_baseline */
 
