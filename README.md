@@ -8,6 +8,6 @@ Solving for each antenna's complex gains using full IQU calibrator source model
 
 | package | usage |
 |---------|-------|
-| cminpack | Use the Levenburg Marquandt solver which solves for gains |
+| cminpack | Use the Levenburg Marquardt solver which solves for gains |
 | lute  | Provide an interface to the GMRT LTA file |
 | fmt   | To write in specific format the solved gains |
