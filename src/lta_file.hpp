@@ -101,8 +101,8 @@ class LTA {
 		std::vector<base_t>     baselines;
 
 		/* frequency axis */
-		float      flo;
-		float      fstep;
+		float      fedge;
+		float      fbw;
 		vf_type    freqs_MHz;
 		/* scan table */
 		int nscans() const { return linfo.scans; };
