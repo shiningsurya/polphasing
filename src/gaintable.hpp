@@ -91,6 +91,9 @@ namespace gaintable {
 			antname_t {"S05"} 
 	};
 
+	/* initialize gaintables */
+	gaintable_t prepare_gaintables ( int nchan );
+
 	int write_complex_solutions ( const gaintable_t& gt, const std::string& outfile );
 
 	int write_phase_solutions ( const gaintable_t& gt );

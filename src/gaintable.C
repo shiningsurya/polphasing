@@ -83,3 +83,13 @@ int gaintable::write_complex_solutions (const gaintable_t& gt, const std::string
 
 	return 0;
 }
+
+gaintable::gaintable_t gaintable::prepare_gaintables ( int nchan ) {
+	gaintable_t ret;
+
+	for (const antname_t& iant : sol_ant_order) {
+		ret[iant] = gains_t ( nchan );
+	}
+
+	return ret;
+}
