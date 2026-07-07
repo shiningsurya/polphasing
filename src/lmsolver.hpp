@@ -99,6 +99,7 @@ class LMSolver {
 	public:
 		/* ctor */
 		LMSolver (int ndata, int npar, int _nprint = 0, real_type _factor = 100.) : n(npar), m(ndata), ldfjac(m),
+			iflag (0),
 			/* work arrays */
 			ipvt(n), qtf(n), wa1(n), wa2(n), wa3(n), wa4(m),
 			/* main vectors */
@@ -131,11 +132,6 @@ class LMSolver {
 		/* main method - solve */
 		int solve ( const ptrdata_t& pkg );
 		int solve ( const ptrdata_t& pkg, vr_type& initial_solution ) {
-			/* input size check */
-			if ( pkg->data.size() != m || initial_solution.size() != n ) {
-				info = 0;
-				return -1;
-			}
 
 			/* copy given initial solution to isolution*/
 			std::copy ( initial_solution.cbegin(), initial_solution.cend(), isolution.begin() );

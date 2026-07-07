@@ -2,12 +2,6 @@
 
 template<>
 int LMSolver<LMSolverType::FULL_POLAR>::solve ( const ptrdata_t& pkg ) {
-	/* input size check */
-	if ( pkg->data.size() != m ) {
-		std::cout << "bad size" << std::endl;
-		info = 0;
-		return -1;
-	}
 
 	/* call lmder */
 	info = __cminpack_func__ (lmder) (
