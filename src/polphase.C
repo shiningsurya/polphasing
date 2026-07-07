@@ -193,6 +193,11 @@ int main(int argc, const char *argv[]) {
 		//std::cout << "after solving SSE=" << test.get_sse() << std::endl;
 		logger.sse_chan [ ichan ]  = test.get_sse();
 
+		logger.nfev [ ichan ]      = test.nfev;
+		logger.njev [ ichan ]      = test.njev;
+
+		logger.info [ ichan ]      = test.info;
+
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 

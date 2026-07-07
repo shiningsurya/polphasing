@@ -70,10 +70,6 @@ class LMSolver {
 		int mode; 
 		/* printing flag */
 		int nprint;
-		/* output flag */ 
-		int info;
-		/* evaluation counters */
-		int nfev, njev;
 
 		/* tuning parameters */
 		real_type factor;
@@ -97,6 +93,11 @@ class LMSolver {
 		vr_type wa4;
 
 	public:
+		/* evaluation counters */
+		int nfev, njev;
+		/* output flag */ 
+		int info;
+
 		/* ctor */
 		LMSolver (int ndata, int npar, int _nprint = 0, real_type _factor = 100.) : n(npar), m(ndata), ldfjac(m),
 			iflag (0),

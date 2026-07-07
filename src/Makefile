@@ -5,7 +5,7 @@ LMSOLVER=lmsolver.C objectives.C
 
 LTA=lta_file.C myltasub.c mycorrsub.c sort.c
 
-MISC=gaintable.C models.C
+MISC=gaintable.C models.C logsolve.C
 
 # test_lmsolver
 

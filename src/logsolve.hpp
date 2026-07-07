@@ -14,14 +14,18 @@
 namespace logging {
 	using real_type = float;
 	using vr_type   = std::vector<real_type>;
+	using vi_type   = std::vector<int>;
 
 	struct log_t {
 	
 		vr_type  sse_chan;
 		vr_type  time_chan;
+		vi_type  nfev;
+		vi_type  njev;
+		vi_type  info;
 
 		log_t ( int nchan ) : 
-			sse_chan ( nchan ), time_chan (nchan) {}
+			sse_chan ( nchan ), time_chan (nchan), nfev (nchan), njev(nchan), info(nchan) {}
 
 	};
 
