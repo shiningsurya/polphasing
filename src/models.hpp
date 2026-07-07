@@ -17,6 +17,7 @@
 
 namespace models {
 	using real_type    = float;
+	using complex_type = std::complex<real_type>;
 	using vf_type      = std::vector<real_type>;
 
 	struct model_data_t {
