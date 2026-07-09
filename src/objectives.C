@@ -1,5 +1,7 @@
 #include "objectives.hpp"
 
+#include <cstring>
+
 
 namespace polphasing {
 
@@ -57,7 +59,14 @@ namespace polphasing {
 		int hm     = m / 2;
 
 		if ( iflag == 0 ) {
-
+#if 0
+			std::cout << " jac=" <<  fjac[0] << " " << fjac[1] << std::endl;
+			// i do not get why jacobian structure is lost towards the end?
+			{
+				std::ofstream of("everyjac.bin", std::ios::binary | std::ios::app);
+				of.write (reinterpret_cast<const char*>(fjac), m*n*sizeof(float));
+			}
+#endif
 		} /* printing */
 		else if ( iflag == 1 ) {
 			/* fvec computation */
@@ -76,9 +85,9 @@ namespace polphasing {
 				complex_type idata    = data  [ im ];
 				complex_type imodel   = model [ im ];
 				/* model prediction */
-				complex_type observed = p1 * imodel * q2c;
+				complex_type omodel   = p1 * imodel * q2c;
 				/* residual */
-				complex_type res      = idata - observed;
+				complex_type res      = idata - omodel;
 				/* error = DATA - MODEL */
 				/* saving as real and imaginary part */
 				fvec [2*im]    = res.real();
@@ -97,6 +106,11 @@ namespace polphasing {
 			 *
 			 * data,model,indices are size=hm
 			 */
+
+			/* do i need to zero out the jacobian everytime? */
+			/* yes */
+			std::memset ( fjac, 0, m*n*sizeof(real_type) );
+
 			for (int im = 0; im < hm; im++) {
 
 				/* get antenna indices */
@@ -105,6 +119,7 @@ namespace polphasing {
 
 				int i1r    = 2*ib1 + 0;
 				int i1i    = 2*ib1 + 1;
+
 				int i2r    = 2*ib2 + 0;
 				int i2i    = 2*ib2 + 1;
 
@@ -145,35 +160,57 @@ namespace polphasing {
 				 * 	 -t1r*modelr*s2i + t1r*modeli*s2r + t1i*modelr*s2r + t1i*modeli*s2i
 				 * )
 				 *
-				 * re(res) / t1r = modelr*s2r + modeli*s2i
-				 * im(res) / t1r =-modelr*s2r + modeli*s2r
+				 * getting this from :jac_math_forC.py:
+				 * t is first, s is second
 				 *
-				 * re(res) / t1i = modelr*s2i - modeli*s2r
-				 * im(res) / t1i = modelr*s2r + modeli*s2i
+						 real (res) / tr 	m^i*s^i + m^r*s^r
+						 imag (res) / tr 	m^i*s^r - m^r*s^i
+						 real (res) / ti 	-m^i*s^r + m^r*s^i
+						 imag (res) / ti 	m^i*s^i + m^r*s^r
+						 real (res) / sr 	-m^i*t^i + m^r*t^r
+						 imag (res) / sr 	m^i*t^r + m^r*t^i
+						 real (res) / si 	m^i*t^r + m^r*t^i
+						 imag (res) / si 	m^i*t^i - m^r*t^r
 				 *
-				 * re(res) / s2r = t1r*modelr - t1i*modeli
-				 * im(res) / s2r = t1r*modeli + t1i*modelr
+				 * Jacobian shape is (ndata, npar)
 				 *
-				 * re(res) / s2i = t1r*modeli + t1i*modelr
-				 * im(res) / s2i =-t1r*modelr + t1i*modeli
+				 * But minpack examples and my test suggests it should be
+				 * (npar, ndata)
+				 * Even scipy.optimize.least_squares also suggest that 
+				 * shape should be (n,m)
+				 *
+				 * `polarbaselines` axis is the fastest
+				 * so ldfjac = m,
+				 *
+				 * assuming so, this should be the ordering
+				 * that matches with above math
+				 * 	(tr, re(res)) = real(res) / tr
+				 * 	(tr, im(res)) = imag(res) / tr
+				 *
 				 *
 				 */
 
-				/* gpr|hpr / re|im */
-				fjac [ ldfjac*i1r + 2*im   ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
-				fjac [ ldfjac*i1r + 2*im+1 ] = - 1.0 * (-imodelr*s2r + imodeli*s2r );
+				/* re,im(res) / tr */
+				fjac [ ldfjac*i1r + 2*im     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
+				fjac [ ldfjac*i1r + 2*im + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
 
-				/* gpi|hpi */
-				fjac [ ldfjac*i1i + 2*im   ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
-				fjac [ ldfjac*i1i + 2*im+1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
+				/* re,im(res) / ti */
+				fjac [ ldfjac*i1i + 2*im     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
+				fjac [ ldfjac*i1i + 2*im + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
 
-				/* gqr|hqr */
-				fjac [ ldfjac*i2r + 2*im   ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
-				fjac [ ldfjac*i2r + 2*im+1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				/* re,im(res) / sr */
+				fjac [ ldfjac*i2r + 2*im     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
+				fjac [ ldfjac*i2r + 2*im + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
 
-				/* gqi|hqi */
-				fjac [ ldfjac*i2i + 2*im   ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
-				fjac [ ldfjac*i2i + 2*im+1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+				/* re,im(res) / si */
+				fjac [ ldfjac*i2i + 2*im     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r );
+				fjac [ ldfjac*i2i + 2*im + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+
+				/* these indices are correct */
+			//std::cout << ldfjac*i1r + 2*im << "," << ldfjac*i1r + 2*im + 1 << ",";
+			//std::cout << ldfjac*i1i + 2*im << "," << ldfjac*i1i + 2*im + 1 << ",";
+			//std::cout << ldfjac*i2r + 2*im << "," << ldfjac*i2r + 2*im + 1 << ",";
+			//std::cout << ldfjac*i2i + 2*im << "," << ldfjac*i2i + 2*im + 1 << std::endl;
 
 			} /* for every polar_baseline */
 
