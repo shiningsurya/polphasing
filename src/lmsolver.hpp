@@ -32,7 +32,7 @@ extern "C" {
 
 #include "objectives.hpp"
 
-constexpr int MAX_FUNCTION_EVALUATIONS = 1000;
+constexpr int MAX_FUNCTION_EVALUATIONS = 4000;
 
 
 enum class LMSolverType {
@@ -51,9 +51,9 @@ class LMSolver {
 	private:
 		/* tolerances */
 		/* rel. error in sum of squares of errors desired */
-		static constexpr real_type ftol = 1E-9;
+		static constexpr real_type ftol = 1.49012e-8;
 		/* rel. error in approx. sum of squares of errors desired */
-		static constexpr real_type xtol = 1E-9;
+		static constexpr real_type xtol = 1.49012e-8;
 		/* orthogonality between residuals and columns of jacobian matrix */
 		static constexpr real_type gtol = 0;
 
@@ -74,13 +74,6 @@ class LMSolver {
 		/* tuning parameters */
 		real_type factor;
 
-		/* input vector (size=n) */
-		/* initial solution --> final estimate of solution */
-		vr_type isolution;
-		/* residuals vector (size=m) */
-		vr_type residuals;
-		/* jacobian matrix as vector (shape=(m,n)) */
-		vr_type jacobian;
 		/* diag (size=(n)) */
 		vr_type diag;
 
@@ -98,13 +91,21 @@ class LMSolver {
 		/* output flag */ 
 		int info;
 
+		/* input vector (size=n) */
+		/* initial solution --> final estimate of solution */
+		vr_type isolution;
+		/* residuals vector (size=m) */
+		vr_type residuals;
+		/* jacobian matrix as vector (shape=(m,n)) */
+		vr_type jacobian;
+
 		/* ctor */
 		LMSolver (int ndata, int npar, int _nprint = 0, real_type _factor = 100.) : n(npar), m(ndata), ldfjac(m),
 			iflag (0),
 			/* work arrays */
 			ipvt(n), qtf(n), wa1(n), wa2(n), wa3(n), wa4(m),
 			/* main vectors */
-			isolution(n), residuals(m), jacobian (m*n),
+			isolution(n, 0.), residuals(m, 0.), jacobian (m*n, 0.),
 			/* rest of the vectors */
 			diag(n),
 			/* initialize counters */
@@ -145,6 +146,9 @@ class LMSolver {
 
 			return info;
 		}
+
+		/* model pass */
+		int forward ( const ptrdata_t& pkg, int iflag );
 	
 		/* need to define in class inline because of templates */
 		friend std::ostream& operator<< (std::ostream& os, const LMSolver<stype>& p) {

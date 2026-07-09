@@ -24,3 +24,18 @@ int LMSolver<LMSolverType::FULL_POLAR>::solve ( const ptrdata_t& pkg ) {
 
 	return info;
 }
+
+template<>
+int LMSolver<LMSolverType::FULL_POLAR>::forward ( const ptrdata_t& pkg, int i ) {
+
+	/* call objective function */
+	return polphasing::full_polar_fcn (
+		static_cast<void*>(pkg.get()),
+		m, n, 
+		isolution.data(),
+		residuals.data(),
+		jacobian.data(),
+		ldfjac,
+		i
+	);
+}
