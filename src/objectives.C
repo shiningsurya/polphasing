@@ -71,11 +71,39 @@ namespace polphasing {
 		else if ( iflag == 1 ) {
 			/* fvec computation */
 
+			//#pragma omp parallel for num_threads(4)
+			//openmp here does not do much
 			for (int im = 0; im < hm; im++) {
 				/* get antenna indices */
 				int ib1 = index_b1 [ im ];
 				int ib2 = index_b2 [ im ];
 
+				/* output */
+				int om  = 2 * im;
+
+				/* unrolling the math */
+				/* see res_math_forC */
+				/* hoping that it speeds up a bit */
+				float pr  = x [ 2*ib1 + 0 ];
+				float pi  = x [ 2*ib1 + 1 ];
+				float qr  = x [ 2*ib2 + 0 ];
+				float qi  = x [ 2*ib2 + 1 ];
+
+				float dr  = data[im].real();
+				float di  = data[im].imag();
+
+				float mr  = model[im].real();
+				float mi  = model[im].imag();
+
+				/* real and imag */
+				fvec[om]  = dr + (mi*pi*qr) - (mi*pr*qi) - (mr*pi*qi) - (mr*pr*qr);
+				fvec[om+1]= di - (mi*pi*qi) - (mi*pr*qr) - (mr*pi*qr) + (mr*pr*qi);
+
+				/*
+				 * real(res) 	d^r + m^i*p^i*q^r - m^i*p^r*q^i - m^r*p^i*q^i - m^r*p^r*q^r
+ 					 imag(res) 	d^i - m^i*p^i*q^i - m^i*p^r*q^r - m^r*p^i*q^r + m^r*p^r*q^i
+				 */
+#if 0
 				/* get gains */
 				complex_type p1  ( x[2*ib1 + 0], x[2*ib1 + 1] );
 				/* get gains - directly complement */
@@ -90,8 +118,9 @@ namespace polphasing {
 				complex_type res      = idata - omodel;
 				/* error = DATA - MODEL */
 				/* saving as real and imaginary part */
-				fvec [2*im]    = res.real();
-				fvec [2*im+1]  = res.imag();
+				fvec [om]    = res.real();
+				fvec [om+1]  = res.imag();
+#endif
 
 			} /* for every polar_baseline */
 
@@ -111,6 +140,8 @@ namespace polphasing {
 			/* yes */
 			std::memset ( fjac, 0, m*n*sizeof(real_type) );
 
+			//#pragma omp parallel for num_threads(4)
+			//openmp here does not do much
 			for (int im = 0; im < hm; im++) {
 
 				/* get antenna indices */
@@ -190,21 +221,32 @@ namespace polphasing {
 				 *
 				 */
 
+				int idx = 0;
 				/* re,im(res) / tr */
-				fjac [ ldfjac*i1r + 2*im     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
-				fjac [ ldfjac*i1r + 2*im + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
+				idx  = ldfjac*i1r + 2*im;
+				fjac [ idx     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
+				fjac [ idx + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
+				//fjac [ ldfjac*i1r + 2*im     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
+				//fjac [ ldfjac*i1r + 2*im + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
 
 				/* re,im(res) / ti */
-				fjac [ ldfjac*i1i + 2*im     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
-				fjac [ ldfjac*i1i + 2*im + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
+				idx  = ldfjac*i1i + 2*im;
+				fjac [ idx     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
+				fjac [ idx + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
+				//fjac [ ldfjac*i1i + 2*im     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
+				//fjac [ ldfjac*i1i + 2*im + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
 
 				/* re,im(res) / sr */
-				fjac [ ldfjac*i2r + 2*im     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
-				fjac [ ldfjac*i2r + 2*im + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				idx  = ldfjac*i2r + 2*im;
+				fjac [ idx     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
+				fjac [ idx + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				//fjac [ ldfjac*i2r + 2*im     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
+				//fjac [ ldfjac*i2r + 2*im + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
 
 				/* re,im(res) / si */
-				fjac [ ldfjac*i2i + 2*im     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r );
-				fjac [ ldfjac*i2i + 2*im + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+				idx  = ldfjac*i2i + 2*im;
+				fjac [ idx     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r );
+				fjac [ idx + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
 
 				/* these indices are correct */
 			//std::cout << ldfjac*i1r + 2*im << "," << ldfjac*i1r + 2*im + 1 << ",";

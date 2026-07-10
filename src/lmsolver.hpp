@@ -105,7 +105,8 @@ class LMSolver {
 			/* work arrays */
 			ipvt(n), qtf(n), wa1(n), wa2(n), wa3(n), wa4(m),
 			/* main vectors */
-			isolution(n, 0.), residuals(m, 0.), jacobian (m*n, 0.),
+			/* isolution one to begin with */
+			isolution(n, 1.), residuals(m, 0.), jacobian (m*n, 0.),
 			/* rest of the vectors */
 			diag(n),
 			/* initialize counters */
@@ -129,6 +130,34 @@ class LMSolver {
 			real_type ret = 0.0;
 			for ( const real_type &res : residuals ) ret += ( res * res );
 			return ret;
+		}
+		
+		/* reset */
+		int reset () {
+			/* fill zero instead of creating a new object */
+
+			/* few variables*/
+			iflag   = 0;
+			nfev    = 0;
+			njev    = 0;
+			info    = -1;
+
+			/* vectors */
+			std::fill ( isolution.begin(), isolution.end(), 1.0f );
+			std::fill ( residuals.begin(), residuals.end(), 0.0f );
+			std::fill ( jacobian.begin(), jacobian.end(), 0.0f );
+
+			std::fill ( diag.begin(), diag.end(), 0.0f );
+			std::fill ( qtf.begin(), qtf.end(), 0.0f );
+
+			std::fill ( wa1.begin(), wa1.end(), 0.0f );
+			std::fill ( wa2.begin(), wa2.end(), 0.0f );
+			std::fill ( wa3.begin(), wa3.end(), 0.0f );
+			std::fill ( wa4.begin(), wa4.end(), 0.0f );
+
+			std::fill ( ipvt.begin(), ipvt.end(), 0 );
+
+			return 0;
 		}
 
 		/* main method - solve */
