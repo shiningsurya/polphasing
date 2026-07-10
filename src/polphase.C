@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <unistd.h>
+
 #include <string>
 
 #include "lmsolver.hpp"
@@ -12,7 +14,7 @@
 #include <chrono>
 #endif
 
-#include "cxxopts.hpp"
+//#include "cxxopts.hpp"
 
 /*
 Arguments:
@@ -44,32 +46,55 @@ auto start  = std::chrono::high_resolution_clock::now();
 auto end    = std::chrono::high_resolution_clock::now();
 #endif 
 
-int main(int argc, const char *argv[]) {
+void print_help () {
+	std::cout << "polphase" << std::endl;
+	std::cout << "  Solving complex gains for each antenna using IQU model" << std::endl;
+	std::cout << std::endl;
+	std::cout << " polphase [ARGUMENTS] LTA_FILE" << std::endl;
+	std::cout << "    -h Print help" << std::endl;
+	std::cout << "    -s <scan> scan number of the LTA file" << std::endl;
+	std::cout << "    -t <tag> tag/stem with which to save log and complex gains" << std::endl;
+	std::cout << "    -m <model> path to model file" << std::endl;
+	std::cout << std::endl;
+}
 
-	cxxopts::Options opts("polphase", "Solving complex gains for each antenna using IQU model");
+int main(int argc, char *argv[]) {
 
-	opts.add_options()
-		("s,scan", "Scan number to use for solving", cxxopts::value<int>())
-		("f,lta", "Path to LTA file", cxxopts::value<std::string>())
-		("t,tag", "Tag with which to save log and complex gains", cxxopts::value<std::string>())
-		("m,model", "Path to model file", cxxopts::value<std::string>())
-		("h,help", "Print help")
-	;
+	/* hello getopt, my old friend */
+	int opt;
+	int cal_scan_number;
+	std::string tag;
+	std::string model_path;
+	std::string lta_path;
 
-	auto res                    = opts.parse ( argc, argv );
-	if ( res.count("help") || !res.count("scan") || !res.count("lta") || !res.count("tag") || !res.count("model") ) {
-		std::cout << opts.help() << std::endl;
-		return 0;
-	}
-	
-	const int cal_scan_number   = res["scan"].as<int>();
-	const std::string lta_path  = res["lta"].as<std::string>();
-	const std::string tag       = res["tag"].as<std::string>();
-	const std::string model_path= res["model"].as<std::string>();
+	while ( (opt = getopt ( argc, argv, "hs:t:m:" )) != -1 ) {
+		switch (opt) {
+			case 'h':
+				print_help ();
+				exit (EXIT_SUCCESS);
+				break;
+			case 's':
+				cal_scan_number = atoi ( optarg );
+				break;
+			case 't':
+				tag  = optarg;
+				break;
+			case 'm':
+				model_path = strdup ( optarg );
+				break;
+		} // switch
+	} // getopt
+	/* lta file*/
+	lta_path  = argv[optind];
+	optind++;
 
+	/* other files */
 	const std::string save_file_r  = tag + std::string("_r.gains");
 	const std::string save_file_l  = tag + std::string("_l.gains");
 	const std::string log_file     = tag + std::string(".log");
+
+	std::cout << "[inputs] lta=" << lta_path << " model=" << model_path << std::endl;
+	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;
 
 	/***************************************/
 	/*      READ LTA FILE                  */

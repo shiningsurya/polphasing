@@ -25,5 +25,10 @@ Unsurprisingly, it is slow.
 | lapack,blas | used by cminpack to accelrate solving |
 | cxxopts | To provide simple CLI |
 
+## removing strictly not necessary dependencies
 
+this code needs to run on a really old system with gcc 4.8.5. 
+
+so i am removing `fmt` and `cxxopts` dependencies
+basically all modern ones
 
