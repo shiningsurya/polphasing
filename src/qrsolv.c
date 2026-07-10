@@ -133,7 +133,7 @@ void __cminpack_func__(qrsolv)(int n, real *r, int ldr,
 
                 if (sdiag[k] != 0.) {
 #                 ifdef USE_LAPACK
-                    __cminpack_lapack__(lartg_)( &r[k + k * ldr], &sdiag[k], &cos, &sin, &temp );
+                    __cminpack_lapack__(lartg)( &r[k + k * ldr], &sdiag[k], &cos, &sin, &temp );
 #                 else /* !USE_LAPACK */
                     if (fabs(r[k + k * ldr]) < fabs(sdiag[k])) {
                         real cotan;

@@ -10,6 +10,10 @@
 #error "cminpack can use cblas and lapack only in double or single precision mode"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef USE_BLAS
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
@@ -52,18 +56,32 @@ typedef long int 	__CLPK_logical;
 typedef __CLPK_logical 	(*__CLPK_L_fp)();
 typedef long int 	__CLPK_ftnlen;
 #endif
-void __cminpack_lapack__(lartg_)(
+/*void __cminpack_lapack__(lartg_)(*/
+  /*__cminpack_real__ *f, __cminpack_real__ *g, __cminpack_real__ *cs,*/
+  /*__cminpack_real__ *sn, __cminpack_real__ *r__);*/
+/*void __cminpack_lapack__(geqp3_)(*/
+  /*__CLPK_integer *m, __CLPK_integer *n, __cminpack_real__ *a, __CLPK_integer * lda,*/
+  /*__CLPK_integer *jpvt, __cminpack_real__ *tau, __cminpack_real__ *work, __CLPK_integer *lwork,*/
+  /*__CLPK_integer *info);*/
+/*void __cminpack_lapack__(geqrf_)(*/
+  /*__CLPK_integer *m, __CLPK_integer *n, __cminpack_real__ *a, __CLPK_integer * lda,*/
+  /*__cminpack_real__ *tau, __cminpack_real__ *work, __CLPK_integer *lwork, __CLPK_integer *info);*/
+void __cminpack_lapack__(lartg)(
   __cminpack_real__ *f, __cminpack_real__ *g, __cminpack_real__ *cs,
   __cminpack_real__ *sn, __cminpack_real__ *r__);
-void __cminpack_lapack__(geqp3_)(
+void __cminpack_lapack__(geqp3)(
   __CLPK_integer *m, __CLPK_integer *n, __cminpack_real__ *a, __CLPK_integer * lda,
   __CLPK_integer *jpvt, __cminpack_real__ *tau, __cminpack_real__ *work, __CLPK_integer *lwork,
   __CLPK_integer *info);
-void __cminpack_lapack__(geqrf_)(
+void __cminpack_lapack__(geqrf)(
   __CLPK_integer *m, __CLPK_integer *n, __cminpack_real__ *a, __CLPK_integer * lda,
   __cminpack_real__ *tau, __cminpack_real__ *work, __CLPK_integer *lwork, __CLPK_integer *info);
 #endif /* !__APPLE__ */
 #endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #include "minpackP.h"
 

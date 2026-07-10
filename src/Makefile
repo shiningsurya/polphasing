@@ -7,6 +7,7 @@ LTA=lta_file.C myltasub.c mycorrsub.c sort.c
 
 MISC=gaintable.C models.C logsolve.C
 
+
 # test_lmsolver
 
 test_lmsolver:
@@ -21,5 +22,15 @@ clean:
 test_solving:
 	g++ -g -std=c++11 -D__cminpack_float__ test_solving.C $(LMSOLVER) $(CMINPACK)  -o $@
 
+test_packs:
+	g++ -g -o $@ -std=c++11 -D__cminpack_float__ -DUSE_LAPACK -DUSE_BLAS \
+		-L/usr/lib \
+		test_solving.C $(LMSOLVER) $(CMINPACK) -llapack -lblas 
+
+#-llapack -lblas -lgfortran
+
+## will be compiling everything at once
+## because ~i am nuts~
 polphase: polphase.C $(LMSOLVER) $(CMINPACK)
-	g++ -g -std=c++11 -D__cminpack_float__ polphase.C $(LMSOLVER) $(CMINPACK) $(LTA) $(MISC) -o $@
+	g++ -O2 -o $@ -g -std=c++11 -DUSE_LAPACK -DUSE_BLAS -D__cminpack_float__ polphase.C $(LMSOLVER) $(CMINPACK) $(LTA) $(MISC) -llapack -lblas
+

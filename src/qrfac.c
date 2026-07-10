@@ -29,7 +29,7 @@ void __cminpack_func__(qrfac)(int m, int n, real *a, int
     if (pivot) {
         assert( lipvt >= n );
         if (sizeof(__CLPK_integer) != sizeof(ipvt[0])) {
-            jpvt = malloc(n*sizeof(__CLPK_integer));
+            jpvt = (__CLPK_integer*)malloc(n*sizeof(__CLPK_integer));
         } else {
             /* __CLPK_integer is actually an int, just do a cast */
             jpvt = (__CLPK_integer *)ipvt;
@@ -41,11 +41,11 @@ void __cminpack_func__(qrfac)(int m, int n, real *a, int
     /* query optimal size of work */
     lwork = -1;
     if (pivot) {
-        __cminpack_lapack__(geqp3_)(&m_,&n_,a,&lda_,jpvt,tau,tau,&lwork,&info);
+        __cminpack_lapack__(geqp3)(&m_,&n_,a,&lda_,jpvt,tau,tau,&lwork,&info);
         lwork = (int)tau[0];
         assert( lwork >= 3*n+1  );
     } else {
-        __cminpack_lapack__(geqrf_)(&m_,&n_,a,&lda_,tau,tau,&lwork,&info);
+        __cminpack_lapack__(geqrf)(&m_,&n_,a,&lda_,tau,tau,&lwork,&info);
         lwork = (int)tau[0];
         assert( lwork >= 1 && lwork >= n );
     }
@@ -65,9 +65,9 @@ void __cminpack_func__(qrfac)(int m, int n, real *a, int
     
     /* QR decomposition */
     if (pivot) {
-        __cminpack_lapack__(geqp3_)(&m_,&n_,a,&lda_,jpvt,tau,work,&lwork,&info);
+        __cminpack_lapack__(geqp3)(&m_,&n_,a,&lda_,jpvt,tau,work,&lwork,&info);
     } else {
-        __cminpack_lapack__(geqrf_)(&m_,&n_,a,&lda_,tau,work,&lwork,&info);
+        __cminpack_lapack__(geqrf)(&m_,&n_,a,&lda_,tau,work,&lwork,&info);
     }
     assert(info == 0);
     
