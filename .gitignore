@@ -4,3 +4,7 @@ solved*
 
 ## binaries
 polphase
+
+## files
+*.log
+*.gains
