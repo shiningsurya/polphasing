@@ -15,12 +15,14 @@ std::ostream& operator<< (std::ostream& os, const gaintable::gain_type& g ) {
 
 int gaintable::write_complex_solutions (const gaintable_t& gt, const std::string& outfile) {
 	std::ofstream of ( outfile );
+	//std::ofstream of ( outfile + ".fst" );
+	//std::ofstream ff ( outfile + ".fmt" );
 
 	/* assume nchan is the same */
 	int nchan = gt.at(sol_ant_order[0]).size();
 
 /*
-	fmt::print ( of, "{: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14}\n",
+	fmt::print ( ff, "{: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14} {: ^14}\n",
 			sol_ant_order[0],
 			sol_ant_order[1],
 			sol_ant_order[2],
@@ -97,8 +99,8 @@ int gaintable::write_complex_solutions (const gaintable_t& gt, const std::string
 	/* XXX always sign here */
 	// [+-]6.3f[+-j]6.3f 
 	for (int ichan = 0; ichan < nchan; ichan++) {
-		/*
-		fmt::print (of,
+/*
+		fmt::print (ff,
 			"{:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f} {:+6.3f}\n",
 			gt.at(sol_ant_order[0])[ichan],
 			gt.at(sol_ant_order[1])[ichan],
@@ -133,7 +135,7 @@ int gaintable::write_complex_solutions (const gaintable_t& gt, const std::string
 			gt.at(sol_ant_order[30])[ichan],
 			gt.at(sol_ant_order[31])[ichan]
 		);
-		*/
+*/
 
 		of << 
 			gt.at(sol_ant_order[0])[ichan] << " " << 

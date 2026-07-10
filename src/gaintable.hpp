@@ -106,6 +106,7 @@ namespace gaintable {
 }; /* gaintable */
 
 /*
+
 // custom formatter 
 template<>
 struct fmt::formatter<gaintable::gain_type> : fmt::formatter<gaintable::real_type> {

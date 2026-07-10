@@ -68,7 +68,7 @@ namespace polphasing {
 			}
 #endif
 		} /* printing */
-		else if ( iflag == 1 ) {
+		if ( iflag == 1 ) {
 			/* fvec computation */
 
 			//#pragma omp parallel for num_threads(4)

@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <stdexcept>
+#include <complex>
 
 /* fmt library */
 //#define FMT_HEADER_ONLY

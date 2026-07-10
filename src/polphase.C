@@ -67,6 +67,11 @@ int main(int argc, char *argv[]) {
 	std::string model_path;
 	std::string lta_path;
 
+	if ( argc < 2 ) {
+		print_help ();
+		exit (EXIT_SUCCESS);
+	}
+
 	while ( (opt = getopt ( argc, argv, "hs:t:m:" )) != -1 ) {
 		switch (opt) {
 			case 'h':
@@ -80,7 +85,7 @@ int main(int argc, char *argv[]) {
 				tag  = optarg;
 				break;
 			case 'm':
-				model_path = strdup ( optarg );
+				model_path = optarg;
 				break;
 		} // switch
 	} // getopt
@@ -209,6 +214,7 @@ int main(int argc, char *argv[]) {
 
 	/*
 	 * This loop prepares pb2corr
+	 *
 	 */
 
 	for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
@@ -257,26 +263,24 @@ int main(int argc, char *argv[]) {
 	
   // openmp parallelizing the whole thing 
   // takes 440s or 7 minutes ish
-  #pragma omp parallel for num_threads(4)
+	// #pragma omp parallel for num_threads(4) private(solver)
 	for (int ichan = 0; ichan < nchannels; ichan++) {
-	//for (int ichan = 0; ichan < 32; ichan++) {
 		/* initialize solver */
-		FullPolarLMSolver          solver (ndata, npar);
-		const FullPolarLMSolver::vr_type& isol = solver.isolution;
+		FullPolarLMSolver          solver (ndata, npar, 1);
 	/* testing */
 	//for (int ichan = 500; ichan < 501; ichan++) {
 		//if (ichan % 128 == 0) std::cout << ichan << " ";
 
 		/* read stokes IQU for ichan */
-		models::real_type    stokes_i ( calmodel.stokes_i[ichan] );
-		models::real_type    stokes_q ( calmodel.stokes_q[ichan] );
-		models::real_type    stokes_u ( calmodel.stokes_u[ichan] );
+		const models::real_type    stokes_i ( calmodel.stokes_i[ichan] );
+		const models::real_type    stokes_q ( calmodel.stokes_q[ichan] );
+		const models::real_type    stokes_u ( calmodel.stokes_u[ichan] );
 
 		/* populate rr, rl, lr, ll */
-		models::complex_type model_rr ( stokes_i, 0.0f );
-		models::complex_type model_rl ( stokes_q, stokes_u );
-		models::complex_type model_lr ( stokes_q,-stokes_u );
-		models::complex_type model_ll ( stokes_i, 0.0f );
+		const models::complex_type model_rr ( stokes_i, 0.0f );
+		const models::complex_type model_rl ( stokes_q, stokes_u );
+		const models::complex_type model_lr ( stokes_q,-stokes_u );
+		const models::complex_type model_ll ( stokes_i, 0.0f );
 
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
@@ -284,10 +288,10 @@ int main(int argc, char *argv[]) {
 			/* ensures this is index of noself baseline */
 			/* which is consistent with lta_file        */
 			/* ib only for reading */
-			int ib     = noself_baselines[ii];
+			const int ib     = noself_baselines[ii];
 
 			/* index in (baseline, channel) complex<float> */
-			int _i     = ichan + nchannels * ib;
+			const int _i     = ichan + nchannels * ib;
 
 			/*
 			 * NEED TO IGNORE SELF-TERMS
@@ -336,7 +340,7 @@ int main(int argc, char *argv[]) {
 		}
 #endif
 
-		 solver.reset ();
+		// solver.reset ();
 
 		/* perform solving */
 #ifdef TIMING
@@ -376,13 +380,14 @@ int main(int argc, char *argv[]) {
 		logger.info [ ichan ]      = solver.info;
 
 		/* save into gain table */
+		const FullPolarLMSolver::vr_type& isol = solver.isolution;
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
-			polphasing::complex_type rg ( isol[4*idx + 0], isol[4*idx + 1] );
-			polphasing::complex_type lg ( isol[4*idx + 2], isol[4*idx + 3] );
+			const polphasing::complex_type rg ( isol[4*idx + 0], isol[4*idx + 1] );
+			const polphasing::complex_type lg ( isol[4*idx + 2], isol[4*idx + 3] );
 
 			solved_gains_r[iant][ichan]  = rg;
 			solved_gains_l[iant][ichan]  = lg;

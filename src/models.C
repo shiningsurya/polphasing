@@ -92,6 +92,8 @@ int models::write_model_file ( const model_data_t& model ) {
 	//fmt::print ( "{: <9} {: <9} {: <9} {: <9}\n", "freqs", "stokes_i", "stokes_q", "stokes_u" );
 	std::cout << "freqs" << " " << "stokes_i" << " " << "stokes_q" << " " << "stokes_u" << std::endl;
 
+	std::cout << std::setprecision(3);
+
 	for ( int ichan = 0; ichan < nchan; ichan++ ) {
 		/*
 		fmt::print ( "{: <9.6f} {: <+9.4f} {: <+9.4f} {: <+9.4f}\n", 
@@ -99,7 +101,7 @@ int models::write_model_file ( const model_data_t& model ) {
 				model.stokes_q[ichan], model.stokes_u[ichan]
 		);
 		*/
-		std::cout << std::setprecision(3) << model.freqs[ichan] << " " << model.stokes_i[ichan] << " " << model.stokes_q[ichan] << " " << model.stokes_u[ichan] << std::endl;
+		std::cout << model.freqs[ichan] << " " << model.stokes_i[ichan] << " " << model.stokes_q[ichan] << " " << model.stokes_u[ichan] << std::endl;
 	}
 
 	return 0;
