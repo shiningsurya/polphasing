@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
 		}
 #endif
 
-		// solver.reset ();
+		 solver.reset ();
 
 		/* perform solving */
 #ifdef TIMING

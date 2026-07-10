@@ -135,7 +135,6 @@ int gaintable::write_complex_solutions (const gaintable_t& gt, const std::string
 		);
 		*/
 
-		// this will unfortunately print as (real,imag)
 		of << 
 			gt.at(sol_ant_order[0])[ichan] << " " << 
 			gt.at(sol_ant_order[1])[ichan] << " " <<
