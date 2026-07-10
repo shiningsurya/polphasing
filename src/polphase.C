@@ -226,7 +226,7 @@ int main(int argc, const char *argv[]) {
 
 
 	/* main loop */
-	fmt::print (" Starting main solving loop\n");
+	std::cout << " Starting main solving loop" << std::endl;
 
 	auto total_start = std::chrono::high_resolution_clock::now();
 	
@@ -380,7 +380,7 @@ int main(int argc, const char *argv[]) {
 	auto total_end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float> total_duration = total_end - total_start;
 
-	fmt::print ("\n Total solving took {:6.3f} seconds...\n", total_duration.count());
+	std::cout << std::setprecision(3) << std::endl << " Total solving took " << total_duration.count() << " seconds ..." << std::endl;
 
 	return 0;
 }

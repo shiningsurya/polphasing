@@ -3,13 +3,14 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 /* fmt library */
-#define FMT_HEADER_ONLY
-#include "fmt/base.h"
-#include "fmt/core.h"
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+//#define FMT_HEADER_ONLY
+//#include "fmt/base.h"
+//#include "fmt/core.h"
+//#include "fmt/format.h"
+//#include "fmt/ostream.h"
 
 namespace logging {
 	using real_type = float;

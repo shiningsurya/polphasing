@@ -1,18 +1,20 @@
 #pragma once
 
+#include <iostream>
 #include <array>
 #include <vector>
 #include <string>
 #include <complex>
 #include <map>
 #include <fstream>
+#include <iomanip>
 
 /* fmt library */
-#define FMT_HEADER_ONLY
-#include "fmt/base.h"
-#include "fmt/core.h"
-#include "fmt/format.h"
-#include "fmt/ostream.h"
+//#define FMT_HEADER_ONLY
+//#include "fmt/base.h"
+//#include "fmt/core.h"
+//#include "fmt/format.h"
+//#include "fmt/ostream.h"
 
 namespace gaintable {
 	using real_type   = float;
@@ -100,9 +102,11 @@ namespace gaintable {
 
 	int write_amp_solutions ( const gaintable_t& gt );
 
+
 }; /* gaintable */
 
-/* custom formatter */
+/*
+// custom formatter 
 template<>
 struct fmt::formatter<gaintable::gain_type> : fmt::formatter<gaintable::real_type> {
 
@@ -126,4 +130,6 @@ struct fmt::formatter<gaintable::antname_t> : fmt::formatter<string_view> {
 			return fmt::format_to (ctx.out(), "{}", string_view(g.data(), g.size()));
 		}
 };
+
+*/
 
