@@ -261,6 +261,16 @@ int main(int argc, char *argv[]) {
 
 	auto total_start = std::chrono::high_resolution_clock::now();
 	
+	/*
+	 * Single thread takes 600 seconds to finish this. 
+	 * approx. 10 minutes
+	 *
+	 * with four threads, we expect ~3 minutes finish solving
+	 *
+	 * NOTE:
+	 * with multi threading, we cannot compute pkg outside of main loop
+	 * it has to be defined within the loop
+	 */
   // openmp parallelizing the whole thing 
   // takes 440s or 7 minutes ish
 	// #pragma omp parallel for num_threads(4) private(solver)
