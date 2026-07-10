@@ -31,6 +31,7 @@ test_packs:
 
 ## will be compiling everything at once
 ## because ~i am nuts~
+## -DTIMING only when needed
 polphase: polphase.C $(LMSOLVER) $(CMINPACK)
-	g++ -O2 -o $@ -g -std=c++11 -DUSE_LAPACK -DUSE_BLAS -D__cminpack_float__ polphase.C $(LMSOLVER) $(CMINPACK) $(LTA) $(MISC) -llapack -lblas
+	g++ -O2 -o $@ -g -fopenmp -std=c++11 -DTIMING -DUSE_LAPACK -DUSE_BLAS -D__cminpack_float__ polphase.C $(LMSOLVER) $(CMINPACK) $(LTA) $(MISC) -llapack -lblas
 

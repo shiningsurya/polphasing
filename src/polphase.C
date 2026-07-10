@@ -1,5 +1,3 @@
-#define TIMING
-
 #include <iostream>
 
 #include <string>
@@ -14,6 +12,8 @@
 #include <chrono>
 #endif
 
+#include "cxxopts.hpp"
+
 /*
 Arguments:
 	LTA_file
@@ -27,12 +27,12 @@ Arguments:
 */
 
 // inputs
-const int cal_scan_number ( 5 );
-const std::string model_file ("/home/shining/shit/gmrt_phase_test/polphasing/code/polphasing/models/3C138_2048_97656.25_550000000_model.txt");
-const std::string lta_file   ("/tmp/lta/relta_out.lta");
-const std::string save_file_r("solved_r.gains");
-const std::string save_file_l("solved_l.gains");
-const std::string log_file   ("solved.log");
+//const int cal_scan_number ( 5 );
+//const std::string model_file ("/home/shining/shit/gmrt_phase_test/polphasing/code/polphasing/models/3C138_2048_97656.25_550000000_model.txt");
+//const std::string lta_file   ("/tmp/lta/relta_out.lta");
+//const std::string save_file_r("solvedO2_pfreset_r.gains");
+//const std::string save_file_l("solvedO2_pfreset_l.gains");
+//const std::string log_file   ("solvedO2_pfreset.log");
 
 using FullPolarLMSolver = LMSolver<LMSolverType::FULL_POLAR>;
 /***************************************/
@@ -46,10 +46,35 @@ auto end    = std::chrono::high_resolution_clock::now();
 
 int main(int argc, const char *argv[]) {
 
+	cxxopts::Options opts("polphase", "Solving complex gains for each antenna using IQU model");
+
+	opts.add_options()
+		("s,scan", "Scan number to use for solving", cxxopts::value<int>())
+		("f,lta", "Path to LTA file", cxxopts::value<std::string>())
+		("t,tag", "Tag with which to save log and complex gains", cxxopts::value<std::string>())
+		("m,model", "Path to model file", cxxopts::value<std::string>())
+		("h,help", "Print help")
+	;
+
+	auto res                    = opts.parse ( argc, argv );
+	if ( res.count("help") || !res.count("scan") || !res.count("lta") || !res.count("tag") || !res.count("model") ) {
+		std::cout << opts.help() << std::endl;
+		return 0;
+	}
+	
+	const int cal_scan_number   = res["scan"].as<int>();
+	const std::string lta_path  = res["lta"].as<std::string>();
+	const std::string tag       = res["tag"].as<std::string>();
+	const std::string model_path= res["model"].as<std::string>();
+
+	const std::string save_file_r  = tag + std::string("_r.gains");
+	const std::string save_file_l  = tag + std::string("_l.gains");
+	const std::string log_file     = tag + std::string(".log");
+
 	/***************************************/
 	/*      READ LTA FILE                  */
 	/***************************************/
-	LTA lta_file ( "/tmp/lta/relta_out.lta" );
+	LTA lta_file ( lta_path );
 
 	int nbaselines   = lta_file.nbaselines;
 	int nchannels    = lta_file.nchannels;
@@ -59,7 +84,7 @@ int main(int argc, const char *argv[]) {
 	/***************************************/
 	/*      READ MODEL FILE                */
 	/***************************************/
-	models::model_data_t calmodel = models::read_model_file ( model_file );
+	models::model_data_t calmodel = models::read_model_file ( model_path );
 
 	/***************************************/
 	/*      AVERAGE LTA SCAN               */
@@ -202,11 +227,20 @@ int main(int argc, const char *argv[]) {
 
 	/* main loop */
 	fmt::print (" Starting main solving loop\n");
+
+	auto total_start = std::chrono::high_resolution_clock::now();
+	
+  // openmp parallelizing the whole thing 
+  // takes 440s or 7 minutes ish
+  #pragma omp parallel for num_threads(4)
 	for (int ichan = 0; ichan < nchannels; ichan++) {
+	//for (int ichan = 0; ichan < 32; ichan++) {
+		/* initialize solver */
+		FullPolarLMSolver          solver (ndata, npar);
+		const FullPolarLMSolver::vr_type& isol = solver.isolution;
 	/* testing */
 	//for (int ichan = 500; ichan < 501; ichan++) {
-		if (ichan % 16 == 0) std::cout << std::endl;
-		std::cout << ichan << " ";
+		//if (ichan % 128 == 0) std::cout << ichan << " ";
 
 		/* read stokes IQU for ichan */
 		models::real_type    stokes_i ( calmodel.stokes_i[ichan] );
@@ -277,15 +311,13 @@ int main(int argc, const char *argv[]) {
 		}
 #endif
 
-		/* initialize solver */
-		FullPolarLMSolver          test(ndata, npar, 1);
-		FullPolarLMSolver::vr_type isol ( npar, 1.0 );
+		// solver.reset ();
 
 		/* perform solving */
 #ifdef TIMING
 		start  = std::chrono::high_resolution_clock::now();
 #endif
-		test.solve ( pkg, isol );
+		solver.solve ( pkg );
 
 #if 0	
 		{
@@ -311,12 +343,12 @@ int main(int argc, const char *argv[]) {
 		logger.time_chan [ ichan ] = duration.count();
 #endif
 		//std::cout << "after solving SSE=" << test.get_sse() << std::endl;
-		logger.sse_chan [ ichan ]  = test.get_sse();
+		logger.sse_chan [ ichan ]  = solver.get_sse();
 
-		logger.nfev [ ichan ]      = test.nfev;
-		logger.njev [ ichan ]      = test.njev;
+		logger.nfev [ ichan ]      = solver.nfev;
+		logger.njev [ ichan ]      = solver.njev;
 
-		logger.info [ ichan ]      = test.info;
+		logger.info [ ichan ]      = solver.info;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
@@ -344,6 +376,11 @@ int main(int argc, const char *argv[]) {
 	/*        WRITE LOG                    */
 	/***************************************/
 	logging::write_log ( logger, log_file );
+
+	auto total_end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> total_duration = total_end - total_start;
+
+	fmt::print ("\n Total solving took {:6.3f} seconds...\n", total_duration.count());
 
 	return 0;
 }
