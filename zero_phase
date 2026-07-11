@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $(basename $0)" >&2
+	echo "Only do if argument is confirm."
+	echo "It is a costly mistake to zero phases when we should not."
+	exit 1
+fi
+
+if [[ "$1" == "confirm" ]]; then
+	cp /home/gpuuser/GWB/common/phasing/phas.zero.dat  /home/gpuuser/GWB/common/phasing/phas.130.dat
+	cp /home/gpuuser/GWB/common/phasing/phas.zero.dat  /home/gpuuser/GWB/common/phasing/phas.175.dat
+fi
