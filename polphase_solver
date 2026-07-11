@@ -5,8 +5,8 @@
 
 SCAN=$1
 
-MODEL="models/3C138_2048_97656.25_550000000_model.txt"
-LTA="/gwbifrdata2/11jul/tst3323_11jul2026_b4_gwb.lta.1"
+#MODEL="models/3C138_2048_97656.25_550000000_model.txt"
+#LTA="/gwbifrdata2/11jul/tst3323_11jul2026_b4_gwb.lta.1"
 
 if ! [ -v MODEL ]; then
 	echo "Define MODEL in the file to specify the model file"
