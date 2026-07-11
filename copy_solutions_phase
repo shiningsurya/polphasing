@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $(basename $0) directory where we saved polphase solutions" >&2
+	echo "This directory would have been created using :python/write_gwb_solutions.py:"
+	exit 1
+fi
+
+SOLDIR=$1
+
+cp -p $SOLDIR/phas.130.dat /home/gpuuser/GWB/common/phasing/phas.130.dat
+cp -p $SOLDIR/phas.175.dat /home/gpuuser/GWB/common/phasing/phas.175.dat

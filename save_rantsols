@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ODIR="rantsols"
+mkdir -p $ODIR
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 tag(or scan number)" >&2
+    echo "Something that you will remember what these solutions refer to."
+    exit 1
+fi
+
+TAG=$1
+
+cp -p /home/gpuuser/GWB/common/phasing/phas.130.dat $ODIR/$TAG"_130.dat"
+cp -p /home/gpuuser/GWB/common/phasing/phas.175.dat $ODIR/$TAG"_175.dat"

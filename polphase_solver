@@ -1,0 +1,30 @@
+#!/bin/bash
+# $1 = scan number of the lta file 
+# you want to solve 
+# you manually edit the file to define MODEL and LTA
+
+SCAN=$1
+
+MODEL="models/3C138_2048_97656.25_550000000_model.txt"
+LTA="/gwbifrdata2/11jul/tst3323_11jul2026_b4_gwb.lta.1"
+
+if ! [ -v MODEL ]; then
+	echo "Define MODEL in the file to specify the model file"
+	exit 1
+fi
+
+if ! [ -v LTA ]; then
+	echo "Define LTA in the file to specify the LTA file"
+	exit 1
+fi
+
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $(basename $0) scan number" >&2
+	echo "MODEL: $MODEL"
+	echo "LTA:   $LTA"
+	exit 1
+fi
+
+TAG="SCAN_$1"
+
+src/polphaseomp -t $TAG -m $MODEL -s $SCAN $LTA
