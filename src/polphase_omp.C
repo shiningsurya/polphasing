@@ -325,21 +325,40 @@ int main(int argc, char *argv[]) {
 			 */
 
 			/* get antennas */
-			const auto& ant1  = _bl.ant1;
-			const auto& ant2  = _bl.ant2;
+			//const auto& ant1  = _bl.ant1;
+			//const auto& ant2  = _bl.ant2;
+			/* flipping, see comment below */
+			const auto& ant1  = _bl.ant2;
+			const auto& ant2  = _bl.ant1;
 
 			/* get bands */
-			const auto& band1 = _bl.band1;
-			const auto& band2 = _bl.band2;
+			//const auto& band1 = _bl.band1;
+			//const auto& band2 = _bl.band2;
+			/* flipping, see comment below */
+			const auto& band1 = _bl.band2;
+			const auto& band2 = _bl.band1;
 
+			/*
+			  * The current ordering with
+			  * antband1, antband2 <--> baseline.1, baseline.2
+			  *
+			  * is giving complex gain solutions whose phases 
+			  * are negative of what rantsol gives
+			  *
+			  * So flipping this ordering to see if 
+			  * gives us true-to-rantsol solution
+			  * 
+			*/
+
+			/* ID correlation */
 			const int pb2corr = _bl.band1*2 + _bl.band2;
 
 			/* index_b1 b2 */
 			const auto& iant1 = ant2idx.at(ant1);
 			const auto& iant2 = ant2idx.at(ant2);
 
-			int ix1   = iant1*2 + band1;
-			int ix2   = iant2*2 + band2;
+			const int ix1   = iant1*2 + band1;
+			const int ix2   = iant2*2 + band2;
 
 			pkg->index_b1 [ ii ] = ix1;
 			pkg->index_b2 [ ii ] = ix2;
