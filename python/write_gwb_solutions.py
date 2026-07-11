@@ -84,7 +84,7 @@ def action ( cgains_file, amp_file, phs_file ):
     ## write amp and phs_file
     with open(amp_file, 'w') as f:
         ## write header
-        line = ""
+        line = "# "
         for ant in ants:
             line += ant
             line += " "
@@ -101,7 +101,7 @@ def action ( cgains_file, amp_file, phs_file ):
 
     with open(phs_file, 'w') as f:
         ## write header
-        line = ""
+        line = "# "
         for ant in ants:
             line += ant
             line += " "
