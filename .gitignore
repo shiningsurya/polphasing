@@ -4,6 +4,7 @@ solved*
 
 ## binaries
 polphase
+polphaseomp
 
 ## files
 *.log
