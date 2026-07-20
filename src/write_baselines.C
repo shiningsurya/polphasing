@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
 	std::ofstream of ( ofile );
 
 	of << "chan ant1 ant2 band1 band2 complex" << std::endl;
+	of << std::fixed << std::setprecision(3) << std::showpos;
 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 		for (int ib = 0; ib < nbaselines; ib++) {
