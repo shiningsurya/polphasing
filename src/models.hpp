@@ -51,7 +51,7 @@ namespace models {
 	 *
 	*/
 
-	int write_model_file ( const model_data_t& model );
+	int write_model_file ( const model_data_t& model, const std::string& );
 
 
 }; /* models namespace */

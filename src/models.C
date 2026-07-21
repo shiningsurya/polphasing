@@ -84,13 +84,14 @@ models::model_data_t models::read_model_file ( const std::string& filepath ) {
 }
 
 
-int models::write_model_file ( const model_data_t& model ) {
+int models::write_model_file ( const model_data_t& model, const std::string& outfile ) {
+	std::ofstream of ( outfile );
 	/*freqs I Q U*/
 
 	int nchan = model.freqs.size();
 
 	//fmt::print ( "{: <9} {: <9} {: <9} {: <9}\n", "freqs", "stokes_i", "stokes_q", "stokes_u" );
-	std::cout << "freqs" << " " << "stokes_i" << " " << "stokes_q" << " " << "stokes_u" << std::endl;
+	of << "freqs" << " " << "stokes_i" << " " << "stokes_q" << " " << "stokes_u" << std::endl;
 
 	std::cout << std::setprecision(3);
 
@@ -101,7 +102,7 @@ int models::write_model_file ( const model_data_t& model ) {
 				model.stokes_q[ichan], model.stokes_u[ichan]
 		);
 		*/
-		std::cout << model.freqs[ichan] << " " << model.stokes_i[ichan] << " " << model.stokes_q[ichan] << " " << model.stokes_u[ichan] << std::endl;
+		of << model.freqs[ichan] << " " << model.stokes_i[ichan] << " " << model.stokes_q[ichan] << " " << model.stokes_u[ichan] << std::endl;
 	}
 
 	return 0;
