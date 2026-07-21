@@ -89,6 +89,10 @@ int main(int argc, char *argv[]) {
 				break;
 		} // switch
 	} // getopt
+	if ( optind < argc ) {
+		print_help ();
+		exit (EXIT_SUCCESS);
+	}
 	/* lta file*/
 	lta_path  = argv[optind];
 	optind++;

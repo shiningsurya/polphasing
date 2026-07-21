@@ -68,6 +68,10 @@ int main(int argc, char *argv[]) {
 				break;
 		} // switch
 	} // getopt
+	if ( optind < argc ) {
+		print_help ();
+		exit (EXIT_SUCCESS);
+	}
 	/* lta file*/
 	lta_path  = argv[optind];
 	optind++;
@@ -100,7 +104,7 @@ int main(int argc, char *argv[]) {
 	constexpr std::array<char,2> bandmap{'r','l'};
 	std::ofstream of ( ofile );
 
-	of << "chan ant1 ant2 band1 band2 complex" << std::endl;
+	of << "chan ant1 ant2 correlation complex" << std::endl;
 	of << std::fixed << std::setprecision(3) << std::showpos;
 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
@@ -111,11 +115,13 @@ int main(int argc, char *argv[]) {
 
 			/* flip the convention */
 			// see polphase_omp.C:357
-			const auto& ant1  = _bl.ant2;
-			const auto& ant2  = _bl.ant1;
+			// unflipping 
+			// 20260721
+			const auto& ant1  = _bl.ant1;
+			const auto& ant2  = _bl.ant2;
 
-			const auto& band1 = _bl.band2;
-			const auto& band2 = _bl.band1;
+			const auto& band1 = _bl.band1;
+			const auto& band2 = _bl.band2;
 
 			/* get data */
 			/* index in (baseline, channel) complex<float> */
@@ -123,7 +129,7 @@ int main(int argc, char *argv[]) {
 			const std::complex<float> cc ( avgbldata[2*_i], avgbldata[2*_i + 1] );
 
 			// write to file
-			of << ichan << " " << ant1 << " " << ant2 << " " << bandmap[band1] << " " << bandmap[band2] << " " << cc << std::endl;
+			of << ichan << " " << ant1 << " " << ant2 << " " << bandmap[band1] <<  bandmap[band2] << " " << cc << std::endl;
 
 		} // baseline
 	} // channel
