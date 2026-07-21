@@ -4,6 +4,7 @@
  */
 
 #include <vector>
+#include <array>
 #include <complex>
 
 namespace polphasing {
@@ -31,9 +32,16 @@ namespace polphasing {
 		vi_type index_b1;
 		vi_type index_b2;
 
+		/* polarbaseline to correlation */
+		// FITIQU
+		// vi_type pb2corr;
+
 		polphasing_data_t ( int ndata ) : 
 			data(ndata), model(ndata), 
-			index_b1(ndata), index_b2(ndata) {}
+			index_b1(ndata), index_b2(ndata)  
+			// FITIQU
+			// pb2corr(ndata) 
+		{}
 
 	};
 

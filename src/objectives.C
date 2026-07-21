@@ -28,16 +28,6 @@ namespace polphasing {
 		/* pull data */
 		data_t *pkg = reinterpret_cast<data_t*> ( vd );
 
-		/* model 
-		 *
-		 * RR = model_i
-		 * RL = model_q + j*model_u
-		 * LR = model_q - j*model_u
-		 * LL = model_i
-		 *
-		 * This will be like an array to save some logic
-		 */
-
 		/* complex arrays */
 		vc_type& data   = pkg->data;
 		vc_type& model  = pkg->model;
@@ -45,6 +35,34 @@ namespace polphasing {
 		/* mapping */
 		vi_type& index_b1 = pkg->index_b1;
 		vi_type& index_b2 = pkg->index_b2;
+
+		// FITIQU
+		/* polar baselines to correlation product */
+		//vi_type& pb2corr  = pkg->pb2corr;
+
+		/* model 
+		 *
+		 * 0 : RR = model_i
+		 * 1 : RL = model_q + j*model_u
+		 * 2 : LR = model_q - j*model_u
+		 * 3 : LL = model_i
+		 *
+		 * This will be like an array to save some logic
+		 *
+		 * Ensure this mapping is same as in polphase_omp.C:348
+		 *
+		 * "x" prefix here means it is also fitted
+		*/
+		// FITIQU
+		//const real_type  xstokes_i  ( x[n-3] );
+		//const real_type  xstokes_q  ( x[n-2] );
+		//const real_type  xstokes_u  ( x[n-1] );
+		//const std::array<complex_type,4> xmodel {  
+		//	complex_type ( xstokes_i, 0.0f ), 
+		//  complex_type ( xstokes_q,  xstokes_u ), 
+		//	complex_type ( xstokes_q, -xstokes_u ), 
+		//	complex_type ( xstokes_i, 0.0f ) 
+		//} ;
 
 
 		/*
@@ -75,25 +93,34 @@ namespace polphasing {
 			//openmp here does not do much
 			for (int im = 0; im < hm; im++) {
 				/* get antenna indices */
-				int ib1 = index_b1 [ im ];
-				int ib2 = index_b2 [ im ];
+				const int ib1 = index_b1 [ im ];
+				const int ib2 = index_b2 [ im ];
 
 				/* output */
-				int om  = 2 * im;
+				const int om  = 2 * im;
 
 				/* unrolling the math */
 				/* see res_math_forC */
 				/* hoping that it speeds up a bit */
-				float pr  = x [ 2*ib1 + 0 ];
-				float pi  = x [ 2*ib1 + 1 ];
-				float qr  = x [ 2*ib2 + 0 ];
-				float qi  = x [ 2*ib2 + 1 ];
+				const float pr  = x [ 2*ib1 + 0 ];
+				const float pi  = x [ 2*ib1 + 1 ];
+				const float qr  = x [ 2*ib2 + 0 ];
+				const float qi  = x [ 2*ib2 + 1 ];
 
-				float dr  = data[im].real();
-				float di  = data[im].imag();
+				const float dr  = data[im].real();
+				const float di  = data[im].imag();
 
-				float mr  = model[im].real();
-				float mi  = model[im].imag();
+				/* FITIQU */
+				const float mr  = model[im].real();
+				const float mi  = model[im].imag();
+				/* get pb2corr */
+				//const int icorr  = pb2corr[im];
+				//const complex_type xm = xmodel[icorr];
+				//const float mr  = xm.real();
+				//const float mi  = xm.imag();
+				/*
+				 * let's solve for model as well at the same time
+				 */
 
 				/* real and imag */
 				fvec[om]  = dr + (mi*pi*qr) - (mi*pr*qi) - (mr*pi*qi) - (mr*pr*qr);
@@ -145,25 +172,33 @@ namespace polphasing {
 			for (int im = 0; im < hm; im++) {
 
 				/* get antenna indices */
-				int ib1   = index_b1 [ im ];
-				int ib2   = index_b2 [ im ];
+				const int ib1   = index_b1 [ im ];
+				const int ib2   = index_b2 [ im ];
 
-				int i1r    = 2*ib1 + 0;
-				int i1i    = 2*ib1 + 1;
+				const int i1r    = 2*ib1 + 0;
+				const int i1i    = 2*ib1 + 1;
 
-				int i2r    = 2*ib2 + 0;
-				int i2i    = 2*ib2 + 1;
+				const int i2r    = 2*ib2 + 0;
+				const int i2i    = 2*ib2 + 1;
 
 				/* get gains */
-				real_type  t1r    = x[i1r];
-				real_type  t1i    = x[i1i];
-				real_type  s2r    = x[i2r];
-				real_type  s2i    = x[i2i];
+				const real_type  t1r    = x[i1r];
+				const real_type  t1i    = x[i1i];
+				const real_type  s2r    = x[i2r];
+				const real_type  s2i    = x[i2i];
 
 				/* model */
-				complex_type imodel   = model [ im ];
-				real_type  imodelr    = imodel.real();
-				real_type  imodeli    = imodel.imag();
+				const complex_type imodel   = model [ im ];
+				const real_type  imodelr    = imodel.real();
+				const real_type  imodeli    = imodel.imag();
+				/* FITIQU */
+				// float mr  = model[im].real();
+				// float mi  = model[im].imag();
+				/* get pb2corr */
+				//const int icorr             = pb2corr[im];
+				//const complex_type imodel   = xmodel [ icorr ];
+				//const real_type imodelr     = imodel.real();
+				//const real_type imodeli     = imodel.imag();
 
 				/* error = DATA - MODEL */
 				/* saving as real and imaginary part */
@@ -247,6 +282,46 @@ namespace polphasing {
 				idx  = ldfjac*i2i + 2*im;
 				fjac [ idx     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r );
 				fjac [ idx + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+
+#if 0
+				FITIQU
+				/* re,im(res) / iqu */
+				const real_type diqu   = - 1.0 * ( s2r*t1r  + s2i*t1i );
+				/*
+				 * d(res)/dI != 0 if icorr = 0 (RR) or 3 (LL)
+				 * 	otherwise zero
+				 * d(res)/dQ != 0 if icorr = 1 (RL) or 2 (LR)
+				 * d(res)/dU != 0 if icorr = 1 (RL) or 2 (LR)
+				 * 	otherwise zero
+				*/
+				if ( icorr == 0 || icorr == 3 ) {
+					/* I */
+					idx  = ldfjac*(n-3) + 2*im;
+					fjac [ idx     ] = -1.0 * ( s2i*t1i + s2r*t1r );
+					fjac [ idx + 1 ] = -1.0 * (-s2i*t1r + s2r*t1i );
+				} /* RR */
+				else if ( icorr == 1 ) {
+					/* Q is real */
+					idx  = ldfjac*(n-2) + 2*im;
+					fjac [ idx     ] = -1.0 * ( s2i*t1i + s2r*t1r );
+					fjac [ idx + 1 ] = -1.0 * (-s2i*t1r + s2r*t1i );
+					/* U is real */
+					idx  = ldfjac*(n-1) + 2*im;
+					fjac [ idx     ] = -1.0 * ( s2i*t1r - s2r*t1i );
+					fjac [ idx + 1 ] = -1.0 * ( s2i*t1i + s2r*t1r );
+				} /* RL */
+				else if ( icorr == 2 ) {
+					/* Q is real */
+					idx  = ldfjac*(n-2) + 2*im;
+					fjac [ idx     ] = -1.0 * ( s2i*t1i + s2r*t1r );
+					fjac [ idx + 1 ] = -1.0 * (-s2i*t1r + s2r*t1i );
+					/* U is real */
+					/* with icorr=2, it is -U, so negatives cancel out  */
+					idx  = ldfjac*(n-1) + 2*im;
+					fjac [ idx     ] =  1.0 * ( s2i*t1r - s2r*t1i );
+					fjac [ idx + 1 ] =  1.0 * ( s2i*t1i + s2r*t1r );
+				} /* LR */
+#endif
 
 				/* these indices are correct */
 			//std::cout << ldfjac*i1r + 2*im << "," << ldfjac*i1r + 2*im + 1 << ",";

@@ -97,6 +97,7 @@ int main(int argc, char *argv[]) {
 	const std::string save_file_r  = tag + std::string("_r.gains");
 	const std::string save_file_l  = tag + std::string("_l.gains");
 	const std::string log_file     = tag + std::string(".log");
+	const std::string fitted_model_path  = tag + std::string("_fitted_model.txt");
 
 	std::cout << "[inputs] lta=" << lta_path << " model=" << model_path << std::endl;
 	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;
@@ -133,6 +134,17 @@ int main(int argc, char *argv[]) {
 	/* (1) Mapping antenna to index  -- ant2idx */
 	/* (2) polarbaseline to correlation product -- pb2cor  */
 	/* (3) (antenna, band) to gain in solution vector -- index_b{1,2} */
+
+	/*
+	 * 20260720:
+	 * we are going to fit for IQU per channel as well.
+	 * Just to see what happens.
+	 * And maybe, we can improve the model.
+	 *
+	 * we are reintroducing pb2corr
+	 * This is going to passed to polphasing_data_t
+	 */
+
 	/**/
 	int rant    = 0;
 	std::map<LTA::antname_t,int>  ant2idx;
@@ -176,6 +188,7 @@ int main(int argc, char *argv[]) {
 	 *  :   iant0_r iant0_i iant1_r iant1_i
 	 *
 	 */
+	// models::model_data_t fitted_model ( nchannels, lta_file.fedge, lta_file.fbw );
 
 	/***************************************/
 	/*        SOLVER RUN                   */
@@ -200,6 +213,8 @@ int main(int argc, char *argv[]) {
 
 	int ndata        = 2 * n_noself_baselines; /* complex -> real,imag */
 	int npar         = 4 * nantennas; /* complex(R) and complex(L) gains */
+	// FITIQU
+	// npar            += 3; /* fitting for IQU per channel */
 
 	/* logging */
 	logging::log_t   logger ( nchannels );
@@ -296,9 +311,25 @@ int main(int argc, char *argv[]) {
 
 		/* populate rr, rl, lr, ll */
 		const models::complex_type model_rr ( stokes_i, 0.0f );
+		const models::complex_type model_ll ( stokes_i, 0.0f );
 		const models::complex_type model_rl ( stokes_q, stokes_u );
 		const models::complex_type model_lr ( stokes_q,-stokes_u );
-		const models::complex_type model_ll ( stokes_i, 0.0f );
+		// see comment below
+		//const models::complex_type model_rl ( stokes_q,-stokes_u );
+		//const models::complex_type model_lr ( stokes_q, stokes_u );
+		// see comment below
+		/* from TST3325 20260713 
+		 * it seems like rl,lr, the cross terms are not phasing
+		 * not like offline-correlated suggests, 
+		 * i am suspecting there needs to be a sign flip in stokes-U
+		 *
+		 * interestingly, rantsol and polphase solutions match for rr and ll
+		 *
+		 * 20260714: it does not matter. 
+		 * Let's solve for IQU every channel.
+		 * We are only adding three parameters.
+		 *
+		 */
 
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
@@ -328,15 +359,17 @@ int main(int argc, char *argv[]) {
 			//const auto& ant1  = _bl.ant1;
 			//const auto& ant2  = _bl.ant2;
 			/* flipping, see comment below */
-			const auto& ant1  = _bl.ant2;
-			const auto& ant2  = _bl.ant1;
+			/* 20260721 not flipping, see comment below */
+			const auto& ant1  = _bl.ant1;
+			const auto& ant2  = _bl.ant2;
 
 			/* get bands */
 			//const auto& band1 = _bl.band1;
 			//const auto& band2 = _bl.band2;
 			/* flipping, see comment below */
-			const auto& band1 = _bl.band2;
-			const auto& band2 = _bl.band1;
+			/* 20260721 not flipping, see comment below */
+			const auto& band1 = _bl.band1;
+			const auto& band2 = _bl.band2;
 
 			/*
 			  * The current ordering with
@@ -347,6 +380,11 @@ int main(int argc, char *argv[]) {
 			  *
 			  * So flipping this ordering to see if 
 			  * gives us true-to-rantsol solution
+			  *
+			  * 20260721: 
+			  * unflipping because it is right.
+			  * we can always add flip to the phase solutions later. 
+			  * flipping here is causing rl <-> lr swap
 			  * 
 			*/
 
@@ -362,6 +400,8 @@ int main(int argc, char *argv[]) {
 
 			pkg->index_b1 [ ii ] = ix1;
 			pkg->index_b2 [ ii ] = ix2;
+
+			//pkg->pb2corr  [ ii ] = pb2corr;
 
 			/*
 			 * NEED TO IGNORE SELF-TERMS
@@ -449,8 +489,15 @@ int main(int argc, char *argv[]) {
 
 		logger.info [ ichan ]      = solver.info;
 
-		/* save into gain table */
+
 		const FullPolarLMSolver::vr_type& isol = solver.isolution;
+
+		/* save into fitted model */
+		//fitted_model.stokes_i [ ichan ]  = isol [ npar - 3 ];
+		//fitted_model.stokes_q [ ichan ]  = isol [ npar - 2 ];
+		//fitted_model.stokes_u [ ichan ]  = isol [ npar - 1 ];
+
+		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
@@ -471,6 +518,11 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 	gaintable::write_complex_solutions ( solved_gains_r, save_file_r );
 	gaintable::write_complex_solutions ( solved_gains_l, save_file_l );
+
+	/***************************************/
+	/*        WRITE FITTED MODEL           */
+	/***************************************/
+	//models::write_model_file ( fitted_model, fitted_model_path );
 
 	/***************************************/
 	/*        WRITE LOG                    */
