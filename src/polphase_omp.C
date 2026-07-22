@@ -6,6 +6,7 @@
 #include <string>
 
 #include "lmsolver.hpp"
+#include "gdsolver.hpp"
 #include "lta_file.hpp"
 #include "gaintable.hpp"
 #include "models.hpp"
@@ -15,7 +16,7 @@
 #include <chrono>
 #endif
 
-#define CHANDEBUG
+//#define CHANDEBUG
 
 //#include "cxxopts.hpp"
 
@@ -297,19 +298,18 @@ int main(int argc, char *argv[]) {
 	 */
   // openmp parallelizing the whole thing 
   // takes 440s or 7 minutes ish
-	//#pragma omp parallel for num_threads(4) 
-	//for (int ichan = 0; ichan < nchannels; ichan++) {
 #ifdef CHANDEBUG
 	for (int ichan = 398; ichan < 399; ichan++) {
+#else
+	//#pragma omp parallel for num_threads(4) 
+	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
 		/* when parallelizing inside loop */
 		/* this will be doing a lot of mallocs */
 
 		/* data package */
-		FullPolarLMSolver::ptrdata_t  pkg ( new FullPolarLMSolver::data_t ( n_noself_baselines ) );
+		polphasing::ptrdata_t      pkg ( new polphasing::data_t ( n_noself_baselines ) );
 
-		/* initialize solver */
-		FullPolarLMSolver          solver (ndata, npar, 1);
 	/* testing */
 		//if (ichan % 128 == 0) std::cout << ichan << " ";
 
@@ -521,7 +521,15 @@ int main(int argc, char *argv[]) {
 #ifdef TIMING
 		start  = std::chrono::high_resolution_clock::now();
 #endif
+#ifdef LMSOLVE
+		FullPolarLMSolver          solver (ndata, npar, 1);
 		solver.solve ( pkg );
+		const FullPolarLMSolver::vr_type& isol = solver.isolution;
+#else 
+		GDSolver                   solver (n_noself_baselines, 2*nantennas);
+		GDSolver::vc_type          isol ( 2*nantennas, GDSolver::complex_type (1.0f, 1.0f) );
+		auto cost = solver.solve ( pkg, isol );
+#endif
 
 #ifdef CHANDEBUG
 		{
@@ -547,15 +555,17 @@ int main(int argc, char *argv[]) {
 		logger.time_chan [ ichan ] = duration.count();
 #endif
 		//std::cout << "after solving SSE=" << test.get_sse() << std::endl;
+
+#ifdef LMSOLVE
 		logger.sse_chan [ ichan ]  = solver.get_sse();
 
 		logger.nfev [ ichan ]      = solver.nfev;
 		logger.njev [ ichan ]      = solver.njev;
 
 		logger.info [ ichan ]      = solver.info;
-
-
-		const FullPolarLMSolver::vr_type& isol = solver.isolution;
+#else
+		logger.sse_chan [ ichan ]  = cost;
+#endif
 
 		/* save into fitted model */
 		//fitted_model.stokes_i [ ichan ]  = isol [ npar - 3 ];
@@ -568,8 +578,13 @@ int main(int argc, char *argv[]) {
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
+#ifdef LMSOLVE
 			const polphasing::complex_type rg ( isol[4*idx + 0], isol[4*idx + 1] );
 			const polphasing::complex_type lg ( isol[4*idx + 2], isol[4*idx + 3] );
+#else
+			const polphasing::complex_type rg ( isol[2*idx + 0] );
+			const polphasing::complex_type lg ( isol[2*idx + 1] );
+#endif
 
 			solved_gains_r[iant][ichan]  = rg;
 			solved_gains_l[iant][ichan]  = lg;
