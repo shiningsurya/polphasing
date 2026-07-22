@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 				break;
 		} // switch
 	} // getopt
-	if ( optind < argc ) {
+	if ( optind >= argc ) {
 		print_help ();
 		exit (EXIT_SUCCESS);
 	}

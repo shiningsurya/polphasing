@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include <unistd.h>
 
@@ -13,6 +14,8 @@
 #ifdef TIMING
 #include <chrono>
 #endif
+
+#define CHANDEBUG
 
 //#include "cxxopts.hpp"
 
@@ -89,7 +92,7 @@ int main(int argc, char *argv[]) {
 				break;
 		} // switch
 	} // getopt
-	if ( optind < argc ) {
+	if ( optind >= argc ) {
 		print_help ();
 		exit (EXIT_SUCCESS);
 	}
@@ -294,8 +297,11 @@ int main(int argc, char *argv[]) {
 	 */
   // openmp parallelizing the whole thing 
   // takes 440s or 7 minutes ish
-	#pragma omp parallel for num_threads(4) 
-	for (int ichan = 0; ichan < nchannels; ichan++) {
+	//#pragma omp parallel for num_threads(4) 
+	//for (int ichan = 0; ichan < nchannels; ichan++) {
+#ifdef CHANDEBUG
+	for (int ichan = 398; ichan < 399; ichan++) {
+#endif
 		/* when parallelizing inside loop */
 		/* this will be doing a lot of mallocs */
 
@@ -305,13 +311,15 @@ int main(int argc, char *argv[]) {
 		/* initialize solver */
 		FullPolarLMSolver          solver (ndata, npar, 1);
 	/* testing */
-	//for (int ichan = 500; ichan < 501; ichan++) {
 		//if (ichan % 128 == 0) std::cout << ichan << " ";
 
 		/* read stokes IQU for ichan */
 		const models::real_type    stokes_i ( calmodel.stokes_i[ichan] );
 		const models::real_type    stokes_q ( calmodel.stokes_q[ichan] );
 		const models::real_type    stokes_u ( calmodel.stokes_u[ichan] );
+		const models::real_type    stokes_l ( std::sqrt ( stokes_q*stokes_q + stokes_u*stokes_u ) );
+		const models::real_type    scale_i  ( 10.0f / stokes_i );
+		const models::real_type    scale_l  ( 10.0f / stokes_l );
 
 		/* populate rr, rl, lr, ll */
 		const models::complex_type model_rr ( stokes_i, 0.0f );
@@ -357,6 +365,10 @@ int main(int argc, char *argv[]) {
 			 * (0,1) = rl -> 1 
 			 * (1,0) = lr -> 2 
 			 * (1,1) = ll -> 3
+			 *
+			 * 20260721: 
+			 * Actually, see comment before.
+			 * This order is really important. 
 			 */
 
 			/* get antennas */
@@ -393,6 +405,20 @@ int main(int argc, char *argv[]) {
 			*/
 
 			/* ID correlation */
+			//const int pb2corr = _bl.band1*2 + _bl.band2;
+			/*
+			 * 20260721:
+			 * the ordering in pb2corr is important.
+			 * i notice that model-forward using model and solved complex gains
+			 * fits nicely with the RR and LL correlations
+			 * but data RL matches with model LR
+			 * This is probably due to pb2corr
+			 * so flipping it and testing
+			 *
+			 * 20260721:
+			 * no, it should band1*2 + band2
+			 * 
+			*/
 			const int pb2corr = _bl.band1*2 + _bl.band2;
 
 			/* index_b1 b2 */
@@ -416,24 +442,59 @@ int main(int argc, char *argv[]) {
 			 */
 
 			/* copy data */
-			pkg->data [ ii ] = std::complex<float>( avgbldata[2*_i], avgbldata[2*_i + 1] );
+			const float _real ( avgbldata[2*_i] );
+			const float _imag ( avgbldata[2*_i + 1] );
+			// let's scale the data itself
+			// model stays the same
+			// so complex gains will get scaled
+			// it will bring the impact
+			// maybe choose a perfect square
+			// solved complex gains must be divided by 
+			// sqrt(this factor) to get the actual complex gains
+			const float dfac ( 1.0f );
+			pkg->data [ ii ]    = std::complex<float> ( dfac * _real, dfac * _imag );
+			//pkg->pbscaling[ii]  = 100.0f / std::sqrt( _real*_real + _imag*_imag ); 
+			//pkg->pbscaling[ii]  = 1.0f;
 
 			/* copy model using polarbaseline to correlation product mapping */
-			if      ( pb2corr == 0 ) pkg->model[ii] = model_rr;
-			else if ( pb2corr == 1 ) pkg->model[ii] = model_rl;
-			else if ( pb2corr == 2 ) pkg->model[ii] = model_lr;
-			else if ( pb2corr == 3 ) pkg->model[ii] = model_ll;
+			/* per polar baseline independent scaling 
+			 *
+			 * 20260721:
+			 *
+			 * RR and LL already fit well, so keep them as unity
+			 * RL and LR are are about 10x lower
+			 * so if RR,LL have scales unity
+			 * RL and LR must have 10.0f
+			 *
+			 * There is probably a better way to do this scaling
+			*/
+			if      ( pb2corr == 0 ) {
+				pkg->model[ii]      = model_rr;
+				//pkg->pbscaling[ii]  = scale_i;
+			}
+			else if ( pb2corr == 1 ) {
+				pkg->model[ii]      = model_rl;
+				//pkg->pbscaling[ii]  = scale_l;
+			}
+			else if ( pb2corr == 2 ) {
+				pkg->model[ii]      = model_lr;
+				//pkg->pbscaling[ii]  = scale_l;
+			}
+			else if ( pb2corr == 3 ) {
+				pkg->model[ii]      = model_ll;
+				//pkg->pbscaling[ii]  = scale_i;
+			}
 
 		} /* baselines */
 
-#if 0	
+#ifdef CHANDEBUG
 		/* save pkg and exit */
 		{
-			std::ofstream bof("avgbldata.bin", std::ios::binary);
-			bof.write (reinterpret_cast<const char*>(avgbldata.data()), avgbldata.size()*sizeof(float));
+			//std::ofstream bof("avgbldata.bin", std::ios::binary);
+			//bof.write (reinterpret_cast<const char*>(avgbldata.data()), avgbldata.size()*sizeof(float));
 
-			std::ofstream nof("noself_baselines.bin", std::ios::binary);
-			nof.write (reinterpret_cast<const char*>(noself_baselines.data()), noself_baselines.size()*sizeof(int));
+			//std::ofstream nof("noself_baselines.bin", std::ios::binary);
+			//nof.write (reinterpret_cast<const char*>(noself_baselines.data()), noself_baselines.size()*sizeof(int));
 
 			std::ofstream of("pkgchan500.bin", std::ios::binary);
 
@@ -462,20 +523,20 @@ int main(int argc, char *argv[]) {
 #endif
 		solver.solve ( pkg );
 
-#if 0	
+#ifdef CHANDEBUG
 		{
 			/* before writing, update residual and jacobian by call fcn */
 			/* with 1 to compute residuals */
-			test.forward ( pkg, 1 );
+			solver.forward ( pkg, 1 );
 			/* with 2 to compute jacobian */
-			test.forward ( pkg, 2 );
+			solver.forward ( pkg, 2 );
 
 			std::ofstream of("solverstate500.bin", std::ios::binary);
-			of.write (reinterpret_cast<const char*>(test.isolution.data()), test.isolution.size()*sizeof(float));
+			of.write (reinterpret_cast<const char*>(solver.isolution.data()), solver.isolution.size()*sizeof(float));
 
-			of.write (reinterpret_cast<const char*>(test.residuals.data()), test.residuals.size()*sizeof(float));
+			of.write (reinterpret_cast<const char*>(solver.residuals.data()), solver.residuals.size()*sizeof(float));
 
-			of.write (reinterpret_cast<const char*>(test.jacobian.data()), test.jacobian.size()*sizeof(float));
+			of.write (reinterpret_cast<const char*>(solver.jacobian.data()), solver.jacobian.size()*sizeof(float));
 		}
 #endif
 
