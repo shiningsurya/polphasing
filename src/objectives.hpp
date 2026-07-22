@@ -35,12 +35,17 @@ namespace polphasing {
 		/* polarbaseline to correlation */
 		// FITIQU
 		// vi_type pb2corr;
+		 
+		/* polarbaseline scaling */
+		vf_type pbscaling;
 
 		polphasing_data_t ( int ndata ) : 
 			data(ndata), model(ndata), 
-			index_b1(ndata), index_b2(ndata)  
+			index_b1(ndata), index_b2(ndata), 
 			// FITIQU
 			// pb2corr(ndata) 
+			// pbscaling
+			pbscaling(ndata, 1.0f)
 		{}
 
 	};

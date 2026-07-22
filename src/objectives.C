@@ -26,15 +26,18 @@ namespace polphasing {
 		/* m is ndata, n is npar */
 
 		/* pull data */
-		data_t *pkg = reinterpret_cast<data_t*> ( vd );
+		const data_t *pkg = reinterpret_cast<data_t*> ( vd );
 
 		/* complex arrays */
-		vc_type& data   = pkg->data;
-		vc_type& model  = pkg->model;
+		const vc_type& data   = pkg->data;
+		const vc_type& model  = pkg->model;
 
 		/* mapping */
-		vi_type& index_b1 = pkg->index_b1;
-		vi_type& index_b2 = pkg->index_b2;
+		const vi_type& index_b1 = pkg->index_b1;
+		const vi_type& index_b2 = pkg->index_b2;
+
+		/* polar baseline scaling */
+		const vf_type& pbscale  = pkg->pbscaling;
 
 		// FITIQU
 		/* polar baselines to correlation product */
@@ -74,7 +77,20 @@ namespace polphasing {
 		 * but LMSolver sees real residuals
 		 * we do this kind of for loop
 		 */
-		int hm     = m / 2;
+		const int hm     = m / 2;
+
+		/*
+		 * 20260721:
+		 * it is fitting well with RR and LL
+		 * but not with RL and LR
+		 * it could possibly be due to low amplitudes.
+		 * so i am scaling residuals and jacobians with 
+		 * 100 or 1000.f
+		 *
+		 * global scaling does not matter
+		 * need to scale RR, RL, LR, LL individually
+		*/
+		// constexpr real_type rfac = 1000.0f;
 
 		if ( iflag == 0 ) {
 #if 0
@@ -121,10 +137,11 @@ namespace polphasing {
 				/*
 				 * let's solve for model as well at the same time
 				 */
+				const float rfac  = pbscale[im];
 
 				/* real and imag */
-				fvec[om]  = dr + (mi*pi*qr) - (mi*pr*qi) - (mr*pi*qi) - (mr*pr*qr);
-				fvec[om+1]= di - (mi*pi*qi) - (mi*pr*qr) - (mr*pi*qr) + (mr*pr*qi);
+				fvec[om]  = rfac * (dr + (mi*pi*qr) - (mi*pr*qi) - (mr*pi*qi) - (mr*pr*qr) );
+				fvec[om+1]= rfac * (di - (mi*pi*qi) - (mi*pr*qr) - (mr*pi*qr) + (mr*pr*qi) );
 
 				/*
 				 * real(res) 	d^r + m^i*p^i*q^r - m^i*p^r*q^i - m^r*p^i*q^i - m^r*p^r*q^r
@@ -256,32 +273,35 @@ namespace polphasing {
 				 *
 				 */
 
+				/* scaling every polar baseline independently */
+				const float rfac  = pbscale[im];
+
 				int idx = 0;
 				/* re,im(res) / tr */
 				idx  = ldfjac*i1r + 2*im;
-				fjac [ idx     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
-				fjac [ idx + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
+				fjac [ idx     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ) * rfac;
+				fjac [ idx + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r ) * rfac;
 				//fjac [ ldfjac*i1r + 2*im     ] = - 1.0 * ( imodelr*s2r + imodeli*s2i );
 				//fjac [ ldfjac*i1r + 2*im + 1 ] = - 1.0 * (-imodelr*s2i + imodeli*s2r );
 
 				/* re,im(res) / ti */
 				idx  = ldfjac*i1i + 2*im;
-				fjac [ idx     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
-				fjac [ idx + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
+				fjac [ idx     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r ) * rfac;
+				fjac [ idx + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ) * rfac; 
 				//fjac [ ldfjac*i1i + 2*im     ] = - 1.0 * ( imodelr*s2i - imodeli*s2r );
 				//fjac [ ldfjac*i1i + 2*im + 1 ] = - 1.0 * ( imodelr*s2r + imodeli*s2i ); 
 
 				/* re,im(res) / sr */
 				idx  = ldfjac*i2r + 2*im;
-				fjac [ idx     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
-				fjac [ idx + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
+				fjac [ idx     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i ) * rfac;
+				fjac [ idx + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i ) * rfac;
 				//fjac [ ldfjac*i2r + 2*im     ] = - 1.0 * ( imodelr*t1r - imodeli*t1i );
 				//fjac [ ldfjac*i2r + 2*im + 1 ] = - 1.0 * ( imodeli*t1r + imodelr*t1i );
 
 				/* re,im(res) / si */
 				idx  = ldfjac*i2i + 2*im;
-				fjac [ idx     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r );
-				fjac [ idx + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i );
+				fjac [ idx     ] = - 1.0 * ( imodelr*t1i + imodeli*t1r ) * rfac;
+				fjac [ idx + 1 ] = - 1.0 * (-imodelr*t1r + imodeli*t1i ) * rfac;
 
 #if 0
 				FITIQU
