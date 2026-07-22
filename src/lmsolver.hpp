@@ -138,12 +138,12 @@ class LMSolver {
 
 			/* few variables*/
 			iflag   = 0;
-			nfev    = 0;
-			njev    = 0;
+			//nfev    = 0;
+			//njev    = 0;
 			info    = -1;
 
 			/* vectors */
-			std::fill ( isolution.begin(), isolution.end(), 1.0f );
+			//std::fill ( isolution.begin(), isolution.end(), 1.0f );
 			std::fill ( residuals.begin(), residuals.end(), 0.0f );
 			std::fill ( jacobian.begin(), jacobian.end(), 0.0f );
 
