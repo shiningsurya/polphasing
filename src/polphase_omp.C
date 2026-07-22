@@ -531,7 +531,8 @@ int main(int argc, char *argv[]) {
 		auto cost = solver.solve ( pkg, isol );
 #endif
 
-#ifdef CHANDEBUG
+#ifdef CHANDEBUG 
+#ifdef LMSOLVE
 		{
 			/* before writing, update residual and jacobian by call fcn */
 			/* with 1 to compute residuals */
@@ -546,7 +547,8 @@ int main(int argc, char *argv[]) {
 
 			of.write (reinterpret_cast<const char*>(solver.jacobian.data()), solver.jacobian.size()*sizeof(float));
 		}
-#endif
+#endif // lmsolve
+#endif // chandebug
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
@@ -565,6 +567,8 @@ int main(int argc, char *argv[]) {
 		logger.info [ ichan ]      = solver.info;
 #else
 		logger.sse_chan [ ichan ]  = cost;
+		logger.nfev [ ichan ]      = solver.niter;
+		logger.info [ ichan ]      = solver.rcode;
 #endif
 
 		/* save into fitted model */

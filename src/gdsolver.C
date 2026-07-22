@@ -59,21 +59,25 @@ GDSolver::real_type GDSolver::iterate(const ptrdata_t& pkg, vc_type& usol) {
 GDSolver::real_type GDSolver::solve ( const ptrdata_t& pkg, vc_type& solution ) {
 
 	rcode = 0;
+	niter = 0;
 
-	real_type last_cost ( 0.0f );
+	real_type last_cost ( 1000.0f );
 
 	for (int iter = 0; iter < max_iterations; iter++ ){
 
 		// iterate once
 		real_type cost = iterate ( pkg, solution );
 
+		//std::cout << iter << " " << cost << std::endl;
+
 		// note that this cost is one behind the update
-		if ( last_cost - cost <= delta ) {
+		if ( std::abs(last_cost - cost) <= delta ) {
 			rcode = 1;
 			break;
 		}
 
 		last_cost = cost;
+		niter++;
 
 	} // iterations
 
