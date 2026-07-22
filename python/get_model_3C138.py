@@ -12,7 +12,9 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-CAL     = "3C138"
+CAL     = "3C138275x"
+## 20260722
+## 2.75x linear pol fraction
 
 # the following three parameters 
 # decide the frequency axis
@@ -105,6 +107,11 @@ cf['ichan']     = np.arange(NCHAN)
 mflux   = CASA_alphabeta ( _freq_mhz*1E-3, ALPHABETA[0], *ALPHABETA[1:] )
 mlp     = CASA_poly ( _freq_mhz*1E-3, *POL_INDICES )
 mpa     = np.deg2rad ( evpa_3c138 (_freq_mhz*1E-3) )
+
+## 20260722 
+## it looks like abs(RL) and abs(LR) of the data have 
+## larger absolute value
+mlp     = 2.75 * mlp
 
 cf['I'] = mflux
 cf['V'] = mflux * 0.
