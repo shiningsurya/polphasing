@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <complex>
+#include <memory>
 
 namespace polphasing {
 	using real_type    = float; 
@@ -49,6 +50,8 @@ namespace polphasing {
 		{}
 
 	};
+	using data_t     = polphasing::polphasing_data_t;
+	using ptrdata_t  = std::unique_ptr<data_t>;
 
 
 

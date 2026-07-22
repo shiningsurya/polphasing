@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <array>
 #include <vector>
-#include <memory>
 
 
 extern "C" {
@@ -45,8 +44,8 @@ class LMSolver {
 	public:
 		using real_type  = float;
 		using vr_type    = std::vector<real_type>;
-		using data_t     = polphasing::polphasing_data_t;
-		using ptrdata_t  = std::unique_ptr<data_t>;
+		using data_t     = polphasing::data_t;
+		using ptrdata_t  = polphasing::ptrdata_t;
 
 	private:
 		/* tolerances */
