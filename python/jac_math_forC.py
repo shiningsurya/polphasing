@@ -59,6 +59,12 @@ print (" imag (res) / sr ", ires.diff(sr), sep='\t')
 print (" real (res) / si ", rres.diff(si), sep='\t')
 print (" imag (res) / si ", ires.diff(si), sep='\t')
 
+print (" real (res) / mr ", rres.diff(mr), sep='\t')
+print (" imag (res) / mr ", ires.diff(mr), sep='\t')
+
+print (" real (res) / mi ", rres.diff(mi), sep='\t')
+print (" imag (res) / mi ", ires.diff(mi), sep='\t')
+
 """
  real (res) / tr 	m^i*s^i + m^r*s^r
  imag (res) / tr 	m^i*s^r - m^r*s^i
@@ -68,5 +74,11 @@ print (" imag (res) / si ", ires.diff(si), sep='\t')
  imag (res) / sr 	m^i*t^r + m^r*t^i
  real (res) / si 	m^i*t^r + m^r*t^i
  imag (res) / si 	m^i*t^i - m^r*t^r
+
+ real (res) / mr 	s^i*t^i + s^r*t^r
+ imag (res) / mr 	-s^i*t^r + s^r*t^i
+ real (res) / mi 	s^i*t^r - s^r*t^i
+ imag (res) / mi 	s^i*t^i + s^r*t^r
+
 """
 
