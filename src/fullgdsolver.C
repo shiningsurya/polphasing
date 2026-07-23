@@ -18,10 +18,10 @@ int FullGDSolver::iterate ( const solve_data_t& pkg, vc_type& gains ) {
 	const complex_type mlr ( pkg.mlr );
 	const complex_type mll ( pkg.mll );
 
-	vc_type    eqn_drr ( nantennas*3 );
-	vc_type    eqn_drl ( nantennas*3 );
-	vc_type    eqn_dlr ( nantennas*3 );
-	vc_type    eqn_dll ( nantennas*3 );
+	vc_type    eqn_drr ( nantennas*3, complex_type(0.0f, 0.0f) );
+	vc_type    eqn_drl ( nantennas*3, complex_type(0.0f, 0.0f) );
+	vc_type    eqn_dlr ( nantennas*3, complex_type(0.0f, 0.0f) );
+	vc_type    eqn_dll ( nantennas*3, complex_type(0.0f, 0.0f) );
 
 	for ( int ibl = 0; ibl < npolarbaselines; ibl++ ) {
 
@@ -267,17 +267,17 @@ int FullGDSolver::iterate ( const solve_data_t& pkg, vc_type& gains ) {
 			const complex_type dlr_const_gq  = conj(data) * (gplr*conj(mrl) + gprr*conj(mrr));
 			const complex_type dll_const_gq  = conj(data) * (gplr*conj(mll) + gprr*conj(mlr));
 
-			eqn_dlr[3*iant1 + 0]  = dlr_coeff_gplr;
-			eqn_dlr[3*iant1 + 2]  = dlr_const_gp;
+			eqn_dlr[3*iant1 + 0]  += dlr_coeff_gplr;
+			eqn_dlr[3*iant1 + 2]  += dlr_const_gp;
 
-			eqn_dll[3*iant1 + 0]  = dll_coeff_gplr;
-			eqn_dll[3*iant1 + 2]  = dll_const_gp;
+			eqn_dll[3*iant1 + 0]  += dll_coeff_gplr;
+			eqn_dll[3*iant1 + 2]  += dll_const_gp;
 
-			eqn_dlr[3*iant2 + 0]  = dlr_coeff_gqlr;
-			eqn_dlr[3*iant2 + 2]  = dlr_const_gq;
+			eqn_dlr[3*iant2 + 0]  += dlr_coeff_gqlr;
+			eqn_dlr[3*iant2 + 2]  += dlr_const_gq;
 
-			eqn_dll[3*iant2 + 0]  = dll_coeff_gqlr;
-			eqn_dll[3*iant2 + 2]  = dll_const_gq;
+			eqn_dll[3*iant2 + 0]  += dll_coeff_gqlr;
+			eqn_dll[3*iant2 + 2]  += dll_const_gq;
 
 		} // lr
 		else if ( pb2corr == 3 ) {

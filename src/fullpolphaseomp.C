@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 #ifdef CHANDEBUG
 	for (int ichan = 398; ichan < 399; ichan++) {
 #else
-	//#pragma omp parallel for num_threads(4) 
+	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
 		/* when parallelizing inside loop */
