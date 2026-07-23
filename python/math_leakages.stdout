@@ -6,3 +6,39 @@ LR
 d^{ll} \left(- g_q^{ll} \overline{m^{rl}} - g_q^{rl} \overline{m^{rr}}\right) + d^{lr} \left(- g_q^{lr} \overline{m^{rl}} - g_q^{rr} \overline{m^{rr}}\right) + g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{ll} m^{lr} \overline{g_q^{rl}} \overline{m^{rl}} + g_q^{lr} m^{ll} \overline{g_q^{lr}} \overline{m^{rl}} + g_q^{lr} m^{lr} \overline{g_q^{rr}} \overline{m^{rl}} + g_q^{rl} m^{ll} \overline{g_q^{ll}} \overline{m^{rr}} + g_q^{rl} m^{lr} \overline{g_q^{rl}} \overline{m^{rr}} + g_q^{rr} m^{ll} \overline{g_q^{lr}} \overline{m^{rr}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{rr}}\right) + g_p^{lr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{ll} m^{rr} \overline{g_q^{rl}} \overline{m^{rl}} + g_q^{lr} m^{rl} \overline{g_q^{lr}} \overline{m^{rl}} + g_q^{lr} m^{rr} \overline{g_q^{rr}} \overline{m^{rl}} + g_q^{rl} m^{rl} \overline{g_q^{ll}} \overline{m^{rr}} + g_q^{rl} m^{rr} \overline{g_q^{rl}} \overline{m^{rr}} + g_q^{rr} m^{rl} \overline{g_q^{lr}} \overline{m^{rr}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right)
 LL
 d^{ll} \left(- g_q^{ll} \overline{m^{ll}} - g_q^{rl} \overline{m^{lr}}\right) + d^{lr} \left(- g_q^{lr} \overline{m^{ll}} - g_q^{rr} \overline{m^{lr}}\right) + g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{ll} m^{lr} \overline{g_q^{rl}} \overline{m^{ll}} + g_q^{lr} m^{ll} \overline{g_q^{lr}} \overline{m^{ll}} + g_q^{lr} m^{lr} \overline{g_q^{rr}} \overline{m^{ll}} + g_q^{rl} m^{ll} \overline{g_q^{ll}} \overline{m^{lr}} + g_q^{rl} m^{lr} \overline{g_q^{rl}} \overline{m^{lr}} + g_q^{rr} m^{ll} \overline{g_q^{lr}} \overline{m^{lr}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right) + g_p^{lr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{ll} m^{rr} \overline{g_q^{rl}} \overline{m^{ll}} + g_q^{lr} m^{rl} \overline{g_q^{lr}} \overline{m^{ll}} + g_q^{lr} m^{rr} \overline{g_q^{rr}} \overline{m^{ll}} + g_q^{rl} m^{rl} \overline{g_q^{ll}} \overline{m^{lr}} + g_q^{rl} m^{rr} \overline{g_q^{rl}} \overline{m^{lr}} + g_q^{rr} m^{rl} \overline{g_q^{lr}} \overline{m^{lr}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{lr}}\right)
+----------   RR   ------------
+gprr-->
+gqll*mrl*conj(gqll)*conj(mrl) + gqll*mrr*conj(gqrl)*conj(mrl) + gqlr*mrl*conj(gqlr)*conj(mrl) + gqlr*mrr*conj(gqrr)*conj(mrl) + gqrl*mrl*conj(gqll)*conj(mrr) + gqrl*mrr*conj(gqrl)*conj(mrr) + gqrr*mrl*conj(gqlr)*conj(mrr) + gqrr*mrr*conj(gqrr)*conj(mrr)
+gprl-->
+gqll*mll*conj(gqll)*conj(mrl) + gqll*mlr*conj(gqrl)*conj(mrl) + gqlr*mll*conj(gqlr)*conj(mrl) + gqlr*mlr*conj(gqrr)*conj(mrl) + gqrl*mll*conj(gqll)*conj(mrr) + gqrl*mlr*conj(gqrl)*conj(mrr) + gqrr*mll*conj(gqlr)*conj(mrr) + gqrr*mlr*conj(gqrr)*conj(mrr)
+drr-->
+-gqlr*conj(mrl) - gqrr*conj(mrr)
+drl-->
+-gqll*conj(mrl) - gqrl*conj(mrr)
+----------   RL   ------------
+gprr-->
+gqll*mrl*conj(gqll)*conj(mll) + gqll*mrr*conj(gqrl)*conj(mll) + gqlr*mrl*conj(gqlr)*conj(mll) + gqlr*mrr*conj(gqrr)*conj(mll) + gqrl*mrl*conj(gqll)*conj(mlr) + gqrl*mrr*conj(gqrl)*conj(mlr) + gqrr*mrl*conj(gqlr)*conj(mlr) + gqrr*mrr*conj(gqrr)*conj(mlr)
+gprl-->
+gqll*mll*conj(gqll)*conj(mll) + gqll*mlr*conj(gqrl)*conj(mll) + gqlr*mll*conj(gqlr)*conj(mll) + gqlr*mlr*conj(gqrr)*conj(mll) + gqrl*mll*conj(gqll)*conj(mlr) + gqrl*mlr*conj(gqrl)*conj(mlr) + gqrr*mll*conj(gqlr)*conj(mlr) + gqrr*mlr*conj(gqrr)*conj(mlr)
+drr-->
+-gqlr*conj(mll) - gqrr*conj(mlr)
+drl-->
+-gqll*conj(mll) - gqrl*conj(mlr)
+----------   LR   ------------
+gpll-->
+gqll*mll*conj(gqll)*conj(mrl) + gqll*mlr*conj(gqrl)*conj(mrl) + gqlr*mll*conj(gqlr)*conj(mrl) + gqlr*mlr*conj(gqrr)*conj(mrl) + gqrl*mll*conj(gqll)*conj(mrr) + gqrl*mlr*conj(gqrl)*conj(mrr) + gqrr*mll*conj(gqlr)*conj(mrr) + gqrr*mlr*conj(gqrr)*conj(mrr)
+gplr-->
+gqll*mrl*conj(gqll)*conj(mrl) + gqll*mrr*conj(gqrl)*conj(mrl) + gqlr*mrl*conj(gqlr)*conj(mrl) + gqlr*mrr*conj(gqrr)*conj(mrl) + gqrl*mrl*conj(gqll)*conj(mrr) + gqrl*mrr*conj(gqrl)*conj(mrr) + gqrr*mrl*conj(gqlr)*conj(mrr) + gqrr*mrr*conj(gqrr)*conj(mrr)
+dll-->
+-gqll*conj(mrl) - gqrl*conj(mrr)
+dlr-->
+-gqlr*conj(mrl) - gqrr*conj(mrr)
+----------   LL   ------------
+gpll-->
+gqll*mll*conj(gqll)*conj(mll) + gqll*mlr*conj(gqrl)*conj(mll) + gqlr*mll*conj(gqlr)*conj(mll) + gqlr*mlr*conj(gqrr)*conj(mll) + gqrl*mll*conj(gqll)*conj(mlr) + gqrl*mlr*conj(gqrl)*conj(mlr) + gqrr*mll*conj(gqlr)*conj(mlr) + gqrr*mlr*conj(gqrr)*conj(mlr)
+gplr-->
+gqll*mrl*conj(gqll)*conj(mll) + gqll*mrr*conj(gqrl)*conj(mll) + gqlr*mrl*conj(gqlr)*conj(mll) + gqlr*mrr*conj(gqrr)*conj(mll) + gqrl*mrl*conj(gqll)*conj(mlr) + gqrl*mrr*conj(gqrl)*conj(mlr) + gqrr*mrl*conj(gqlr)*conj(mlr) + gqrr*mrr*conj(gqrr)*conj(mlr)
+dll-->
+-gqll*conj(mll) - gqrl*conj(mlr)
+dlr-->
+-gqlr*conj(mll) - gqrr*conj(mlr)

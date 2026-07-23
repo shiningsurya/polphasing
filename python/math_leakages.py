@@ -6,6 +6,7 @@ for gradient descent update equations
 import sys
 import pandas as pd
 from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex)
+from sympy.printing.pycode import PythonCodePrinter
 
 gp_rr, gp_rl, gp_lr, gp_ll = symbols('g_p^{rr} g_p^{rl} g_p^{lr} g_p^{ll}')
 gq_rr, gq_rl, gq_lr, gq_ll = symbols('g_q^{rr} g_q^{rl} g_q^{lr} g_q^{ll}')
@@ -52,6 +53,13 @@ sll  = expand ( conjugate(ell) * ell )
 ### sum of all 
 sss   = srr + srl + slr + sll
 # arger = lambda t,a,b,c,d : sss.diff(t).collect( (Derivative(conjugate(t),t), conjugate(a), conjugate(b), conjugate(c), conjugate(d)), evaluate=False)
+
+## i want to print cxxcode
+## using python because the expressing is simple
+## using std::conj;
+print_settings  = PythonCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
+printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
+## replace sub/super scripts because my variable names do not have them
 def arger (t,a,b,c,d): 
     """
     c,d are the data terms
@@ -73,17 +81,35 @@ def arger (t,a,b,c,d):
     dd = conjugate ( kv [ cd ] )
     ###
     term  = a*aa + b*bb + c*cc + d*dd
-    return term
+    # dv = {a:aa, b:bb, c:cc, d:dd}
+    dv    = {printer(a):printer(aa), printer(b):printer(bb), printer(c):printer(cc), printer(d):printer(dd)}
+    return term,dv
 
 ## collect terms
-trr   = arger ( gp_rr, gp_rr, gp_rl, d_rr, d_rl ) 
-trl   = arger ( gp_rl, gp_rr, gp_rl, d_rr, d_rl ) 
-tlr   = arger ( gp_lr, gp_ll, gp_lr, d_ll, d_lr ) 
-tll   = arger ( gp_ll, gp_ll, gp_lr, d_ll, d_lr ) 
+trr,vrr   = arger ( gp_rr, gp_rr, gp_rl, d_rr, d_rl ) 
+trl,vrl   = arger ( gp_rl, gp_rr, gp_rl, d_rr, d_rl ) 
+tlr,vlr   = arger ( gp_lr, gp_ll, gp_lr, d_ll, d_lr ) 
+tll,vll   = arger ( gp_ll, gp_ll, gp_lr, d_ll, d_lr ) 
 
+### latex printing
 
 print ("RR", latex(trr), sep='\n')
 print ("RL", latex(trl), sep='\n')
 print ("LR", latex(tlr), sep='\n')
 print ("LL", latex(tll), sep='\n')
+
+### coefficient printing
+
+print ("----------   RR   ------------")
+for k,v in vrr.items():
+    print ( k, v, sep='-->\n' )
+print ("----------   RL   ------------")
+for k,v in vrl.items():
+    print ( k, v, sep='-->\n' )
+print ("----------   LR   ------------")
+for k,v in vlr.items():
+    print ( k, v, sep='-->\n' )
+print ("----------   LL   ------------")
+for k,v in vll.items():
+    print ( k, v, sep='-->\n' )
 
