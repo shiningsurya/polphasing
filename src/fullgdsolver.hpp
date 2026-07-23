@@ -19,6 +19,10 @@
 #include <vector>
 #include <map>
 
+#ifdef ADAM
+#include "adam.hpp"
+#endif
+
 
 class FullGDSolver {
 	public:

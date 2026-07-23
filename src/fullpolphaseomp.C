@@ -1,3 +1,5 @@
+#define ADAM
+
 #include <iostream>
 #include <cmath>
 

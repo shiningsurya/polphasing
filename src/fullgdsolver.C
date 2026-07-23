@@ -477,6 +477,10 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 
 	real_type rcost (0.0f);
 
+#ifdef ADAM
+	Adam apple ( ngains, 0.01, 0.99, 0.99 );
+#endif
+
 	for ( int iter = 0; iter < max_iterations; iter++ ) {
 
 		// find cost before iteration
@@ -488,6 +492,10 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 		// iterate once
 		iterate ( pkg, solutions );
 
+		// find cost after iteration
+		real_type new_cost = cost ( pkg, solutions );
+
+#ifdef LERP
 		// update gains
 		// ngains is 4 x nantennas
 		for ( int igain = 0; igain < ngains; igain++ ) {
@@ -497,13 +505,24 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 			// lerp with alpha
 			gains [ igain ] = (1.0f - alpha)*og + alpha*ng;
 		}
+#endif
+#ifdef ADAM
+		/*
+		 * Instead of using one fixed alpha throughout the iterations, 
+		 * let us use Adam strategy to update the ``learning rate''. 
+		 * We will also pick one for every `gain`. 
+		 * So that we get maximum granularity.
+		 *
+		 * This and more is in Adam.
+		*/
+		apple ( old_cost, new_cost, gains, solutions );
+#endif
 
-		real_type new_cost = cost ( pkg, gains );
 
 		// termination condition
 		if ( std::abs(old_cost - new_cost) <= delta ) {
 			rcode = 1;
-			rcost  = new_cost;
+			rcost  = cost ( pkg, gains );
 			break;
 		}
 		// do not terminate on gainconvergence
