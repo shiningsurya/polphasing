@@ -10,3 +10,5 @@ write_baselines
 ## files
 *.log
 *.gains
+
+Makefile
