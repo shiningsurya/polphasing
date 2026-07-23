@@ -83,6 +83,13 @@ class FullGDSolver {
 			 * = (det-term-here) | b2*c1 - b1*c2 | 
 			 *                   | c2*a1 - c1*a2 |
 			 *
+			 * | a3  b3 | | lr | = | c3 |
+			 * | a4  b4 | | ll |   | c4 |
+			 *
+			 * | lr | = (det34)**-1 * |  b4 -b3 | | c3 |
+			 * | ll |                 | -a4  a3 | | c4 |
+			 * = (det-term-here) | b4c3 - b3c4 |
+			 *                   | c4a3 - c3a4 |
 			 *
 			 * implementation details:
 			 * instead of an associative container for gains and eqns.
@@ -122,7 +129,7 @@ class FullGDSolver {
 		/*
 		 * Interpolation between old solution and new solution
 		*/
-		static constexpr real_type alpha = 0.40;
+		static constexpr real_type alpha = 0.20;
 		/*
 		 * Change in SSE observed
 		*/
@@ -130,7 +137,7 @@ class FullGDSolver {
 
 		//static constexpr complex_type zero_complex = complex_type( 0.0f, 0.0f );
 
-		static constexpr int max_iterations = 1000;
+		static constexpr int max_iterations = 3000;
 
 		// iteration method
 		int iterate( const solve_data_t& pkg, vc_type& gains );
