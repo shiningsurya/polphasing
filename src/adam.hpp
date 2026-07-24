@@ -56,7 +56,7 @@ class Adam {
 			max_iterations ( _max_iterations ),
 			last_mt (_npar, complex_t(0.0f,0.0f)), last_vt (_npar, 0.0f) {}
 
-		int operator() (const float oldcost, const float newcost, vc_t& oldgains, const vc_t& newgains );
+		int operator() (const vc_t& gradient, vc_t& gains );
 		/*
 		 * Update the oldgains in place.
 		*/

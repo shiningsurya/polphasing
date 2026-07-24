@@ -19,10 +19,7 @@
 #include <vector>
 #include <map>
 
-#ifdef ADAM
 #include "adam.hpp"
-#endif
-
 
 class FullGDSolver {
 	public:
@@ -138,6 +135,11 @@ class FullGDSolver {
 		 * Change in SSE observed
 		*/
 		static constexpr real_type delta = 0.1;
+		/*
+		 * minimum norm of the gradient vector
+		 * This is probably arbitrary
+		*/
+		static constexpr real_type gamma = 100;
 
 		//static constexpr complex_type zero_complex = complex_type( 0.0f, 0.0f );
 
@@ -145,6 +147,9 @@ class FullGDSolver {
 
 		// iteration method
 		int iterate( const solve_data_t& pkg, vc_type& gains );
+
+		// gradient method
+		int gradient ( const solve_data_t& pkg, const vc_type& gains, vc_type& grad );
 	
 	public:
 
@@ -163,6 +168,8 @@ class FullGDSolver {
 		real_type solve ( const solve_data_t& pkg, vc_type& gains );
 
 		real_type cost ( const solve_data_t& pkg, const vc_type& gains );
+
+		real_type norm ( const vc_type& gains );
 
 }; // FullGDSolve
 
