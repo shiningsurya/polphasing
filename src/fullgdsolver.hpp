@@ -128,22 +128,33 @@ class FullGDSolver {
 	
 	private:
 		/*
-		 * Interpolation between old solution and new solution
+		 * obselete: Change in SSE observed
+		 *
+		 * Termination if ema(norm(gradient)) < delta
 		*/
-		static constexpr real_type alpha = 0.20;
+		static constexpr real_type delta = 0.01;
+		/* EMA beta parameter of norm(gradient) */
+		/* Default as Adam */
+		static constexpr real_type betag = 0.9;
+		/* Fast and slow EMA beta parameter for cost */
+		// higher beta fast changing
+		static constexpr real_type beta_cost_fast = 0.9;
+		static constexpr real_type beta_cost_slow = 0.6;
 		/*
-		 * Change in SSE observed
+		 * if the difference between the fast_ema and slow_ema is <= gamma,
+		 * terminate
 		*/
-		static constexpr real_type delta = 0.1;
+		static constexpr real_type gamma = 0.001;
 		/*
 		 * minimum norm of the gradient vector
 		 * This is probably arbitrary
+		 * obselete
 		*/
-		static constexpr real_type gamma = 100;
+		// static constexpr real_type gamma = 100;
 
 		//static constexpr complex_type zero_complex = complex_type( 0.0f, 0.0f );
 
-		static constexpr int max_iterations = 3000;
+		static constexpr int max_iterations = 100000;
 
 		// iteration method
 		int iterate( const solve_data_t& pkg, vc_type& gains );

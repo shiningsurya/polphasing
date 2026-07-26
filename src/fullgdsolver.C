@@ -851,7 +851,14 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 
 	real_type rcost (0.0f);
 
-	Adam     apple ( ngains );
+	// EMA of square of norm of gradient
+	real_type ema_gnorm ( 0.0f );
+
+	// EMAs of cost 
+	real_type ema_cost_fast ( 0.0f );
+	real_type ema_cost_slow ( 0.0f );
+
+	Adam     apple ( ngains, 0.01f, 0.90f, 0.99f, 1000 );
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
 
 	for ( int iter = 0; iter < max_iterations; iter++ ) {
@@ -864,6 +871,9 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 
 		// gradient norm
 		const real_type gnorm = norm ( grad );
+
+		// EMA of gnorm
+		ema_gnorm  = betag*ema_gnorm + (1.0f - betag)*gnorm;
 
 		// use ADAM to update gains
 		// in place updation
@@ -880,6 +890,44 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 		// find cost after iteration
 		const real_type new_cost = cost ( pkg, gains );
 
+		// EMAs of new cost
+		ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
+		ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
+
+		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;
+
+		/*
+		 * We do not have any validation dataset to measure validating error.
+		 * We cannot set a threshold on the error as a termination condition, 
+		 * because we do not know how the error would be. 
+		 *
+		 * Instead, we put a termination condition on the norm of the gradient.
+		 * (precisely, the square of the norm of the gradient).
+		 * Because when the gradient vanishes, we know we are the minimum point.
+		 *
+		 * Instead of directly using the gnorm which is noisy and does not really show the trend,
+		 * we use exponential moving average with a suitable beta (betag)
+		 * and set the condition as ema(gnorm) < 0.1
+		 *
+		 * This is a very stringent condition. It would probably be better to relax it.
+		 *
+		*/
+
+#ifndef CHANDEBUG
+		// termination condition
+		if ( ema_gnorm <= delta ) {
+			rcode  = 1;
+			rcost  = new_cost;
+			break;
+		}
+		if ( std::abs ( ema_cost_fast - ema_cost_slow) <= gamma ) {
+			rcode  = 2;
+			rcost  = new_cost;
+			break;
+		}
+#endif
+
+#if 0
 		// termination condition
 		// If the change in the cost is not a lot!
 		if ( std::abs(old_cost - new_cost) <= delta ) {
@@ -893,6 +941,7 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 			rcost  = new_cost;
 			break;
 		}
+#endif
 		// do not terminate on gainconvergence
 		// only terminate if cost converges
 

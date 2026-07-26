@@ -1,5 +1,3 @@
-#define ADAM
-
 #include <iostream>
 #include <cmath>
 
@@ -186,7 +184,8 @@ int main(int argc, char *argv[]) {
 	auto total_start = std::chrono::high_resolution_clock::now();
 	
 #ifdef CHANDEBUG
-	for (int ichan = 398; ichan < 399; ichan++) {
+	/* channel 458 has high loss.*/
+	for (int ichan = 458; ichan < 459; ichan++) {
 #else
 	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
@@ -203,8 +202,22 @@ int main(int argc, char *argv[]) {
 		/* populate rr, rl, lr, ll */
 		const models::complex_type model_rr ( stokes_i, 0.0f );
 		const models::complex_type model_ll ( stokes_i, 0.0f );
-		const models::complex_type model_rl ( stokes_q, stokes_u );
-		const models::complex_type model_lr ( stokes_q,-stokes_u );
+		
+		/* what if there is a sign flip in the model itself*/
+		// cost ~ 61
+		//const models::complex_type model_rl ( stokes_q, stokes_u );
+		//const models::complex_type model_lr ( stokes_q,-stokes_u );
+
+		// cost ~ 55
+		//const models::complex_type model_rl ( stokes_q,-stokes_u );
+		//const models::complex_type model_lr ( stokes_q, stokes_u );
+
+		// cost ~ 54
+		//const models::complex_type model_rl (-stokes_q,-stokes_u );
+		//const models::complex_type model_lr (-stokes_q, stokes_u );
+
+		const models::complex_type model_rl (-stokes_q, stokes_u );
+		const models::complex_type model_lr (-stokes_q,-stokes_u );
 
 		/* data package */
 		FullGDSolver::solve_data_t  pkg ( 

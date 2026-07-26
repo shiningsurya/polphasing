@@ -12,7 +12,7 @@ class Adam {
 	using vc_t = std::vector<complex_t>;
 
 	// small number
-	static constexpr float eps = 1E-6;
+	static constexpr float eps = 1E-7;
 
 	// number of parameters
 	const int  npar;
@@ -21,17 +21,17 @@ class Adam {
 	// alpha <- learning rate
 	const float alpha; 
 	// beta1 is weight for momentum
-	const float beta1;
+	const float betam;
 	// beta2 is weight for variance
-	const float beta2;
+	const float betav;
 
 	// to correct the initialization bias
 	// we need to power beta?**iter
 	// to optimize the operation
 	// we save the running computation
 	// saves us from using std::pow
-	float rbeta1;
-	float rbeta2;
+	float rbetam;
+	float rbetav;
 	// these are initialized to one
 
 	// time counter
@@ -45,14 +45,14 @@ class Adam {
 	public:
 		Adam(
 			int _npar, 
-			float _alpha = 0.01,
-			float _beta1 = 0.99,
-			float _beta2 = 0.99,
+			float _alpha = 0.50,
+			float _betam = 0.99,
+			float _betav = 0.99,
 			int _max_iterations = 1000
 		) : 
 			npar(_npar), 
-			alpha(_alpha), beta1(_beta1), beta2(_beta2), 
-			iter(0), rbeta1(_beta1), rbeta2(_beta2),
+			alpha(_alpha), betam(_betam), betav(_betav), 
+			iter(0), rbetam(_betam), rbetav(_betav),
 			max_iterations ( _max_iterations ),
 			last_mt (_npar, complex_t(0.0f,0.0f)), last_vt (_npar, 0.0f) {}
 

@@ -12,18 +12,23 @@ int Adam::operator() (const vc_t& gradient, vc_t& gains ) {
 
 	for ( int ipar = 0; ipar < npar; ipar++ ) {
 
-		/* The conjugation here is required for the math */
-		const complex_t grad = conj(gradient[ipar]);
+		/* The conjugation here is required for the math 
+		 * 
+		 * But we do not seem to converge if we are taking conjugation.
+		 * Suggests there is a conjugation done before.
+		 */
+		//const complex_t grad = conj(gradient[ipar]);
+		const complex_t grad = gradient[ipar];
 
 		/* momemtum update */
-		const complex_t mt = (beta1 * last_mt[ipar]) + ((1.0f - beta1)*grad);
+		const complex_t mt = (betam * last_mt[ipar]) + ((1.0f - betam)*grad);
 
 		/* RMSprop update */
-		const real_t    vt = (beta2 * last_vt[ipar]) + ((1.0f - beta2)*norm(grad));
+		const real_t    vt = (betav * last_vt[ipar]) + ((1.0f - betav)*norm(grad));
 
 		/* correct the bias */
-		const complex_t hmt = mt / ( 1.0f - rbeta1 ); 
-		const real_t    hvt = vt / ( 1.0f - rbeta2 ); 
+		const complex_t hmt = mt / ( 1.0f - rbetam ); 
+		const real_t    hvt = vt / ( 1.0f - rbetav ); 
 
 		/* update the gain */
 		const real_t    _dr_term ( eps + sqrt(hvt) );
@@ -40,8 +45,8 @@ int Adam::operator() (const vc_t& gradient, vc_t& gains ) {
 		
 	/* save running product */
 	/* after iterating over gains */
-	rbeta1 *= beta1;
-	rbeta2 *= beta2;
+	rbetam *= betam;
+	rbetav *= betav;
 
 	return 0;
 }
