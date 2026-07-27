@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
 	/* other files */
 	const std::string save_model  = tag + std::string("_solved_model.txt");
-	const std::string log_file    = tag + std::string(".log");
+	const std::string log_file    = tag + std::string("_solved_model.log");
 
 	std::cout << "[inputs] lta=" << lta_path << std::endl;
 	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;

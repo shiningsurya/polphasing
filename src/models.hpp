@@ -71,3 +71,5 @@ namespace models {
 
 
 }; /* models namespace */
+
+std::ostream& operator<< (std::ostream& os, const models::complex_type& g );
