@@ -12,7 +12,7 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-CAL     = "3C138275x"
+CAL     = "3C138"
 ## 20260722
 ## 2.75x linear pol fraction
 
@@ -111,7 +111,8 @@ mpa     = np.deg2rad ( evpa_3c138 (_freq_mhz*1E-3) )
 ## 20260722 
 ## it looks like abs(RL) and abs(LR) of the data have 
 ## larger absolute value
-mlp     = 2.75 * mlp
+## mlp     = 2.75 * mlp
+## commented out 
 
 cf['I'] = mflux
 cf['V'] = mflux * 0.
