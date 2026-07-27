@@ -3,6 +3,13 @@
 #include <iostream>
 #include <sstream>
 
+/*
+ *
+ * Because i am defining the same complex_type in multiple namespaces
+ * and since the operator<< for the complex_type in global namespace
+ * this models.C should appear after gaintable.C while compilation
+*/
+
 models::model_data_t models::read_model_file ( const std::string& filepath ) {
 
 	/* parse the filename  */
@@ -103,6 +110,24 @@ int models::write_model_file ( const model_data_t& model, const std::string& out
 		);
 		*/
 		of << model.freqs[ichan] << " " << model.stokes_i[ichan] << " " << model.stokes_q[ichan] << " " << model.stokes_u[ichan] << std::endl;
+	}
+
+	return 0;
+}
+
+int models::write_model_file ( const model_vis_t& model, const std::string& outfile ) {
+	std::ofstream of ( outfile );
+	/*freqs I Q U*/
+
+	int nchan = model.nchans;
+
+	//fmt::print ( "{: <9} {: <9} {: <9} {: <9}\n", "freqs", "stokes_i", "stokes_q", "stokes_u" );
+	of << "rr" << " " << "rl" << " " << "lr" << " " << "ll" << std::endl;
+
+	of << std::fixed << std::setprecision(3) << std::showpos;
+
+	for ( int ichan = 0; ichan < nchan; ichan++ ) {
+		of << model.rr[ichan] << " " << model.rl[ichan] << " " << model.lr[ichan] << " " << model.ll[ichan] << std::endl;
 	}
 
 	return 0;

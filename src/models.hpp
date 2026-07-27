@@ -22,6 +22,7 @@ namespace models {
 	using real_type    = float;
 	using complex_type = std::complex<real_type>;
 	using vf_type      = std::vector<real_type>;
+	using vc_type      = std::vector<complex_type>;
 
 	struct model_data_t {
 		std::string name;
@@ -41,6 +42,19 @@ namespace models {
 			stokes_i (nchan), stokes_q (nchan), stokes_u (nchan) {}
 	};
 
+	struct model_vis_t {
+		int        nchans;
+
+		vc_type  rr;
+		vc_type  rl;
+		vc_type  lr;
+		vc_type  ll;
+
+		model_vis_t ( int nchan) : 
+			nchans ( nchan ),
+			rr (nchan), rl (nchan), lr (nchan), ll(nchan) {}
+	};
+
 	model_data_t read_model_file ( const std::string& str );
 	/*
 	 * 
@@ -52,6 +66,8 @@ namespace models {
 	*/
 
 	int write_model_file ( const model_data_t& model, const std::string& );
+
+	int write_model_file ( const model_vis_t& model, const std::string& );
 
 
 }; /* models namespace */
