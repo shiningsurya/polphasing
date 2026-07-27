@@ -102,17 +102,35 @@ print ("LR", tlr, sep='\n')
 print ("LL", tll, sep='\n')
 
 ### coefficient printing
+def codeprintaction ( k, v, tag ):
+    """
+    k : dlr
+    v : -gqrr*conj(gplr)
+
+    tag : Drr
+
+    Drr_coeff_{k} = v
+
+    swaps p<->q and prints as well
+    """
+    print (f"const complex_type {tag}_coeff_{k} = {v} ; ")
+
+    swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+
+    print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
+
+
 
 print ("----------   RR   ------------")
 for k,v in vrr.items():
-    print ( k, v, sep='-->\n' )
+    codeprintaction ( k, v,"Dgprr" )
 print ("----------   RL   ------------")
 for k,v in vrl.items():
-    print ( k, v, sep='-->\n' )
+    codeprintaction ( k, v,"Dgprl" )
 print ("----------   LR   ------------")
 for k,v in vlr.items():
-    print ( k, v, sep='-->\n' )
+    codeprintaction ( k, v,"Dgplr" )
 print ("----------   LL   ------------")
 for k,v in vll.items():
-    print ( k, v, sep='-->\n' )
+    codeprintaction ( k, v,"Dgpll" )
 
