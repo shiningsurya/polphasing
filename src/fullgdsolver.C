@@ -140,7 +140,7 @@ int FullGDSolver::gradient ( const solve_data_t& pkg, const vc_type& gains, vc_t
 			grad[iprl] += Dgprl_coeff_gprr*gprr + Dgprl_coeff_dpqrr*data;
 
 			grad[iqrr] += Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqprr*conj(data);
-			grad[iqrl] += Dgqrl_coeff_gqrr*gqrr + Dgqrr_coeff_dqprr*conj(data);
+			grad[iqrl] += Dgqrl_coeff_gqrr*gqrr + Dgqrl_coeff_dqprr*conj(data);
 
 		} // rr
 		else if ( pb2corr == 1 ) {
