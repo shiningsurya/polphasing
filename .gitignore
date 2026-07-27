@@ -5,7 +5,9 @@ solved*
 ## binaries
 polphase
 polphaseomp
+fullpolphaseomp
 write_baselines
+solve_model
 
 ## files
 *.log
