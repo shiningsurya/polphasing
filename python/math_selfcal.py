@@ -77,10 +77,13 @@ def arger (t):
             *cerms
         ), 
     evaluate=False)
+    dkey  = Derivative(conjugate(t),t)
+    kv.pop ( dkey )
     ###
-    tv    = {t:conjugate(kv[c]) for t,c in zip(terms, cerms)}
-    dv    = {printer(t):printer(conjugate(kv[c])) for t,c in zip(terms, cerms)}
-    return tv,dv
+    tv    = {conjugate(k):conjugate(v) for k,v in kv.items()}
+    lv    = "+".join([latex(k*v) for k,v in tv.items()])
+    dv    = {printer(k):printer(v) for k,v in tv.items()}
+    return lv,dv
 
 trr, vrr   = arger ( m_rr ) 
 trl, vrl   = arger ( m_rl ) 
@@ -90,22 +93,34 @@ tll, vll   = arger ( m_ll )
 
 print ("============== LATEX PRINTING ==============")
 
-print ("RR")
-for k,v in trr.items(): print ( latex(k), latex(v), sep='\n' )
-print ("RL")
-for k,v in trl.items(): print ( latex(k), latex(v), sep='\n' )
-print ("LR")
-for k,v in tlr.items(): print ( latex(k), latex(v), sep='\n' )
-print ("LL")
-for k,v in tll.items(): print ( latex(k), latex(v), sep='\n' )
+print ("RR", trr, sep='\n')
+print ("RL", trl, sep='\n')
+print ("LR", tlr, sep='\n')
+print ("LL", tll, sep='\n')
 
 print ("============== CODE PRINTING ==============")
 
-print ("RR")
-for k,v in vrr.items(): print ( k, v, sep='\n' )
-print ("RL")
-for k,v in vrl.items(): print ( k, v, sep='\n' )
-print ("LR")
-for k,v in vlr.items(): print ( k, v, sep='\n' )
-print ("LL")
-for k,v in vll.items(): print ( k, v, sep='\n' )
+def codeprintaction ( k, v, tag ):
+    """
+    k : dlr
+    v : -gqrr*conj(gplr)
+
+    tag : Drr
+
+    Drr_coeff_{k} = v
+    """
+    print (f"const complex_type {tag}_coeff_{k} = {v} ; ")
+
+
+print ("----------   RR   ------------")
+for k,v in vrr.items():
+    codeprintaction ( k, v, "Drr" )
+print ("----------   RL   ------------")
+for k,v in vrl.items():
+    codeprintaction ( k, v, "Drl" )
+print ("----------   LR   ------------")
+for k,v in vlr.items():
+    codeprintaction ( k, v, "Dlr" )
+print ("----------   LL   ------------")
+for k,v in vll.items():
+    codeprintaction ( k, v, "Dll" )

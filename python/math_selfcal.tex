@@ -12,69 +12,68 @@ S = \sum_{p\neq q} \sum_{mn} d_{pq}^{mn} - g_p^{ma} M^{ab} \overline{g_q^{bn}}.
 $p$ and $q$ are baselines, $m$ and $n$ are correlations ($\in {r,l}$). Repeated indices are summed. 
 What we minimize is the norm of $S$, that is, $S\overline{S}$, or $|S|^2$.
 
+\par As ``selfcalibration'', we use the solves Jones matrices and the data used to solve the Jones matrices, to solve for model. 
+We do this to see if there is an model differences. 
+It will also indicate the performance of our fitting solution.
+We do this by evaluating the gradient and using Gradient descent. 
+The same way we solved for Jones matrices.
 
-\begin{equation*}
-\frac{\partial |S|^2}{\partial m^{rr}} = \frac{\partial |S|^2}{\partial m^{rl}} = \frac{\partial |S|^2}{\partial m^{lr}} = \frac{\partial |S|^2}{\partial m^{ll}} = 0
-\end{equation*}
-
-\par Our sum of normed residuals \emph{should} not depend on the model. 
-If this is not the case, then, we are overfitting. Our solved gains are not universal and will only work with the model. 
-
-\par So when we set each of the above derivatives to zero, we get a system of four equations in four unknowns. 
-All unknowns are the model parameters. 
-So we can solve for them and see if we recover back our model that we used to solve for the gain terms.
-
-\par All summations $\sum$ over all the baselines.
+\par So, we compute the derivative below: All summations $\sum$ over all the baselines.
 
 \begin{equation}
 \begin{split}
-m^{rr}& \sum g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}} \\
-m^{rl}& \sum g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}} \\
-m^{lr}& \sum g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}} \\
-m^{ll}& \sum g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}} \\
-=&\sum d_{pq}^{rr} g_q^{rr} \overline{g_p^{rr}}
-+ d_{pq}^{rl} g_q^{rl} \overline{g_p^{rr}}
-+ d_{pq}^{lr} g_q^{rr} \overline{g_p^{lr}}
-+ d_{pq}^{ll} g_q^{rl} \overline{g_p^{lr}}
+\frac{\partial |S|^2}{\partial \overline{m^{rr}}} = 
+	- &d^{lr} g_q^{rr} \overline{g_p^{lr}}+\\
+	- &d^{ll} g_q^{rl} \overline{g_p^{lr}}+\\
+	- &d^{rr} g_q^{rr} \overline{g_p^{rr}}+\\
+	- &d^{rl} g_q^{rl} \overline{g_p^{rr}}+\\
+	&m^{rl} \left(g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+\\
+	&m^{ll} \left(g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+\\
+	&m^{rr} \left(g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)+\\
+	&m^{lr} \left(g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right).
 \end{split}
 \end{equation}
 
 \begin{equation}
 \begin{split}
-m^{rr}& \sum g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}} \\
-m^{rl}& \sum g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}} \\
-m^{lr}& \sum g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}} \\
-m^{ll}& \sum g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}} \\
-=&\sum d_{pq}^{rr} g_q^{lr} \overline{g_p^{rr}} 
-+ d_{pq}^{rl} g_q^{ll} \overline{g_p^{rr}}
-+ d_{pq}^{lr} g_q^{lr} \overline{g_p^{lr}}
-+ d_{pq}^{ll} g_q^{ll} \overline{g_p^{lr}}
+\frac{\partial |S|^2}{\partial \overline{m^{rl}}} = 
+	- &d^{lr} g_q^{lr} \overline{g_p^{lr}}+\\
+	- &d^{ll} g_q^{ll} \overline{g_p^{lr}}+\\
+	- &d^{rr} g_q^{lr} \overline{g_p^{rr}}+\\
+	- &d^{rl} g_q^{ll} \overline{g_p^{rr}}+\\
+	&m^{rl} \left(g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+\\
+	&m^{ll} \left(g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+\\
+	&m^{rr} \left(g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)+\\
+	&m^{lr} \left(g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right).
 \end{split}
 \end{equation}
 
 \begin{equation}
 \begin{split}
-m^{rr}& \sum g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}} \\
-m^{rl}& \sum g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}} \\
-m^{lr}& \sum g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}} \\
-m^{ll}& \sum g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}} \\
-=&\sum d_{pq}^{rr} g_q^{rr} \overline{g_p^{rl}}
-+ d_{pq}^{rl} g_q^{rl} \overline{g_p^{rl}}
-+ d_{pq}^{lr}g_q^{rr} \overline{g_p^{ll}}
-+ d_{pq}^{ll}g_q^{rl} \overline{g_p^{ll}}
+\frac{\partial |S|^2}{\partial \overline{m^{lr}}} = 
+	- &d^{lr} g_q^{rr} \overline{g_p^{ll}}+\\
+	- &d^{ll} g_q^{rl} \overline{g_p^{ll}}+\\
+	- &d^{rr} g_q^{rr} \overline{g_p^{rl}}+\\
+	- &d^{rl} g_q^{rl} \overline{g_p^{rl}}+\\
+	&m^{rl} \left(g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+\\
+	&m^{ll} \left(g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+\\
+	&m^{rr} \left(g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)+\\
+	&m^{lr} \left(g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right).
 \end{split}
 \end{equation}
 
 \begin{equation}
 \begin{split}
-m^{rr}& \sum g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}} \\
-m^{rl}& \sum g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}} \\
-m^{lr}& \sum g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}} \\
-m^{ll}& \sum g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}} \\
-=&\sum d_{pq}^{rr} g_q^{lr} \overline{g_p^{rl}}
-+ d_{pq}^{rl}g_q^{ll} \overline{g_p^{rl}}
-+ d_{pq}^{lr}g_q^{lr} \overline{g_p^{ll}}
-+ d_{pq}^{ll}g_q^{ll} \overline{g_p^{ll}}
+\frac{\partial |S|^2}{\partial \overline{m^{ll}}} = 
+	- &d^{lr} g_q^{lr} \overline{g_p^{ll}}+\\
+	- &d^{ll} g_q^{ll} \overline{g_p^{ll}}+\\
+	- &d^{rr} g_q^{lr} \overline{g_p^{rl}}+\\
+	- &d^{rl} g_q^{ll} \overline{g_p^{rl}}+\\
+	&m^{rl} \left(g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+\\
+	&m^{ll} \left(g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+\\
+	&m^{rr} \left(g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)+\\
+	&m^{lr} \left(g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right).
 \end{split}
 \end{equation}
+
 \end{document}

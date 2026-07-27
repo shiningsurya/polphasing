@@ -1,138 +1,46 @@
 ============== LATEX PRINTING ==============
 RR
-m^{rr}
-g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}
-m^{rl}
-g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}
-m^{lr}
-g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}
-m^{ll}
-g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}
-d^{rr}
-- g_q^{rr} \overline{g_p^{rr}}
-d^{rl}
-- g_q^{rl} \overline{g_p^{rr}}
-d^{lr}
-- g_q^{rr} \overline{g_p^{lr}}
-d^{ll}
-- g_q^{rl} \overline{g_p^{lr}}
+- d^{lr} g_q^{rr} \overline{g_p^{lr}}+- d^{ll} g_q^{rl} \overline{g_p^{lr}}+- d^{rr} g_q^{rr} \overline{g_p^{rr}}+- d^{rl} g_q^{rl} \overline{g_p^{rr}}+m^{rl} \left(g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+m^{ll} \left(g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+m^{rr} \left(g_p^{lr} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)+m^{lr} \left(g_p^{ll} g_q^{rl} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)
 RL
-m^{rr}
-g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}
-m^{rl}
-g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}
-m^{lr}
-g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}
-m^{ll}
-g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}
-d^{rr}
-- g_q^{lr} \overline{g_p^{rr}}
-d^{rl}
-- g_q^{ll} \overline{g_p^{rr}}
-d^{lr}
-- g_q^{lr} \overline{g_p^{lr}}
-d^{ll}
-- g_q^{ll} \overline{g_p^{lr}}
+- d^{lr} g_q^{lr} \overline{g_p^{lr}}+- d^{ll} g_q^{ll} \overline{g_p^{lr}}+- d^{rr} g_q^{lr} \overline{g_p^{rr}}+- d^{rl} g_q^{ll} \overline{g_p^{rr}}+m^{rl} \left(g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+m^{ll} \left(g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{lr}}\right)+m^{rr} \left(g_p^{lr} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)+m^{lr} \left(g_p^{ll} g_q^{ll} \overline{g_p^{lr}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{lr}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rr}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rr}} \overline{g_q^{rr}}\right)
 LR
-m^{rr}
-g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}
-m^{rl}
-g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}
-m^{lr}
-g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}
-m^{ll}
-g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}
-d^{rr}
-- g_q^{rr} \overline{g_p^{rl}}
-d^{rl}
-- g_q^{rl} \overline{g_p^{rl}}
-d^{lr}
-- g_q^{rr} \overline{g_p^{ll}}
-d^{ll}
-- g_q^{rl} \overline{g_p^{ll}}
+- d^{lr} g_q^{rr} \overline{g_p^{ll}}+- d^{ll} g_q^{rl} \overline{g_p^{ll}}+- d^{rr} g_q^{rr} \overline{g_p^{rl}}+- d^{rl} g_q^{rl} \overline{g_p^{rl}}+m^{rl} \left(g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+m^{ll} \left(g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+m^{rr} \left(g_p^{lr} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)+m^{lr} \left(g_p^{ll} g_q^{rl} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{rr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{rl} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{rr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)
 LL
-m^{rr}
-g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}
-m^{rl}
-g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}
-m^{lr}
-g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}
-m^{ll}
-g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}
-d^{rr}
-- g_q^{lr} \overline{g_p^{rl}}
-d^{rl}
-- g_q^{ll} \overline{g_p^{rl}}
-d^{lr}
-- g_q^{lr} \overline{g_p^{ll}}
-d^{ll}
-- g_q^{ll} \overline{g_p^{ll}}
+- d^{lr} g_q^{lr} \overline{g_p^{ll}}+- d^{ll} g_q^{ll} \overline{g_p^{ll}}+- d^{rr} g_q^{lr} \overline{g_p^{rl}}+- d^{rl} g_q^{ll} \overline{g_p^{rl}}+m^{rl} \left(g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+m^{ll} \left(g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{ll}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{lr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{ll}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{lr}}\right)+m^{rr} \left(g_p^{lr} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{lr} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rr} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rr} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)+m^{lr} \left(g_p^{ll} g_q^{ll} \overline{g_p^{ll}} \overline{g_q^{rl}} + g_p^{ll} g_q^{lr} \overline{g_p^{ll}} \overline{g_q^{rr}} + g_p^{rl} g_q^{ll} \overline{g_p^{rl}} \overline{g_q^{rl}} + g_p^{rl} g_q^{lr} \overline{g_p^{rl}} \overline{g_q^{rr}}\right)
 ============== CODE PRINTING ==============
-RR
-mrr
-gplr*gqrl*conj(gplr)*conj(gqrl) + gplr*gqrr*conj(gplr)*conj(gqrr) + gprr*gqrl*conj(gprr)*conj(gqrl) + gprr*gqrr*conj(gprr)*conj(gqrr)
-mrl
-gplr*gqrl*conj(gplr)*conj(gqll) + gplr*gqrr*conj(gplr)*conj(gqlr) + gprr*gqrl*conj(gprr)*conj(gqll) + gprr*gqrr*conj(gprr)*conj(gqlr)
-mlr
-gpll*gqrl*conj(gplr)*conj(gqrl) + gpll*gqrr*conj(gplr)*conj(gqrr) + gprl*gqrl*conj(gprr)*conj(gqrl) + gprl*gqrr*conj(gprr)*conj(gqrr)
-mll
-gpll*gqrl*conj(gplr)*conj(gqll) + gpll*gqrr*conj(gplr)*conj(gqlr) + gprl*gqrl*conj(gprr)*conj(gqll) + gprl*gqrr*conj(gprr)*conj(gqlr)
-drr
--gqrr*conj(gprr)
-drl
--gqrl*conj(gprr)
-dlr
--gqrr*conj(gplr)
-dll
--gqrl*conj(gplr)
-RL
-mrr
-gplr*gqll*conj(gplr)*conj(gqrl) + gplr*gqlr*conj(gplr)*conj(gqrr) + gprr*gqll*conj(gprr)*conj(gqrl) + gprr*gqlr*conj(gprr)*conj(gqrr)
-mrl
-gplr*gqll*conj(gplr)*conj(gqll) + gplr*gqlr*conj(gplr)*conj(gqlr) + gprr*gqll*conj(gprr)*conj(gqll) + gprr*gqlr*conj(gprr)*conj(gqlr)
-mlr
-gpll*gqll*conj(gplr)*conj(gqrl) + gpll*gqlr*conj(gplr)*conj(gqrr) + gprl*gqll*conj(gprr)*conj(gqrl) + gprl*gqlr*conj(gprr)*conj(gqrr)
-mll
-gpll*gqll*conj(gplr)*conj(gqll) + gpll*gqlr*conj(gplr)*conj(gqlr) + gprl*gqll*conj(gprr)*conj(gqll) + gprl*gqlr*conj(gprr)*conj(gqlr)
-drr
--gqlr*conj(gprr)
-drl
--gqll*conj(gprr)
-dlr
--gqlr*conj(gplr)
-dll
--gqll*conj(gplr)
-LR
-mrr
-gplr*gqrl*conj(gpll)*conj(gqrl) + gplr*gqrr*conj(gpll)*conj(gqrr) + gprr*gqrl*conj(gprl)*conj(gqrl) + gprr*gqrr*conj(gprl)*conj(gqrr)
-mrl
-gplr*gqrl*conj(gpll)*conj(gqll) + gplr*gqrr*conj(gpll)*conj(gqlr) + gprr*gqrl*conj(gprl)*conj(gqll) + gprr*gqrr*conj(gprl)*conj(gqlr)
-mlr
-gpll*gqrl*conj(gpll)*conj(gqrl) + gpll*gqrr*conj(gpll)*conj(gqrr) + gprl*gqrl*conj(gprl)*conj(gqrl) + gprl*gqrr*conj(gprl)*conj(gqrr)
-mll
-gpll*gqrl*conj(gpll)*conj(gqll) + gpll*gqrr*conj(gpll)*conj(gqlr) + gprl*gqrl*conj(gprl)*conj(gqll) + gprl*gqrr*conj(gprl)*conj(gqlr)
-drr
--gqrr*conj(gprl)
-drl
--gqrl*conj(gprl)
-dlr
--gqrr*conj(gpll)
-dll
--gqrl*conj(gpll)
-LL
-mrr
-gplr*gqll*conj(gpll)*conj(gqrl) + gplr*gqlr*conj(gpll)*conj(gqrr) + gprr*gqll*conj(gprl)*conj(gqrl) + gprr*gqlr*conj(gprl)*conj(gqrr)
-mrl
-gplr*gqll*conj(gpll)*conj(gqll) + gplr*gqlr*conj(gpll)*conj(gqlr) + gprr*gqll*conj(gprl)*conj(gqll) + gprr*gqlr*conj(gprl)*conj(gqlr)
-mlr
-gpll*gqll*conj(gpll)*conj(gqrl) + gpll*gqlr*conj(gpll)*conj(gqrr) + gprl*gqll*conj(gprl)*conj(gqrl) + gprl*gqlr*conj(gprl)*conj(gqrr)
-mll
-gpll*gqll*conj(gpll)*conj(gqll) + gpll*gqlr*conj(gpll)*conj(gqlr) + gprl*gqll*conj(gprl)*conj(gqll) + gprl*gqlr*conj(gprl)*conj(gqlr)
-drr
--gqlr*conj(gprl)
-drl
--gqll*conj(gprl)
-dlr
--gqlr*conj(gpll)
-dll
--gqll*conj(gpll)
+----------   RR   ------------
+const complex_type Drr_coeff_dlr = -gqrr*conj(gplr) ; 
+const complex_type Drr_coeff_dll = -gqrl*conj(gplr) ; 
+const complex_type Drr_coeff_drr = -gqrr*conj(gprr) ; 
+const complex_type Drr_coeff_drl = -gqrl*conj(gprr) ; 
+const complex_type Drr_coeff_mrl = gplr*gqrl*conj(gplr)*conj(gqll) + gplr*gqrr*conj(gplr)*conj(gqlr) + gprr*gqrl*conj(gprr)*conj(gqll) + gprr*gqrr*conj(gprr)*conj(gqlr) ; 
+const complex_type Drr_coeff_mll = gpll*gqrl*conj(gplr)*conj(gqll) + gpll*gqrr*conj(gplr)*conj(gqlr) + gprl*gqrl*conj(gprr)*conj(gqll) + gprl*gqrr*conj(gprr)*conj(gqlr) ; 
+const complex_type Drr_coeff_mrr = gplr*gqrl*conj(gplr)*conj(gqrl) + gplr*gqrr*conj(gplr)*conj(gqrr) + gprr*gqrl*conj(gprr)*conj(gqrl) + gprr*gqrr*conj(gprr)*conj(gqrr) ; 
+const complex_type Drr_coeff_mlr = gpll*gqrl*conj(gplr)*conj(gqrl) + gpll*gqrr*conj(gplr)*conj(gqrr) + gprl*gqrl*conj(gprr)*conj(gqrl) + gprl*gqrr*conj(gprr)*conj(gqrr) ; 
+----------   RL   ------------
+const complex_type Drl_coeff_dlr = -gqlr*conj(gplr) ; 
+const complex_type Drl_coeff_dll = -gqll*conj(gplr) ; 
+const complex_type Drl_coeff_drr = -gqlr*conj(gprr) ; 
+const complex_type Drl_coeff_drl = -gqll*conj(gprr) ; 
+const complex_type Drl_coeff_mrl = gplr*gqll*conj(gplr)*conj(gqll) + gplr*gqlr*conj(gplr)*conj(gqlr) + gprr*gqll*conj(gprr)*conj(gqll) + gprr*gqlr*conj(gprr)*conj(gqlr) ; 
+const complex_type Drl_coeff_mll = gpll*gqll*conj(gplr)*conj(gqll) + gpll*gqlr*conj(gplr)*conj(gqlr) + gprl*gqll*conj(gprr)*conj(gqll) + gprl*gqlr*conj(gprr)*conj(gqlr) ; 
+const complex_type Drl_coeff_mrr = gplr*gqll*conj(gplr)*conj(gqrl) + gplr*gqlr*conj(gplr)*conj(gqrr) + gprr*gqll*conj(gprr)*conj(gqrl) + gprr*gqlr*conj(gprr)*conj(gqrr) ; 
+const complex_type Drl_coeff_mlr = gpll*gqll*conj(gplr)*conj(gqrl) + gpll*gqlr*conj(gplr)*conj(gqrr) + gprl*gqll*conj(gprr)*conj(gqrl) + gprl*gqlr*conj(gprr)*conj(gqrr) ; 
+----------   LR   ------------
+const complex_type Dlr_coeff_dlr = -gqrr*conj(gpll) ; 
+const complex_type Dlr_coeff_dll = -gqrl*conj(gpll) ; 
+const complex_type Dlr_coeff_drr = -gqrr*conj(gprl) ; 
+const complex_type Dlr_coeff_drl = -gqrl*conj(gprl) ; 
+const complex_type Dlr_coeff_mrl = gplr*gqrl*conj(gpll)*conj(gqll) + gplr*gqrr*conj(gpll)*conj(gqlr) + gprr*gqrl*conj(gprl)*conj(gqll) + gprr*gqrr*conj(gprl)*conj(gqlr) ; 
+const complex_type Dlr_coeff_mll = gpll*gqrl*conj(gpll)*conj(gqll) + gpll*gqrr*conj(gpll)*conj(gqlr) + gprl*gqrl*conj(gprl)*conj(gqll) + gprl*gqrr*conj(gprl)*conj(gqlr) ; 
+const complex_type Dlr_coeff_mrr = gplr*gqrl*conj(gpll)*conj(gqrl) + gplr*gqrr*conj(gpll)*conj(gqrr) + gprr*gqrl*conj(gprl)*conj(gqrl) + gprr*gqrr*conj(gprl)*conj(gqrr) ; 
+const complex_type Dlr_coeff_mlr = gpll*gqrl*conj(gpll)*conj(gqrl) + gpll*gqrr*conj(gpll)*conj(gqrr) + gprl*gqrl*conj(gprl)*conj(gqrl) + gprl*gqrr*conj(gprl)*conj(gqrr) ; 
+----------   LL   ------------
+const complex_type Dll_coeff_dlr = -gqlr*conj(gpll) ; 
+const complex_type Dll_coeff_dll = -gqll*conj(gpll) ; 
+const complex_type Dll_coeff_drr = -gqlr*conj(gprl) ; 
+const complex_type Dll_coeff_drl = -gqll*conj(gprl) ; 
+const complex_type Dll_coeff_mrl = gplr*gqll*conj(gpll)*conj(gqll) + gplr*gqlr*conj(gpll)*conj(gqlr) + gprr*gqll*conj(gprl)*conj(gqll) + gprr*gqlr*conj(gprl)*conj(gqlr) ; 
+const complex_type Dll_coeff_mll = gpll*gqll*conj(gpll)*conj(gqll) + gpll*gqlr*conj(gpll)*conj(gqlr) + gprl*gqll*conj(gprl)*conj(gqll) + gprl*gqlr*conj(gprl)*conj(gqlr) ; 
+const complex_type Dll_coeff_mrr = gplr*gqll*conj(gpll)*conj(gqrl) + gplr*gqlr*conj(gpll)*conj(gqrr) + gprr*gqll*conj(gprl)*conj(gqrl) + gprr*gqlr*conj(gprl)*conj(gqrr) ; 
+const complex_type Dll_coeff_mlr = gpll*gqll*conj(gpll)*conj(gqrl) + gpll*gqlr*conj(gpll)*conj(gqrr) + gprl*gqll*conj(gprl)*conj(gqrl) + gprl*gqlr*conj(gprl)*conj(gqrr) ; 
