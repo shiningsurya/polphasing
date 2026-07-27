@@ -17,7 +17,8 @@ int FullGDSolver::gradient ( const solve_data_t& pkg, const vc_type& gains, vc_t
 	const complex_type mll ( pkg.mll );
 
 	/* zero out gradient */
-	std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
+	// 20260727: the caller should zero out the gradient
+	// std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
 
 	/* iterate over the polar baselines */
 	for ( int ibl = 0; ibl < npolarbaselines; ibl++ ) {
@@ -230,7 +231,8 @@ int FullGDSolver::gradient ( const solve_model_t& pkg,
 	 */
 
 	/* zero out gradient */
-	std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
+	// 20260727: the caller should zero out the gradient
+	// std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
 
 	/* iterate over the polar baselines */
 	for ( int ibl = 0; ibl < npolarbaselines; ibl++ ) {
@@ -940,6 +942,9 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 		// find cost before iteration
 		const real_type old_cost = cost ( pkg, gains );
 
+		// zero out before solving
+		std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
+
 		// find gradient
 		gradient ( pkg, gains, grad );
 
@@ -1033,6 +1038,9 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_model_t& pkg, complex_
 		// find cost before iteration
 		const real_type old_cost = cost ( pkg, mrr, mrl, mlr, mll );
 
+		// zero out the gradient
+		std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
+
 		// find gradient
 		gradient ( pkg, mrr, mrl, mlr, mll, grad );
 
@@ -1068,6 +1076,100 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_model_t& pkg, complex_
 #ifdef CHANDEBUG
 		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;
 #endif
+
+		/*
+		 * We do not have any validation dataset to measure validating error.
+		 * We cannot set a threshold on the error as a termination condition, 
+		 * because we do not know how the error would be. 
+		 *
+		 * Instead, we put a termination condition on the norm of the gradient.
+		 * (precisely, the square of the norm of the gradient).
+		 * Because when the gradient vanishes, we know we are the minimum point.
+		 *
+		 * Instead of directly using the gnorm which is noisy and does not really show the trend,
+		 * we use exponential moving average with a suitable beta (betag)
+		 * and set the condition as ema(gnorm) < 0.1
+		 *
+		 * This is a very stringent condition. It would probably be better to relax it.
+		 *
+		*/
+
+#ifndef CHANDEBUG
+		// termination condition
+		if ( ema_gnorm <= delta ) {
+			rcode  = 1;
+			rcost  = new_cost;
+			break;
+		}
+		if ( std::abs ( ema_cost_fast - ema_cost_slow) <= gamma ) {
+			rcode  = 2;
+			rcost  = new_cost;
+			break;
+		}
+#endif
+
+		niter++;
+	}
+
+	return rcost;
+}
+
+FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg1, const solve_data_t& pkg2, vc_type& gains ) {
+	rcode = 0;
+	niter = 0;
+
+	real_type rcost (0.0f);
+
+	// EMA of square of norm of gradient
+	real_type ema_gnorm ( 0.0f );
+
+	// EMAs of cost 
+	real_type ema_cost_fast ( 0.0f );
+	real_type ema_cost_slow ( 0.0f );
+
+	Adam     apple ( ngains, 0.01f, 0.90f, 0.99f, 1000 );
+	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
+
+	for ( int iter = 0; iter < max_iterations; iter++ ) {
+
+		// find cost before iteration
+		const real_type old_cost = cost ( pkg1, gains ) + cost ( pkg2, gains );
+
+		// zero out before solving
+		std::fill ( grad.begin(), grad.end(), complex_type(0.0f, 0.0f) );
+
+		// find gradient
+		gradient ( pkg1, gains, grad );
+		gradient ( pkg2, gains, grad );
+
+		// gradient norm
+		const real_type gnorm = norm ( grad );
+
+		// EMA of gnorm
+		ema_gnorm  = betag*ema_gnorm + (1.0f - betag)*gnorm;
+
+		// use ADAM to update gains
+		// in place updation
+		/*
+		 * Instead of using one fixed alpha throughout the iterations, 
+		 * let us use Adam strategy to update the ``learning rate''. 
+		 * We will also pick one for every `gain`. 
+		 * So that we get maximum granularity.
+		 *
+		 * This and more is in Adam.
+		*/
+		apple ( grad, gains );
+
+		// find cost after iteration
+		const real_type new_cost = cost ( pkg1, gains ) + cost ( pkg2, gains );
+
+		// EMAs of new cost
+		ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
+		ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
+
+#ifdef CHANDEBUG
+		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;
+#endif 
 
 		/*
 		 * We do not have any validation dataset to measure validating error.

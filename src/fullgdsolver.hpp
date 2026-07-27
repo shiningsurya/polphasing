@@ -211,6 +211,7 @@ class FullGDSolver {
 			rcode (0), niter(0) {}
 
 		real_type solve ( const solve_data_t& pkg, vc_type& gains );
+		real_type solve ( const solve_data_t& pkg, const solve_data_t& qkg, vc_type& gains );
 
 		real_type solve ( const solve_model_t& pkg, complex_type& mrr, complex_type& mrl, complex_type& mlr, complex_type& mll );
 

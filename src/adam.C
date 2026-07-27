@@ -13,9 +13,9 @@ int Adam::operator() (const vc_t& gradient, vc_t& gains ) {
 	for ( int ipar = 0; ipar < npar; ipar++ ) {
 
 		/* The conjugation here is required for the math 
+		 *
+		 * We are already computing the conjugated gradient.
 		 * 
-		 * But we do not seem to converge if we are taking conjugation.
-		 * Suggests there is a conjugation done before.
 		 */
 		//const complex_t grad = conj(gradient[ipar]);
 		const complex_t grad = gradient[ipar];
