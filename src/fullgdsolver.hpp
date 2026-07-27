@@ -123,8 +123,36 @@ class FullGDSolver {
 				mrr(_mrr), mrl(_mrl), mlr(_mlr), mll(_mll) {}
 		}; 
 
+		struct model_t {
+			/*
+			 * When we are solving for model given gains
+			*/
+
+			//names_t                  ant1;
+			//names_t                  ant2;
+			vi_type                  iant1;
+			vi_type                  iant2;
+
+			vi_type                  pb2corr;
+
+			vc_type                  data;
+
+			vc_type                  gains;
+
+			// why keep ant2idx
+			//const std::map<antname_t,int>& ant2idx;
+
+			model_t ( 
+					int npbl, 
+					int ngains
+			) : 
+				iant1(npbl), iant2(npbl), pb2corr(npbl), data(npbl),
+				gains ( ngains ) {}
+		}; 
+
 		using solve_data_t    = struct data_t;
 		using solve_ptrdata_t = std::unique_ptr<solve_data_t>;
+		using solve_model_t   = struct model_t;
 	
 	private:
 		/*
@@ -161,6 +189,12 @@ class FullGDSolver {
 
 		// gradient method
 		int gradient ( const solve_data_t& pkg, const vc_type& gains, vc_type& grad );
+		int gradient ( const solve_model_t& pkg, 
+				const complex_type& mrr, 
+				const complex_type& mrl, 
+				const complex_type& mlr, 
+				const complex_type& mll, 
+				vc_type& grad );
 	
 	public:
 
@@ -178,7 +212,11 @@ class FullGDSolver {
 
 		real_type solve ( const solve_data_t& pkg, vc_type& gains );
 
+		real_type solve ( const solve_model_t& pkg, complex_type& mrr, complex_type& mrl, complex_type& mlr, complex_type& mll );
+
 		real_type cost ( const solve_data_t& pkg, const vc_type& gains );
+		real_type cost ( const solve_model_t& pkg, 
+		const complex_type& mrr, const complex_type& mrl, const complex_type& mlr, const complex_type& mll );
 
 		real_type norm ( const vc_type& gains );
 
