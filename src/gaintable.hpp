@@ -96,12 +96,13 @@ namespace gaintable {
 	/* initialize gaintables */
 	gaintable_t prepare_gaintables ( int nchan );
 
+	gaintable_t read_complex_solutions ( const std::string& infile );
+
 	int write_complex_solutions ( const gaintable_t& gt, const std::string& outfile );
 
 	int write_phase_solutions ( const gaintable_t& gt );
 
 	int write_amp_solutions ( const gaintable_t& gt );
-
 
 }; /* gaintable */
 

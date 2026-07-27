@@ -185,3 +185,81 @@ gaintable::gaintable_t gaintable::prepare_gaintables ( int nchan ) {
 
 	return ret;
 }
+
+gaintable::gaintable_t gaintable::read_complex_solutions ( const std::string& infile ) {
+	/* antname : vector<complex>  */
+	gaintable_t               ret;
+	/* to store the order of the gains */
+	std::vector<antname_t>    antnames;
+
+	std::string               line;
+	std::ifstream             ifs ( infile );
+	/* tokens from every line */
+	gains_t                   gtoks;
+
+	/* read header, populate antenna names  */
+	std::getline ( ifs, line );
+	{
+		std::string tok;
+		std::stringstream ss ( line );
+		while ( ss >> tok ) {
+			//const antname_t _ant { tok[0], tok[1], tok[2], ' ' };
+			antname_t _ant;
+			tok.copy ( _ant.data(), 4 );
+			antnames.push_back ( _ant );
+		}
+	}
+	const int nant   = antnames.size();
+
+	/* read line by line, populate channel gains */
+	while ( std::getline (ifs, line) ) {
+		/* clear previous reads */
+		gtoks.clear ();
+
+		{
+			std::string tok;
+			std::stringstream ss ( line );
+			while ( ss >> tok ) {
+				/* parse the complex number */
+				// each complex number is written with the following ioflags
+				// std::fixed << std::setprecision(3) << std::showpos;
+				// +0.029+0.042j
+
+				// first char is always sign
+				// last char  is always j 
+				const int nchar = tok.length();
+				if ( (tok[0] == '+' || tok[0] == '-') && tok[nchar-1] == 'j' ) {
+					const int sep = tok.find_last_of ("+-");
+
+					// we need to have two signs in the complex number
+					if ( sep == 0 ) {
+						throw std::runtime_error ("complex number format not recognized");
+					}
+
+					const real_type _real ( std::stof ( tok.substr (0, sep) ) );
+					// last char is j, so we exclude that
+					const real_type _imag ( std::stof ( tok.substr (sep, nchar-sep-1) ) );
+
+					// save into vector<complex>
+					gtoks.push_back ( gain_type ( _real, _imag ) );
+
+				} else {
+					throw std::runtime_error ("gain format not recognized.");
+				}
+			}
+		}
+		// sanity check
+		if ( gtoks.size() != nant ) {
+			throw std::runtime_error ("gain file not consistent.");
+		}
+
+		// load into table
+		for ( int iant = 0; iant < nant; iant++ ) {
+			ret[ antnames[ iant ] ].push_back ( gtoks[iant] );
+		}
+
+	} // read file
+
+	/* return */
+	return ret;
+}
