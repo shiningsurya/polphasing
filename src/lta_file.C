@@ -3,6 +3,7 @@
  */
 
 #include "lta_file.hpp"
+#include "sources.hpp"
 #include <stdexcept>
 
 
@@ -141,9 +142,21 @@ LTA::scan_t LTA::get_scan ( int iscan ) {
 	const float       integ  ( shdr.integ );
 	const int         nrecs  ( stab.recs );
 
+	/* we want time at middle of the scan */
+	const float       half_scan ( 0.5 * nrecs * integ );
+
+	/* the reference mjd inside the correlator */
+	const double      mjd_ref ( shdr.mjd_ref );
+
 	/* seek in file */
 	rewind (fp);
 	ltaseek (fp, linfo.stab[iscan].start_rec + linfo.srecs, recl);
+
+	/* offsets */
+	const int time_off  ( linfo.lhdr.time_off );
+	const int time_size ( linfo.lhdr.time_size );
+
+	if ( time_size != 8 ) throw std::runtime_error("type of time not recognized.");
 
 	/* space to read */
 	vb_type dbuf ( recl );
@@ -154,11 +167,16 @@ LTA::scan_t LTA::get_scan ( int iscan ) {
 
 	double *tref = reinterpret_cast<double*>( dbuf.data() + time_off );
 
-	const double scan_time ( *tref );
+	const double secs_since_ref ( *tref );
 
-	const double ra  ( 0.0 );
-	const double dec ( 0.0 );
+	/* this MJD is in UTC */
+	const double mjd ( mjd_ref + ((secs_since_ref+half_scan)/86400.0) );
 
-	return scan_t ( source, ra, dec, scan_time );
+	/* get coordinates from a table */
+	const sources::coords_t coord = sources::table.at ( source );
+	const double ra  ( coord.first );
+	const double dec ( coord.second );
+
+	return scan_t ( source, ra, dec, mjd );
 }
 

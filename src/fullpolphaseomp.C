@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 	 *  <antname_t,real_type>
 	*/
 
-	ants::ant2par_t antpar = ants::calculate_parallactic_angle ( mjd, source_ra, source_dec );
+	const ants::ant2par_t antpar = ants::calculate_parallactic_angle ( cal_scan.mjd, cal_scan.ra, cal_scan.dec );
 
 	/***************************************/
 	/*        SOLVER RUN                   */
@@ -227,8 +227,8 @@ int main(int argc, char *argv[]) {
 		
 		/* what if there is a sign flip in the model itself*/
 		// cost ~ 61
-		//const models::complex_type model_rl ( stokes_q, stokes_u );
-		//const models::complex_type model_lr ( stokes_q,-stokes_u );
+		const models::complex_type model_rl ( stokes_q, stokes_u );
+		const models::complex_type model_lr ( stokes_q,-stokes_u );
 
 		// cost ~ 55
 		//const models::complex_type model_rl ( stokes_q,-stokes_u );
@@ -238,8 +238,8 @@ int main(int argc, char *argv[]) {
 		//const models::complex_type model_rl (-stokes_q,-stokes_u );
 		//const models::complex_type model_lr (-stokes_q, stokes_u );
 
-		const models::complex_type model_rl (-stokes_q, stokes_u );
-		const models::complex_type model_lr (-stokes_q,-stokes_u );
+		//const models::complex_type model_rl (-stokes_q, stokes_u );
+		//const models::complex_type model_lr (-stokes_q,-stokes_u );
 
 		/* data package */
 		FullGDSolver::solve_data_t  pkg ( 
@@ -306,7 +306,9 @@ int main(int argc, char *argv[]) {
 			 * first antenna parang   is same
 			 * second antenna parrang is sign flipped
 			*/
-			const auto& _par_model = models::parallatic_correction ( _par1, -_par2, model_rr, model_rl, model_lr, model_ll );
+			// 3C147 <-> 3C138 parallel gains not matching
+			// const auto& _par_model = models::parallactic_correction ( _par1, -_par2, model_rr, model_rl, model_lr, model_ll );
+			const auto& _par_model = models::parallactic_correction (- _par1, _par2, model_rr, model_rl, model_lr, model_ll );
 
 			pkg.par_model_rr [ ii ] = _par_model[0];
 			pkg.par_model_rl [ ii ] = _par_model[1];

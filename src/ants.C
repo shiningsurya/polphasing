@@ -31,7 +31,7 @@ ants::ant2par_t ants::calculate_parallactic_angle ( double tmjd, double source_r
 	// hourangle
 	const double  ha ( lst - source_ra_rad );
 
-	std::cout <<  tmjd << " " << lst << " " << ha << std::endl;
+	//std::cout <<  tmjd << " " << lst << " " << ha << std::endl;
 
 	/* iterate over ant2pos and compute angle for every antenna */
 	for (auto it = ant2pos.begin(); it != ant2pos.end(); ++it) {
