@@ -1,0 +1,8 @@
+RR
+-m^{ll}*sin(theta_1)*sin(theta_2) - m^{lr}*sin(theta_1)*cos(theta_2) + m^{rl}*sin(theta_2)*cos(theta_1) + m^{rr}*cos(theta_1)*cos(theta_2)
+RL
+-m^{ll}*sin(theta_1)*cos(theta_2) + m^{lr}*sin(theta_1)*sin(theta_2) + m^{rl}*cos(theta_1)*cos(theta_2) - m^{rr}*sin(theta_2)*cos(theta_1)
+LR
+m^{ll}*sin(theta_2)*cos(theta_1) + m^{lr}*cos(theta_1)*cos(theta_2) + m^{rl}*sin(theta_1)*sin(theta_2) + m^{rr}*sin(theta_1)*cos(theta_2)
+LL
+m^{ll}*cos(theta_1)*cos(theta_2) - m^{lr}*sin(theta_2)*cos(theta_1) + m^{rl}*sin(theta_1)*cos(theta_2) - m^{rr}*sin(theta_1)*sin(theta_2)
