@@ -132,3 +132,33 @@ int models::write_model_file ( const model_vis_t& model, const std::string& outf
 
 	return 0;
 }
+
+
+models::model_type models::parallactic_correction ( 
+		const real_type pa1, const real_type pa2, 
+		const complex_type mrr, const complex_type mrl, const complex_type mlr, const complex_type mll
+	) {
+
+	// return this
+	model_type  ret;
+
+	// precompute the angles
+	const real_type c1 ( std::cos(pa1) );
+	const real_type c2 ( std::cos(pa2) );
+	const real_type s1 ( std::sin(pa1) );
+	const real_type s2 ( std::sin(pa2) );
+
+	// rr
+	ret[0] = mrr*c1*c2 - mll*s1*s2 + mrl*s2*c1 - mlr*s1*c2;
+
+	// rl
+	ret[1] = -mll*s1*c2 + mlr*s1*s2 + mrl*c1*c2 - mrr*s2*c1;
+
+	// lr
+	ret[2] = mll*s2*c1 + mlr*c1*c2 + mrl*s1*s2 + mrr*s1*c2;
+
+	// ll
+	ret[3] = mll*c1*c2 - mlr*s2*c1 + mrl*s1*c2 - mrr*s1*s2;
+
+	return ret;
+}

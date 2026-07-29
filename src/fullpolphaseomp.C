@@ -10,6 +10,7 @@
 #include "models.hpp"
 #include "logsolve.hpp"
 #include "fullgdsolver.hpp"
+#include "ants.hpp"
 
 #ifdef TIMING
 #include <chrono>
@@ -105,6 +106,9 @@ int main(int argc, char *argv[]) {
 	/* maybe directly read complex<float>  */
   /* NOTICE:avgbldata contains self-terms*/
 	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0. );
+
+	const LTA::scan_t cal_scan = lta_file.get_scan ( cal_scan_number );
+
 	lta_file.time_average  ( cal_scan_number, avgbldata );
 
 	/***************************************/
@@ -147,6 +151,24 @@ int main(int argc, char *argv[]) {
 		if ( ant1 != ant2 ) noself_baselines.push_back ( ib );
 
 	} /* polar baselines */
+
+	/***************************************/
+	/*        MEASURE PAR ANGLES           */ 
+	/***************************************/
+
+	/*
+	 * We need coordinates of each antenna. 
+	 * > we can get them from casa and keep them as static.
+	 *
+	 * We need source coordinates, LST of observation
+	 * > we have to get them from lta_file
+	 *
+	 * --------
+	 *  We put the par angles in map ant2par. 
+	 *  <antname_t,real_type>
+	*/
+
+	ants::ant2par_t antpar = ants::calculate_parallactic_angle ( mjd, source_ra, source_dec );
 
 	/***************************************/
 	/*        SOLVER RUN                   */
@@ -274,6 +296,22 @@ int main(int argc, char *argv[]) {
 
 			// data
 			pkg.data [ ii ]     = FullGDSolver::complex_type (  _real,  _imag );
+
+			// parallactic angle correct model
+			// find parallactic angle
+			const float _par1 ( antpar.at(ant1) );
+			const float _par2 ( antpar.at(ant2) );
+			// perform correction
+			/*
+			 * first antenna parang   is same
+			 * second antenna parrang is sign flipped
+			*/
+			const auto& _par_model = models::parallatic_correction ( _par1, -_par2, model_rr, model_rl, model_lr, model_ll );
+
+			pkg.par_model_rr [ ii ] = _par_model[0];
+			pkg.par_model_rl [ ii ] = _par_model[1];
+			pkg.par_model_lr [ ii ] = _par_model[2];
+			pkg.par_model_ll [ ii ] = _par_model[3];
 
 			// antenna indices
 			pkg.iant1 [ ii ]    = iant1;

@@ -2,6 +2,16 @@
 
 using std::conj;
 
+/*
+ * i need a way to selectively use gains
+ * Like, 
+ * only use parallel hand gains (rr and ll)
+ *
+ * i can enforce gains to be zero.
+ * But that does not make the corresponding gradient to be zero?
+ * It makes it, but our gradient equations are condensed and derived when they are non zero.
+*/
+
 int FullGDSolver::gradient ( const solve_data_t& pkg, const vc_type& gains, vc_type& grad ) {
 	/*
 	 * This function computes gradient and saves in grad
@@ -9,12 +19,6 @@ int FullGDSolver::gradient ( const solve_data_t& pkg, const vc_type& gains, vc_t
 	 *
 	 * grad should be 4*nantennas;
 	 */
-
-	/* load model parameters */
-	const complex_type mrr ( pkg.mrr );
-	const complex_type mrl ( pkg.mrl );
-	const complex_type mlr ( pkg.mlr );
-	const complex_type mll ( pkg.mll );
 
 	/* zero out gradient */
 	// 20260727: the caller should zero out the gradient
@@ -32,6 +36,12 @@ int FullGDSolver::gradient ( const solve_data_t& pkg, const vc_type& gains, vc_t
 
 		// fetch complex data
 		const complex_type data ( pkg.data[ibl] );
+
+		// fetch the par corrected model
+		const complex_type mrr ( pkg.par_model_rr[ibl] );
+		const complex_type mrl ( pkg.par_model_rl[ibl] );
+		const complex_type mlr ( pkg.par_model_lr[ibl] );
+		const complex_type mll ( pkg.par_model_ll[ibl] );
 
 		// set the gain indices
 		const int iprr ( 4*iant1 + 0 );
@@ -761,11 +771,6 @@ FullGDSolver::real_type FullGDSolver::cost ( const solve_data_t& pkg, const vc_t
 
 	real_type cost ( 0.0f );
 
-	const complex_type mrr ( pkg.mrr );
-	const complex_type mrl ( pkg.mrl );
-	const complex_type mlr ( pkg.mlr );
-	const complex_type mll ( pkg.mll );
-
 	for (int ibl = 0; ibl < npolarbaselines; ibl++) {
 
 		// fetch the antenna index
@@ -777,6 +782,12 @@ FullGDSolver::real_type FullGDSolver::cost ( const solve_data_t& pkg, const vc_t
 
 		// fetch complex data
 		const complex_type data ( pkg.data[ibl] );
+
+		// fetch the par corrected model
+		const complex_type mrr ( pkg.par_model_rr[ibl] );
+		const complex_type mrl ( pkg.par_model_rl[ibl] );
+		const complex_type mlr ( pkg.par_model_lr[ibl] );
+		const complex_type mll ( pkg.par_model_ll[ibl] );
 
 		// fetch full gains for both antennas
 		const complex_type gprr ( gains[4*iant1 + 0] );

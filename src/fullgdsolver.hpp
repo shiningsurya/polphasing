@@ -109,6 +109,13 @@ class FullGDSolver {
 
 			vc_type                  data;
 
+			// parallactic angle corrected model
+			// over polarbaselines
+			vc_type                  par_model_rr;
+			vc_type                  par_model_rl;
+			vc_type                  par_model_lr;
+			vc_type                  par_model_ll;
+
 			// why keep ant2idx
 			//const std::map<antname_t,int>& ant2idx;
 
@@ -120,7 +127,8 @@ class FullGDSolver {
 					const complex_type _mll
 			) : 
 				iant1(npbl), iant2(npbl), pb2corr(npbl), data(npbl),
-				mrr(_mrr), mrl(_mrl), mlr(_mlr), mll(_mll) {}
+				mrr(_mrr), mrl(_mrl), mlr(_mlr), mll(_mll),
+				par_model_rr (npbl), par_model_rl (npbl), par_model_lr (npbl), par_model_ll (npbl) {}
 		}; 
 
 		struct model_t {
@@ -187,6 +195,8 @@ class FullGDSolver {
 		// iteration method
 		int iterate( const solve_data_t& pkg, vc_type& gains );
 
+	public:
+
 		// gradient method
 		int gradient ( const solve_data_t& pkg, const vc_type& gains, vc_type& grad );
 		int gradient ( const solve_model_t& pkg, 
@@ -196,7 +206,6 @@ class FullGDSolver {
 				const complex_type& mll, 
 				vc_type& grad );
 	
-	public:
 
 		int npolarbaselines;
 		int nantennas;

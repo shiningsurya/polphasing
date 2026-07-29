@@ -75,6 +75,16 @@ class LTA {
 		using vi_type   = std::vector<int>;
 		using vf_type   = std::vector<float>;
 
+		struct scan_t {
+			const std::string source;
+			// coordinates in radians
+			const double      ra;
+			const double      dec;
+			const double      mjd;
+
+			scan_t ( const std::string& _source, double _ra, double _dec, double _mjd ) :
+				source(_source), ra(_ra), dec(_dec), mjd(_mjd) {}
+		};
 
 	private:
 		std::string     filepath;
@@ -109,6 +119,9 @@ class LTA {
 
 		/* time average one scan */
 		void time_average ( int iscan, vf_type& inout );
+
+		/* get properties of :iscan: scan */
+		scan_t get_scan ( int iscan );
 
 	public:
 		/* ctor dtor */

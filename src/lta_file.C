@@ -122,3 +122,43 @@ std::ostream& operator<< (std::ostream& os, const LTA & l) {
 
 	return os;
 }
+
+LTA::scan_t LTA::get_scan ( int iscan ) {
+	/*
+	 * Get scan properties of :iscan:
+	 *
+	 * need source name, ra/dec, mjd
+	 *
+	 * get middle mjd
+	*/
+	/* sanity check */
+	if (iscan >= linfo.scans) throw std::runtime_error ("Chosen scan out of range.");
+
+	const ScanHdrTab& stab = linfo.stab[iscan];
+	const ScanHdr& shdr    = stab.shdr;
+
+	const std::string source ( shdr.object );
+	const float       integ  ( shdr.integ );
+	const int         nrecs  ( stab.recs );
+
+	/* seek in file */
+	rewind (fp);
+	ltaseek (fp, linfo.stab[iscan].start_rec + linfo.srecs, recl);
+
+	/* space to read */
+	vb_type dbuf ( recl );
+
+	/* read record from file */
+	if ( fread ( dbuf.data(), recl, 1, fp ) != 1 ) 
+		throw std::runtime_error ("Incomplete read while reading scan properties.");
+
+	double *tref = reinterpret_cast<double*>( dbuf.data() + time_off );
+
+	const double scan_time ( *tref );
+
+	const double ra  ( 0.0 );
+	const double dec ( 0.0 );
+
+	return scan_t ( source, ra, dec, scan_time );
+}
+

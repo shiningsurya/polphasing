@@ -23,6 +23,7 @@ namespace models {
 	using complex_type = std::complex<real_type>;
 	using vf_type      = std::vector<real_type>;
 	using vc_type      = std::vector<complex_type>;
+	using model_type   = std::array<complex_type,4>;
 
 	struct model_data_t {
 		std::string name;
@@ -69,6 +70,7 @@ namespace models {
 
 	int write_model_file ( const model_vis_t& model, const std::string& );
 
+	model_type parallactic_correction ( const real_type, const real_type, const complex_type, const complex_type, const complex_type, const complex_type );
 
 }; /* models namespace */
 
