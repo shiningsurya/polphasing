@@ -301,14 +301,9 @@ int main(int argc, char *argv[]) {
 			// find parallactic angle
 			const float _par1 ( antpar.at(ant1) );
 			const float _par2 ( antpar.at(ant2) );
+
 			// perform correction
-			/*
-			 * first antenna parang   is same
-			 * second antenna parrang is sign flipped
-			*/
-			// 3C147 <-> 3C138 parallel gains not matching
-			// const auto& _par_model = models::parallactic_correction ( _par1, -_par2, model_rr, model_rl, model_lr, model_ll );
-			const auto& _par_model = models::parallactic_correction (- _par1, _par2, model_rr, model_rl, model_lr, model_ll );
+			const auto& _par_model = models::parallactic_correction ( _par1, _par2, model_rr, model_rl, model_lr, model_ll );
 
 			pkg.par_model_rr [ ii ] = _par_model[0];
 			pkg.par_model_rl [ ii ] = _par_model[1];
@@ -328,7 +323,7 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 		FullGDSolver               solver (n_noself_baselines, nantennas);
-		FullGDSolver::vc_type      isol ( solver.ngains, FullGDSolver::complex_type (1.0f, 1.0f) );
+		FullGDSolver::vc_type      isol ( solver.ngains, FullGDSolver::complex_type (1.0f, 0.0f) );
 		auto cost = solver.solve ( pkg, isol );
 
 #ifdef TIMING

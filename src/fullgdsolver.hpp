@@ -171,7 +171,7 @@ class FullGDSolver {
 		static constexpr real_type delta = 0.01;
 		/* EMA beta parameter of norm(gradient) */
 		/* Default as Adam */
-		static constexpr real_type betag = 0.9;
+		static constexpr real_type betag = 0.95;
 		/* Fast and slow EMA beta parameter for cost */
 		// higher beta fast changing
 		static constexpr real_type beta_cost_fast = 0.9;
@@ -180,7 +180,7 @@ class FullGDSolver {
 		 * if the difference between the fast_ema and slow_ema is <= gamma,
 		 * terminate
 		*/
-		static constexpr real_type gamma = 0.001;
+		static constexpr real_type gamma = 0.01;
 		/*
 		 * minimum norm of the gradient vector
 		 * This is probably arbitrary
