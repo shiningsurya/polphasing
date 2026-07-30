@@ -945,7 +945,7 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 	real_type ema_cost_fast ( 0.0f );
 	real_type ema_cost_slow ( 0.0f );
 
-	Adam     apple ( ngains, 0.01f, 0.90f, 0.99f, 1000 );
+	Adam     apple ( ngains, 0.05f, 0.90f, 0.99f, 1000 );
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
 
 	for ( int iter = 0; iter < max_iterations; iter++ ) {
@@ -1012,7 +1012,7 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 			rcost  = new_cost;
 			break;
 		}
-		if ( std::abs ( ema_cost_fast - ema_cost_slow) <= gamma ) {
+		if ( std::abs ( ema_cost_fast - ema_cost_slow ) <= gamma ) {
 			rcode  = 2;
 			rcost  = new_cost;
 			break;
