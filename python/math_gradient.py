@@ -6,6 +6,8 @@ p,q are baselines
 m,n are polarization hands
 """
 
+from collections import defaultdict
+
 import sys
 import pandas as pd
 from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex)
@@ -63,14 +65,13 @@ sss   = srr + srl + slr + sll
 print_settings  = PythonCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
 printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
 ## replace sub/super scripts because my variable names do not have them
-def arger (t): 
+def arger (t, terms): 
     """
     Derivative(conjugate(z),z) term is ignored
     Wirtinger derivative
 
     m_rr, m
     """
-    terms = [d_rr, d_rl, d_lr, d_ll, gp_rr, gp_rl, gp_lr, gp_ll]
     cerms = [conjugate(t) for t in terms]
 
     ###
@@ -84,24 +85,32 @@ def arger (t):
     kv.pop ( dkey )
     ###
     tv    = {conjugate(k):conjugate(v) for k,v in kv.items()}
-    lv    = "".join([latex(k*v) for k,v in tv.items()])
+    lv    = "+".join([latex(k*v) for k,v in tv.items()])
     dv    = {printer(k):printer(v) for k,v in tv.items()}
-    return lv,dv
+    return lv,dv,tv
 
 ## collect terms
-trr,vrr   = arger ( gp_rr )
-trl,vrl   = arger ( gp_rl )
-tlr,vlr   = arger ( gp_lr )
-tll,vll   = arger ( gp_ll )
+terms = [d_rr, d_rl, d_lr, d_ll, gp_rr, gp_rl, gp_lr, gp_ll]
+p_rr  = arger ( gp_rr, terms )
+p_rl  = arger ( gp_rl, terms )
+p_lr  = arger ( gp_lr, terms )
+p_ll  = arger ( gp_ll, terms )
+
+terms = [conjugate(d_rr), conjugate(d_rl), conjugate(d_lr), conjugate(d_ll), gq_rr, gq_rl, gq_lr, gq_ll]
+q_rr  = arger ( gq_rr, terms )
+q_rl  = arger ( gq_rl, terms )
+q_lr  = arger ( gq_lr, terms )
+q_ll  = arger ( gq_ll, terms )
 
 ### latex printing
-
-print ("RR", trr, sep='\n')
-print ("RL", trl, sep='\n')
-print ("LR", tlr, sep='\n')
-print ("LL", tll, sep='\n')
+## switching it off when generating code
+# print ("RR", p_rr[0], sep='\n')
+# print ("RL", p_rl[0], sep='\n')
+# print ("LR", p_lr[0], sep='\n')
+# print ("LL", p_ll[0], sep='\n')
 
 ### coefficient printing
+locs = defaultdict(list)
 def codeprintaction ( k, v, tag ):
     """
     k : dlr
@@ -111,26 +120,37 @@ def codeprintaction ( k, v, tag ):
 
     Drr_coeff_{k} = v
 
-    swaps p<->q and prints as well
     """
-    print (f"const complex_type {tag}_coeff_{k} = {v} ; ")
+    ptag = tag
+    pk   = k
+    if pk.startswith("conj(") and pk.endswith(")"):
+        swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+        pk      = swapper(pk[len('conj('):-len(')')])
 
-    swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+    stmt = f"const complex_type {ptag}_coeff_{pk} = {v} ; "
 
-    print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
+    locs[pk].append (stmt)
 
+    # print ( stmt )
 
+    # print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
 
-print ("----------   RR   ------------")
-for k,v in vrr.items():
-    codeprintaction ( k, v,"Dgprr" )
-print ("----------   RL   ------------")
-for k,v in vrl.items():
-    codeprintaction ( k, v,"Dgprl" )
-print ("----------   LR   ------------")
-for k,v in vlr.items():
-    codeprintaction ( k, v,"Dgplr" )
-print ("----------   LL   ------------")
-for k,v in vll.items():
-    codeprintaction ( k, v,"Dgpll" )
+# print ("----------   RR   ------------")
+for k,v in p_rr[1].items(): codeprintaction ( k, v,"Dgprr" )
+for k,v in q_rr[1].items(): codeprintaction ( k, v,"Dgqrr" )
+# print ("----------   RL   ------------")
+for k,v in p_rl[1].items(): codeprintaction ( k, v,"Dgprl" )
+for k,v in q_rl[1].items(): codeprintaction ( k, v,"Dgqrl" )
+# print ("----------   LR   ------------")
+for k,v in p_lr[1].items(): codeprintaction ( k, v,"Dgplr" )
+for k,v in q_lr[1].items(): codeprintaction ( k, v,"Dgqlr" )
+# print ("----------   LL   ------------")
+for k,v in p_ll[1].items(): codeprintaction ( k, v,"Dgpll" )
+for k,v in q_ll[1].items(): codeprintaction ( k, v,"Dgqll" )
 
+##########################
+
+for k,v in locs.items():
+    print ("-------------------------")
+    # print (k)
+    for iv in v: print (iv)
