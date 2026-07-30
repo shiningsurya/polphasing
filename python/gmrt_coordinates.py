@@ -25,12 +25,12 @@ gmrt_ant_y         = 5797947.77
 gmrt_ant_z         = 2073243.16
 gmrt_el            = asc.EarthLocation.from_geocentric (gmrt_ant_x, gmrt_ant_y, gmrt_ant_z, unit="m")
 ######################
-# singles      = pd.read_csv ("casa_single_antpos.txt", names=[
-    # "idx", "name", "oname", "radius", "ru", "long", "lat", "bx", "by", "bz", "gx", "gy", "gz"
-# ], sep='\\s+')
-# singles_el   = asc.EarthLocation.from_geocentric ( singles.gx, singles.gy, singles.gz, unit='m' )
-# singles['lat_deg'] = singles_el.lat.deg
-# singles['lon_deg'] = singles_el.lon.deg
+singles      = pd.read_csv ("casa_single_antpos.txt", names=[
+  "idx", "name", "oname", "radius", "ru", "long", "lat", "bx", "by", "bz", "gx", "gy", "gz"
+], sep='\\s+')
+singles_el   = asc.EarthLocation.from_geocentric ( singles.gx, singles.gy, singles.gz, unit='m' )
+singles['lat_deg'] = singles_el.lat.deg
+singles['lon_deg'] = singles_el.lon.deg
 ######################
 
 def write_code():
@@ -43,8 +43,8 @@ def write_code():
 
     print (" GMRT SINGLE ANTENNA POS")
 
-    for name, lon, lat in zip ( singles['name'], singles['lon_deg'], singles['lat_deg'] ):
-        print (f"{{ antname_t{{\"{name}\"}}, antpos_t({lon:.6f}, {lat:.6f}) }},")
+    for name, lon, lat in zip ( singles['oname'], singles['lon_deg'], singles['lat_deg'] ):
+        print (f"{{ antname_t{{\"{name.split(':')[0]}\"}}, antpos_t({lon:.6f}, {lat:.6f}) }},")
 
 def get_args ():
     import argparse
@@ -91,7 +91,9 @@ def get_parallactic_angle ( sc, tobs, el ):
 
 if __name__ == "__main__":
     ### write_code only when we need to update code
-    # write_code()
+    write_code()
+    import sys
+    sys.exit(0)
     ### write_code only when we need to update code
 
     args = get_args()
