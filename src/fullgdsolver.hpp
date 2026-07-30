@@ -164,8 +164,6 @@ class FullGDSolver {
 	
 	private:
 		/*
-		 * obselete: Change in SSE observed
-		 *
 		 * Termination if ema(norm(gradient)) < delta
 		*/
 		static constexpr real_type delta = 0.01;

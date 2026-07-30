@@ -13,48 +13,86 @@
 #include <vector>
 #include <memory>
 
-#include "objectives.hpp"
+#include "adam.hpp"
 
 class GDSolver {
 	public:
-		using real_type  = float;
+		using real_type    = float;
 		using complex_type = std::complex<real_type>;
-		using vr_type    = std::vector<real_type>;
-		using vc_type    = std::vector<complex_type>;
-		using data_t     = polphasing::data_t;
-		using ptrdata_t  = polphasing::ptrdata_t;
+		using vi_type      = std::vector<int>;
+		using vr_type      = std::vector<real_type>;
+		using vc_type      = std::vector<complex_type>;
+
+		struct data_t {
+
+			const complex_type       mrr, mrl, mlr, mll;
+
+			/* complex arrays */
+			vc_type    data;
+
+			/* index mapping */
+			vi_type    iant1;
+			vi_type    iant2;
+
+			/* polarbaseline to correlation */
+			vi_type    pb2corr;
+
+			// parallactic angle corrected model
+			// over polarbaselines
+			vc_type    par_model_rr;
+			vc_type    par_model_rl;
+			vc_type    par_model_lr;
+			vc_type    par_model_ll;
+
+			data_t ( int ndata, const complex_type _mrr, const complex_type _mrl, const complex_type _mlr, const complex_type _mll ) : 
+				mrr (_mrr), mrl (_mrl), mlr (_mlr), mll (_mll),
+				data(ndata), 
+				par_model_rr(ndata), par_model_rl(ndata), par_model_lr(ndata), par_model_ll(ndata), 
+				iant1 (ndata), iant2 (ndata), pb2corr (ndata)
+			{}
+
+		};
 
 	private:
 		/*
-		 * Interpolation between old solution and new solution
+		 * Termination if ema(norm(gradient)) < delta
 		*/
-		static constexpr real_type alpha = 0.40;
+		static constexpr real_type delta = 0.01;
+		/* EMA beta parameter of norm(gradient) */
+		/* Default as Adam */
+		static constexpr real_type betag = 0.95;
+		/* Fast and slow EMA beta parameter for cost */
+		// higher beta fast changing
+		static constexpr real_type beta_cost_fast = 0.9;
+		static constexpr real_type beta_cost_slow = 0.6;
 		/*
-		 * Change in SSE observed
+		 * if the difference between the fast_ema and slow_ema is <= gamma,
+		 * terminate
 		*/
-		static constexpr real_type delta = 0.1;
+		static constexpr real_type gamma = 0.01;
 
-		//static constexpr complex_type zero_complex = complex_type( 0.0f, 0.0f );
-
-		static constexpr int max_iterations = 1000;
-
-		/* one iteration */
-		real_type iterate(const ptrdata_t& pkg, vc_type& usol);
+		static constexpr int max_iterations = 100000;
 
 
-		int m; // number of polar baselines
-		int n; // number of antbands
-		
-		vc_type g_nr;
-		vr_type g_dr;
-	
+		int gradient ( const data_t& pkg, const vc_type& gains, vc_type& grad );
+
 	public:
+		int npolarbaselines;
+		int nantennas;
+		int ngains;
+
 		int rcode; 
 		int niter;
 
-		GDSolver ( int _m, int _n ) : m (_m), n (_n), g_nr (n), g_dr(n), rcode(-1), niter(0) {}
+		GDSolver( int _npolarbaselines, int _nantennas ) : 
+			npolarbaselines(_npolarbaselines),
+			nantennas (_nantennas), ngains (2*_nantennas),
+			rcode (0), niter(0) {}
 
-		real_type solve ( const ptrdata_t& pkg, vc_type& initial_solution );
+		real_type solve ( const data_t& pkg, vc_type& gains );
 
+		real_type cost ( const data_t& pkg, const vc_type& gains );
+
+		real_type norm ( const vc_type& gains );
 
 };
