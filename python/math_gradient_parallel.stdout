@@ -1,0 +1,18 @@
+RR
+- d_{pq}^{rl} g_q^{ll} \overline{m^{rl}}+- d_{pq}^{rr} g_q^{rr} \overline{m^{rr}}+g_p^{rr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right)
+LL
+- d_{pq}^{ll} g_q^{ll} \overline{m^{ll}}+- d_{pq}^{lr} g_q^{rr} \overline{m^{lr}}+g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right)
+----------   RR   ------------
+const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) ; 
+const complex_type Dgqrr_coeff_dqprl = -gpll*conj(mrl) ; 
+const complex_type Dgprr_coeff_dpqrr = -gqrr*conj(mrr) ; 
+const complex_type Dgqrr_coeff_dqprr = -gprr*conj(mrr) ; 
+const complex_type Dgprr_coeff_gprr = gqll*mrl*conj(gqll)*conj(mrl) + gqrr*mrr*conj(gqrr)*conj(mrr) ; 
+const complex_type Dgqrr_coeff_gqrr = gpll*mrl*conj(gpll)*conj(mrl) + gprr*mrr*conj(gprr)*conj(mrr) ; 
+----------   LL   ------------
+const complex_type Dgpll_coeff_dpqll = -gqll*conj(mll) ; 
+const complex_type Dgqll_coeff_dqpll = -gpll*conj(mll) ; 
+const complex_type Dgpll_coeff_dpqlr = -gqrr*conj(mlr) ; 
+const complex_type Dgqll_coeff_dqplr = -gprr*conj(mlr) ; 
+const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) + gqrr*mlr*conj(gqrr)*conj(mlr) ; 
+const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) + gprr*mlr*conj(gprr)*conj(mlr) ; 
