@@ -5,6 +5,7 @@ with only parallel complex gains
 p,q are baselines
 m,n are polarization hands
 """
+from collections import defaultdict
 
 import sys
 import pandas as pd
@@ -46,14 +47,13 @@ sss   = srr + srl + slr + sll
 print_settings  = PythonCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
 printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
 ## replace sub/super scripts because my variable names do not have them
-def arger (t): 
+def arger (t, terms): 
     """
     Derivative(conjugate(z),z) term is ignored
     Wirtinger derivative
 
     m_rr, m
     """
-    terms = [d_rr, d_rl, d_lr, d_ll, gp_rr, gp_ll]
     cerms = [conjugate(t) for t in terms]
 
     ###
@@ -72,15 +72,21 @@ def arger (t):
     return lv,dv,tv
 
 ## collect terms
-trr,vrr,srr   = arger ( gp_rr )
-tll,vll,sll   = arger ( gp_ll )
+terms = [d_rr, d_rl, d_lr, d_ll, gp_rr, gp_ll]
+p_rr  = arger ( gp_rr, terms )
+p_ll  = arger ( gp_ll, terms )
+
+terms = [conjugate(d_rr), conjugate(d_rl), conjugate(d_lr), conjugate(d_ll), gq_rr, gq_ll]
+q_rr  = arger ( gq_rr, terms )
+q_ll  = arger ( gq_ll, terms )
 
 ### latex printing
-
-print ("RR", trr, sep='\n')
-print ("LL", tll, sep='\n')
+## switching it off when generating code
+print ("RR", p_rr[0], sep='\n')
+print ("LL", p_ll[0], sep='\n')
 
 ### coefficient printing
+locs = defaultdict(list)
 def codeprintaction ( k, v, tag ):
     """
     k : dlr
@@ -90,20 +96,32 @@ def codeprintaction ( k, v, tag ):
 
     Drr_coeff_{k} = v
 
-    swaps p<->q and prints as well
     """
-    print (f"const complex_type {tag}_coeff_{k} = {v} ; ")
+    ptag = tag
+    pk   = k
+    if pk.startswith("conj(") and pk.endswith(")"):
+        swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+        pk      = swapper(pk[len('conj('):-len(')')])
 
-    swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+    stmt = f"const complex_type {ptag}_coeff_{pk} = {v} ; "
 
-    print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
+    locs[pk].append (stmt)
 
-print ("----------   RR   ------------")
-for k,v in vrr.items():
-    codeprintaction ( k, v,"Dgprr" )
-print ("----------   LL   ------------")
-for k,v in vll.items():
-    codeprintaction ( k, v,"Dgpll" )
+    # print ( stmt )
+
+    # print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
+
+# print ("----------   RR   ------------")
+for k,v in p_rr[1].items(): codeprintaction ( k, v,"Dgprr" )
+for k,v in q_rr[1].items(): codeprintaction ( k, v,"Dgqrr" )
+# print ("----------   LL   ------------")
+for k,v in p_ll[1].items(): codeprintaction ( k, v,"Dgpll" )
+for k,v in q_ll[1].items(): codeprintaction ( k, v,"Dgqll" )
 
 ##########################
+
+for k,v in locs.items():
+    print ("-------------------------")
+    # print (k)
+    for iv in v: print (iv)
 

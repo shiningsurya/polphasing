@@ -191,7 +191,7 @@ int GDSolver::gradient ( const data_t& pkg, const vc_type& gains, vc_type& grad 
 		if ( pb2corr == 0 ) {
 
 			const complex_type Dgprr_coeff_dpqrr = -gqrr*conj(mrr) ; 
-			const complex_type Dgqrr_coeff_dqprr = -gprr*conj(mrr) ; 
+			const complex_type Dgqrr_coeff_dqprr = -gprr*mrr ; 
 
 			const complex_type Dgprr_coeff_gprr = gqrr*mrr*conj(gqrr)*conj(mrr) ; 
 			const complex_type Dgqrr_coeff_gqrr = gprr*mrr*conj(gprr)*conj(mrr) ; 
@@ -203,34 +203,34 @@ int GDSolver::gradient ( const data_t& pkg, const vc_type& gains, vc_type& grad 
 		else if ( pb2corr == 1 ) {
 
 			const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) ; 
-			const complex_type Dgqrr_coeff_dqprl = -gpll*conj(mrl) ; 
+			const complex_type Dgqll_coeff_dqprl = -gprr*mrl ; 
 
 			const complex_type Dgprr_coeff_gprr = gqll*mrl*conj(gqll)*conj(mrl) ; 
-			const complex_type Dgqrr_coeff_gqrr = gpll*mrl*conj(gpll)*conj(mrl) ; 
+			const complex_type Dgqll_coeff_gqll = gprr*mrl*conj(gprr)*conj(mrl) ; 
 
 			grad[iprr] += Dgprr_coeff_gprr*gprr + Dgprr_coeff_dpqrl*data; 
-			grad[iqrr] += Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqprl*conj(data);
+			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqprl*conj(data);
 
 		} // rl
 		else if ( pb2corr == 2 ) {
 
 			const complex_type Dgpll_coeff_dpqlr = -gqrr*conj(mlr) ; 
-			const complex_type Dgqll_coeff_dqplr = -gprr*conj(mlr) ; 
+			const complex_type Dgqrr_coeff_dqplr = -gpll*mlr ; 
 
 			const complex_type Dgpll_coeff_gpll = gqrr*mlr*conj(gqrr)*conj(mlr) ; 
-			const complex_type Dgqll_coeff_gqll = gprr*mlr*conj(gprr)*conj(mlr) ; 
+			const complex_type Dgqrr_coeff_gqrr = gpll*mlr*conj(gpll)*conj(mlr) ; 
 
-			grad[ipll] += Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqlr*data;
-			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqplr*conj(data);
+			grad[ipll] +=  Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqlr*data;
+			grad[iqrr] +=  Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqplr*conj(data);
 
 		} // lr
 		else if ( pb2corr == 3 ) {
 
 			const complex_type Dgpll_coeff_dpqll = -gqll*conj(mll) ; 
-			const complex_type Dgqll_coeff_dqpll = -gpll*conj(mll) ; 
+			const complex_type Dgqll_coeff_dqpll = -gpll*mll ; 
 
-			const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) ;
-			const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) ;
+			const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) ; 
+			const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) ; 
 
 			grad[ipll] += Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqll*data;
 			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqpll*conj(data);

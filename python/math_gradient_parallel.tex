@@ -1,4 +1,4 @@
-\documentclass[landscape,12pt]{article}
+\documentclass[12pt]{article}
 \usepackage[a4paper,left=5mm,right=5mm,top=10mm,bottom=10mm]{geometry}
 \usepackage{amsmath}
 \usepackage{autobreak}
@@ -19,7 +19,7 @@ To this end, we compute gradient of the loss, that is, $\frac{\partial |S|^2}{\p
 \frac{\partial |S|^2}{\partial g_p^{rr}} &= \sum_q \\ 
 - &d_{pq}^{rl} g_q^{ll} \overline{m^{rl}}+\\
 - &d_{pq}^{rr} g_q^{rr} \overline{m^{rr}}+\\
-	&g_p^{rr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right)
+	&g_p^{rr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right).
 \end{split}
 \end{equation}
 
@@ -28,7 +28,7 @@ To this end, we compute gradient of the loss, that is, $\frac{\partial |S|^2}{\p
 \frac{\partial |S|^2}{\partial g_p^{ll}} &= \sum_q \\ 
 - &d_{pq}^{ll} g_q^{ll} \overline{m^{ll}}+\\
 - &d_{pq}^{lr} g_q^{rr} \overline{m^{lr}}+\\
-	&g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right)
+	&g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right).
 \end{split}
 \end{equation}
 
