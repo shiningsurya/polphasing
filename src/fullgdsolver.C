@@ -872,17 +872,15 @@ FullGDSolver::real_type FullGDSolver::cost ( const solve_model_t& pkg,
 FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& gains ) {
 	rcode = 0;
 	niter = 0;
+	gnorm = 0.0f;
 
 	real_type rcost (0.0f);
 
 	// EMA of square of norm of gradient
 	real_type ema_gnorm ( 0.0f );
+	real_type ema_gnorm_slow ( 0.0f );
 
-	// EMAs of cost 
-	real_type ema_cost_fast ( 0.0f );
-	real_type ema_cost_slow ( 0.0f );
-
-	Adam     apple ( ngains, 0.05f, 0.90f, 0.99f, 1000 );
+	Adam     apple ( ngains, 0.01f, 0.90f, 0.95f, 1000 );
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
 
 	for ( int iter = 0; iter < max_iterations; iter++ ) {
@@ -897,10 +895,11 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 		gradient ( pkg, gains, grad );
 
 		// gradient norm
-		const real_type gnorm = norm ( grad );
+		gnorm = norm ( grad );
 
 		// EMA of gnorm
-		ema_gnorm  = betag*ema_gnorm + (1.0f - betag)*gnorm;
+		ema_gnorm      = betag*gnorm + (1.0f - betag)*ema_gnorm;
+		ema_gnorm_slow = beta_gnorm_slow*gnorm + (1.0f - beta_gnorm_slow)*ema_gnorm_slow;
 
 		// use ADAM to update gains
 		// in place updation
@@ -917,12 +916,9 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 		// find cost after iteration
 		const real_type new_cost = cost ( pkg, gains );
 
-		// EMAs of new cost
-		ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
-		ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
-
+		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_gnorm_slow << std::endl;
 #ifdef CHANDEBUG
-		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;
+		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_gnorm_slow << std::endl;
 #endif 
 
 		/*
@@ -949,10 +945,11 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg, vc_type& 
 			rcost  = new_cost;
 			break;
 		}
-		if ( std::abs ( ema_cost_fast - ema_cost_slow ) <= gamma ) {
+		// we do not want cost plateau condition.
+		if ( std::abs ( ema_gnorm - ema_gnorm_slow ) <= gamma ) {
 			rcode  = 2;
 			rcost  = new_cost;
-			break;
+		  break;
 		}
 #endif
 
@@ -1018,8 +1015,8 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_model_t& pkg, complex_
 		const real_type new_cost = cost ( pkg, mrr, mrl, mlr, mll );
 
 		// EMAs of new cost
-		ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
-		ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
+		//ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
+		//ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
 
 #ifdef CHANDEBUG
 		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;
@@ -1112,8 +1109,8 @@ FullGDSolver::real_type FullGDSolver::solve ( const solve_data_t& pkg1, const so
 		const real_type new_cost = cost ( pkg1, gains ) + cost ( pkg2, gains );
 
 		// EMAs of new cost
-		ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
-		ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
+		//ema_cost_fast = beta_cost_fast*ema_cost_fast + (1.0f - beta_cost_fast)*new_cost;
+		//ema_cost_slow = beta_cost_slow*ema_cost_slow + (1.0f - beta_cost_slow)*new_cost;
 
 #ifdef CHANDEBUG
 		std::cout << iter << " " << new_cost << " " << gnorm << " " << ema_gnorm << " " << ema_cost_slow << " " << ema_cost_fast << std::endl;

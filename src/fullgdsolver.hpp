@@ -166,19 +166,18 @@ class FullGDSolver {
 		/*
 		 * Termination if ema(norm(gradient)) < delta
 		*/
-		static constexpr real_type delta = 0.01;
+		static constexpr real_type delta = 0.1;
 		/* EMA beta parameter of norm(gradient) */
 		/* Default as Adam */
-		static constexpr real_type betag = 0.95;
+		static constexpr real_type betag = 0.99;
 		/* Fast and slow EMA beta parameter for cost */
 		// higher beta fast changing
-		static constexpr real_type beta_cost_fast = 0.9;
-		static constexpr real_type beta_cost_slow = 0.6;
+		static constexpr real_type beta_gnorm_slow = 0.75;
 		/*
 		 * if the difference between the fast_ema and slow_ema is <= gamma,
 		 * terminate
 		*/
-		static constexpr real_type gamma = 0.01;
+		static constexpr real_type gamma = 0.0001;
 		/*
 		 * minimum norm of the gradient vector
 		 * This is probably arbitrary
@@ -188,7 +187,7 @@ class FullGDSolver {
 
 		//static constexpr complex_type zero_complex = complex_type( 0.0f, 0.0f );
 
-		static constexpr int max_iterations = 100000;
+		static constexpr int max_iterations = 10000;
 
 		// iteration method
 		int iterate( const solve_data_t& pkg, vc_type& gains );
@@ -211,6 +210,8 @@ class FullGDSolver {
 
 		int rcode;
 		int niter;
+
+		real_type gnorm;
 
 		FullGDSolver( int _npolarbaselines, int _nantennas ) : 
 			npolarbaselines(_npolarbaselines),

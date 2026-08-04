@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
 	/* channel 458 has high loss.*/
 	for (int ichan = 458; ichan < 459; ichan++) {
 #else
-	#pragma omp parallel for num_threads(4) 
+	//#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
 		/* when parallelizing inside loop */
@@ -226,11 +226,9 @@ int main(int argc, char *argv[]) {
 		const models::complex_type model_ll ( stokes_i, 0.0f );
 		
 		/* what if there is a sign flip in the model itself*/
-		// cost ~ 61
 		const models::complex_type model_rl ( stokes_q, stokes_u );
 		const models::complex_type model_lr ( stokes_q,-stokes_u );
 
-		// cost ~ 55
 		//const models::complex_type model_rl ( stokes_q,-stokes_u );
 		//const models::complex_type model_lr ( stokes_q, stokes_u );
 
@@ -295,7 +293,7 @@ int main(int argc, char *argv[]) {
 			const float _imag ( avgbldata[2*_i + 1] );
 
 			// data
-			pkg.data [ ii ]     = FullGDSolver::complex_type (  _real,  _imag );
+			pkg.data [ ii ]     = FullGDSolver::complex_type (  _real, _imag );
 
 			// parallactic angle correct model
 			// find parallactic angle
@@ -333,6 +331,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 		logger.sse_chan [ ichan ]  = cost;
+		logger.gnorm_chan [ ichan ]= solver.gnorm;
 		logger.nfev [ ichan ]      = solver.niter;
 		logger.info [ ichan ]      = solver.rcode;
 
