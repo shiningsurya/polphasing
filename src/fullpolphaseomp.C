@@ -327,13 +327,13 @@ int main(int argc, char *argv[]) {
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double,std::milli> duration = end - start;
-		logger.time_chan [ ichan ] = duration.count();
+		logger.time [ ichan ]  = duration.count();
 #endif
 
-		logger.sse_chan [ ichan ]  = cost;
-		logger.gnorm_chan [ ichan ]= solver.gnorm;
-		logger.nfev [ ichan ]      = solver.niter;
-		logger.info [ ichan ]      = solver.rcode;
+		logger.sse  [ ichan ]  = cost;
+		logger.gnorm[ ichan ]  = solver.gnorm;
+		logger.nfev [ ichan ]  = solver.niter;
+		logger.info [ ichan ]  = solver.rcode;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {

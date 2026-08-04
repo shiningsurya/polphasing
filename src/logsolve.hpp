@@ -19,14 +19,14 @@ namespace logging {
 
 	struct log_t {
 	
-		vr_type  sse_chan;
-		vr_type  time_chan;
+		vr_type  sse;
+		vr_type  time;
+		vr_type  gnorm;
 		vi_type  nfev;
-		vi_type  njev;
 		vi_type  info;
 
 		log_t ( int nchan ) : 
-			sse_chan ( nchan ), time_chan (nchan), nfev (nchan), njev(nchan), info(nchan) {}
+			sse ( nchan ), time (nchan), gnorm (nchan), nfev (nchan), info(nchan) {}
 
 	};
 

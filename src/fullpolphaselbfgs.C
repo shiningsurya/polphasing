@@ -5,11 +5,11 @@
 
 #include <string>
 
-#include "gdsolver.hpp"
 #include "lta_file.hpp"
 #include "gaintable.hpp"
 #include "models.hpp"
 #include "logsolve.hpp"
+#include "LBFGS.hpp"
 #include "ants.hpp"
 
 #ifdef TIMING
@@ -18,16 +18,17 @@
 
 //#define CHANDEBUG
 
+
 #ifdef TIMING
 auto start  = std::chrono::high_resolution_clock::now();
 auto end    = std::chrono::high_resolution_clock::now();
 #endif 
 
 void print_help () {
-	std::cout << "polphase" << std::endl;
-	std::cout << "  Solving parallel complex gains for each antenna using IQU model using multithreading " << std::endl;
+	std::cout << "fullpolphase" << std::endl;
+	std::cout << "  Solving full Jones matrix for each antenna using IQU model using multithreading " << std::endl;
 	std::cout << std::endl;
-	std::cout << " polphase [ARGUMENTS] LTA_FILE" << std::endl;
+	std::cout << " fullpolphase [ARGUMENTS] LTA_FILE" << std::endl;
 	std::cout << "    -h Print help" << std::endl;
 	std::cout << "    -s <scan> scan number of the LTA file" << std::endl;
 	std::cout << "    -t <tag> tag/stem with which to save log and complex gains" << std::endl;
@@ -75,9 +76,11 @@ int main(int argc, char *argv[]) {
 	optind++;
 
 	/* other files */
-	const std::string save_file_r  = tag + std::string("_r.gains");
-	const std::string save_file_l  = tag + std::string("_l.gains");
-	const std::string log_file     = tag + std::string(".log");
+	const std::string save_file_rr  = tag + std::string("_rr.gains");
+	const std::string save_file_rl  = tag + std::string("_rl.gains");
+	const std::string save_file_lr  = tag + std::string("_lr.gains");
+	const std::string save_file_ll  = tag + std::string("_ll.gains");
+	const std::string log_file      = tag + std::string(".log");
 
 	std::cout << "[inputs] lta=" << lta_path << " model=" << model_path << std::endl;
 	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;
@@ -104,9 +107,9 @@ int main(int argc, char *argv[]) {
   /* NOTICE:avgbldata contains self-terms*/
 	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0. );
 
-	lta_file.time_average  ( cal_scan_number, avgbldata );
-
 	const LTA::scan_t cal_scan = lta_file.get_scan ( cal_scan_number );
+
+	lta_file.time_average  ( cal_scan_number, avgbldata );
 
 	/***************************************/
 	/*        SOLVER PREPARE               */
@@ -114,9 +117,8 @@ int main(int argc, char *argv[]) {
 
 	/* Following is for mapping */
 	/* (1) Mapping antenna to index  -- ant2idx */
-	/* (2) polarbaseline to correlation product -- pb2cor  */
-	/* (3) (antenna, band) to gain in solution vector -- index_b{1,2} */
 
+	/**/
 	int rant    = 0;
 	std::map<LTA::antname_t,int>  ant2idx;
 	/* contains noself_baseline index */
@@ -154,6 +156,18 @@ int main(int argc, char *argv[]) {
 	/*        MEASURE PAR ANGLES           */ 
 	/***************************************/
 
+	/*
+	 * We need coordinates of each antenna. 
+	 * > we can get them from casa and keep them as static.
+	 *
+	 * We need source coordinates, LST of observation
+	 * > we have to get them from lta_file
+	 *
+	 * --------
+	 *  We put the par angles in map ant2par. 
+	 *  <antname_t,real_type>
+	*/
+
 	const ants::ant2par_t antpar = ants::calculate_parallactic_angle ( cal_scan.mjd, cal_scan.ra, cal_scan.dec );
 
 	/***************************************/
@@ -167,6 +181,9 @@ int main(int argc, char *argv[]) {
 	 *
 	 * noself_nbaselines will be 0.5*nantennas*(nantennas-1)*4
 	 *
+	 * ndata = 2 * noself_nbaselines
+	 * npar  = 4 * nantennas
+	 *
 	 */
 	int nantennas    = ant2idx.size(); 
 	int n_noself_baselines  = noself_baselines.size();
@@ -178,8 +195,10 @@ int main(int argc, char *argv[]) {
 	logging::log_t   logger ( nchannels );
 
 	/* gain tables */
-	gaintable::gaintable_t    solved_gains_r = gaintable::prepare_gaintables ( nchannels );
-	gaintable::gaintable_t    solved_gains_l = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_rr = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_rl = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_lr = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_ll = gaintable::prepare_gaintables ( nchannels );
 
 	/* main loop */
 	std::cout << " Starting main solving loop" << std::endl;
@@ -187,14 +206,14 @@ int main(int argc, char *argv[]) {
 	auto total_start = std::chrono::high_resolution_clock::now();
 	
 #ifdef CHANDEBUG
-	for (int ichan = 398; ichan < 399; ichan++) {
+	/* channel 458 has high loss.*/
+	for (int ichan = 458; ichan < 459; ichan++) {
 #else
 	//#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
-
-	/* testing */
-		//if (ichan % 128 == 0) std::cout << ichan << " ";
+		/* when parallelizing inside loop */
+		/* this will be doing a lot of mallocs */
 
 		/* read stokes IQU for ichan */
 		const models::real_type    stokes_i ( calmodel.stokes_i[ichan] );
@@ -204,12 +223,16 @@ int main(int argc, char *argv[]) {
 
 		/* populate rr, rl, lr, ll */
 		const models::complex_type model_rr ( stokes_i, 0.0f );
-		const models::complex_type model_ll ( stokes_i, 0.0f );
 		const models::complex_type model_rl ( stokes_q, stokes_u );
 		const models::complex_type model_lr ( stokes_q,-stokes_u );
+		const models::complex_type model_ll ( stokes_i, 0.0f );
 
 		/* data package */
-		GDSolver::data_t pkg ( n_noself_baselines, model_rr, model_rl, model_lr, model_ll );
+		LBFGS::data_t  pkg ( 
+				n_noself_baselines, 
+				nantennas,
+				model_rr, model_rl, model_lr, model_ll
+		);
 
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
@@ -225,9 +248,6 @@ int main(int argc, char *argv[]) {
 			/* get baseline object */
 			const baseline_t&  _bl = lta_file.baselines [ ib ];
 
-			/* every baseline is polar baseline */
-			/* although redundant, we write a model column */
-			/* because it makes future computations straightforward */
 			/*
 			 * (0,0) = rr -> 0 
 			 * (0,1) = rl -> 1 
@@ -250,17 +270,12 @@ int main(int argc, char *argv[]) {
 			const auto& iant1 = ant2idx.at(ant1);
 			const auto& iant2 = ant2idx.at(ant2);
 
-			// antenna indices
-			pkg.iant1 [ ii ]    = iant1;
-			pkg.iant2 [ ii ]    = iant2;
-
-			pkg.pb2corr  [ ii ] = pb2corr;
-
 			/* copy data */
 			const float _real ( avgbldata[2*_i] );
 			const float _imag ( avgbldata[2*_i + 1] );
 
-			pkg.data [ ii ]    = std::complex<float> ( _real, _imag );
+			// data
+			pkg.data [ ii ]     = LBFGS::complex_type (  _real,  _imag );
 
 			// parallactic angle correct model
 			// find parallactic angle
@@ -275,26 +290,35 @@ int main(int argc, char *argv[]) {
 			pkg.par_model_lr [ ii ] = _par_model[2];
 			pkg.par_model_ll [ ii ] = _par_model[3];
 
+			// antenna indices
+			pkg.iant1 [ ii ]    = iant1;
+			pkg.iant2 [ ii ]    = iant2;
+
+			// correlation index
+			pkg.pb2corr  [ ii ] = pb2corr;
 		} /* baselines */
 
 		/* perform solving */
 #ifdef TIMING
 		start  = std::chrono::high_resolution_clock::now();
 #endif
-		GDSolver                   solver (n_noself_baselines, nantennas);
-		GDSolver::vc_type          isol ( solver.ngains, GDSolver::complex_type (1.0f, 0.0f) );
-		auto cost = solver.solve ( pkg, isol );
+
+		/* full jones has four complex gains per antenna */
+		/* LBFGS separates real and imaginary so double it*/
+		const int npar      ( nantennas * 4 * 2 );
+		LBFGS::Solver               solver (npar);
+		auto cost       =          solver ( pkg );
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double,std::milli> duration = end - start;
-		logger.time [ ichan ] = duration.count();
+		logger.time   [ ichan ]  = duration.count();
 #endif
-		//std::cout << "after solving SSE=" << test.get_sse() << std::endl;
 
-		logger.sse  [ ichan ] = cost;
-		logger.nfev [ ichan ] = solver.niter;
-		logger.info [ ichan ] = solver.rcode;
+		logger.sse    [ ichan ]  = cost;
+		logger.nfev   [ ichan ]  = solver.niter;
+		logger.info   [ ichan ]  = solver.rcode;
+		logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
@@ -302,11 +326,15 @@ int main(int argc, char *argv[]) {
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
-			const GDSolver::complex_type rg ( isol[2*idx + 0] );
-			const GDSolver::complex_type lg ( isol[2*idx + 1] );
+			const LBFGS::complex_type  rr ( solver.xpar[8*idx + 0], solver.xpar[8*idx + 1] );
+			const LBFGS::complex_type  rl ( solver.xpar[8*idx + 2], solver.xpar[8*idx + 3] );
+			const LBFGS::complex_type  lr ( solver.xpar[8*idx + 4], solver.xpar[8*idx + 5] );
+			const LBFGS::complex_type  ll ( solver.xpar[8*idx + 6], solver.xpar[8*idx + 7] );
 
-			solved_gains_r[iant][ichan]  = rg;
-			solved_gains_l[iant][ichan]  = lg;
+			solved_gains_rr[iant][ichan]  = rr;
+			solved_gains_rl[iant][ichan]  = rl;
+			solved_gains_lr[iant][ichan]  = lr;
+			solved_gains_ll[iant][ichan]  = ll;
 
 		} /* ant2idx */
 
@@ -315,8 +343,10 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 	/*        WRITE GAINTABLES             */
 	/***************************************/
-	gaintable::write_complex_solutions ( solved_gains_r, save_file_r );
-	gaintable::write_complex_solutions ( solved_gains_l, save_file_l );
+	gaintable::write_complex_solutions ( solved_gains_rr, save_file_rr );
+	gaintable::write_complex_solutions ( solved_gains_rl, save_file_rl );
+	gaintable::write_complex_solutions ( solved_gains_lr, save_file_lr );
+	gaintable::write_complex_solutions ( solved_gains_ll, save_file_ll );
 
 	/***************************************/
 	/*        WRITE LOG                    */
@@ -330,3 +360,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+
