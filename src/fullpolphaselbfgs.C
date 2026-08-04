@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
 	/* channel 458 has high loss.*/
 	for (int ichan = 458; ichan < 459; ichan++) {
 #else
-	//#pragma omp parallel for num_threads(4) 
+	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
 		/* when parallelizing inside loop */
@@ -284,6 +284,7 @@ int main(int argc, char *argv[]) {
 
 			// perform correction
 			const auto& _par_model = models::parallactic_correction ( _par1, _par2, model_rr, model_rl, model_lr, model_ll );
+			//const auto& _par_model = models::parallactic_correction ( -_par1, -_par2, model_rr, model_rl, model_lr, model_ll );
 
 			pkg.par_model_rr [ ii ] = _par_model[0];
 			pkg.par_model_rl [ ii ] = _par_model[1];

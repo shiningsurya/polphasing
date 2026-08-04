@@ -1,5 +1,7 @@
 #pragma once
 
+#define DEBUG
+
 #include "lbfgs.h"
 
 #include <complex>
@@ -125,6 +127,10 @@ namespace LBFGS {
 
 			xpar      = lbfgs_malloc ( npar );
 			grad      = lbfgs_malloc ( npar );
+
+			/* initialize xpar */
+			//std::fill ( xpar, xpar + npar, 0.5f ); 
+			for ( int ipar = 0; ipar < npar; ipar++ ) xpar[ipar] = ipar % 2 ? 1.0f : 0.0f;
 		}
 
 		// dtor

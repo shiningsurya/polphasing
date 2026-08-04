@@ -1,5 +1,7 @@
 #include "LBFGS.hpp"
 
+//#include <iostream>
+
 LBFGS::real_type LBFGS::full_jones (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
 
 	/* return this */
@@ -189,15 +191,23 @@ LBFGS::real_type LBFGS::full_jones (void *instance, const lbfgsfloatval_t *rgain
 			
 		// update cost
 		cost += std::norm ( data - model );
+		//std::cout << " iterationcost=" << cost << " ";
 
 	} // iterate over polar baselines
+	
+	//std::cout << " rgrads=";
 
 	/* load complex grad into real and imaginary parts */
 	for ( int igain = 0; igain < ngains; igain++ ) {
 		const complex_type gg ( grad[igain] );
 		rgrad[2*igain + 0] = gg.real();
 		rgrad[2*igain + 1] = gg.imag();
+		/* we are actually computing derivative wrt conjugate, so lets unconjugate */
+		//std::cout << rgrad[2*igain + 0] << " " << rgrad[2*igain + 1] << " ";
+		//std::cout << gg << " ";
 	}
+
+	//std::cout << " full_jones_cost=" << cost << std::endl; 
 
 	return cost;
 }
@@ -354,6 +364,8 @@ int LBFGS::progress_reporter (void *instance, const lbfgsfloatval_t *x, const lb
 	pkg->gnorm  = gnorm;
 	pkg->niter++;
 
+	//std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+
 	/* return 0 always */
 	return 0;
 }
@@ -368,8 +380,8 @@ LBFGS::real_type LBFGS::Solver::operator() (data_t& pkg) {
   rcode = lbfgs(npar, xpar, &final_cost, full_jones, progress_reporter, vpkg, &param);
 
   cost   = final_cost;
-  niter  = pkg.niter;
   gnorm  = pkg.gnorm;
+  niter  = pkg.niter;
 
   return final_cost;
 }
