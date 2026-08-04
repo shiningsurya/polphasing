@@ -19,6 +19,7 @@ Unsurprisingly, it is slow.
 
 | package | usage |
 |---------|-------|
+| lbfgs | Limited memory BFGS optimization code |
 | cminpack | Use the Levenburg Marquardt solver which solves for gains |
 | lute  | Provide an interface to the GMRT LTA file |
 | fmt   | To write in specific format the solved gains |
