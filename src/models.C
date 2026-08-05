@@ -160,19 +160,19 @@ models::model_type models::parallactic_correction (
 
 	// precompute the angles
 	// The order matters.
-	const real_type cd ( std::cos(pa2 - pa1) );
-	const real_type cs ( std::cos(pa2 + pa1) );
-	const real_type sd ( std::sin(pa2 - pa1) );
-	const real_type ss ( std::sin(pa2 + pa1) );
+	const real_type cd ( std::cos(pa1 - pa2) );
+	const real_type cs ( std::cos(pa1 + pa2) );
+	const real_type sd ( std::sin(pa1 - pa2) );
+	const real_type ss ( std::sin(pa1 + pa2) );
 
 	// rr
-	ret[0]  = mrr * complex_type(cd, sd);
+	ret[0]  = mrr * complex_type(cd,-sd);
 	// rl
 	ret[1]  = mrl * complex_type(cs,-ss);
 	// lr
 	ret[2]  = mlr * complex_type(cs, ss);
 	// ll
-	ret[3]  = mll * complex_type(cd,-sd);
+	ret[3]  = mll * complex_type(cd, sd);
 
 	return ret;
 }
