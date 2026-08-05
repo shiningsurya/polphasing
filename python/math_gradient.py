@@ -18,30 +18,22 @@ gq_rr, gq_rl, gq_lr, gq_ll = symbols('g_q^{rr} g_q^{rl} g_q^{lr} g_q^{ll}')
 m_rr, m_rl, m_lr, m_ll     = symbols('m^{rr} m^{rl} m^{lr} m^{ll}')
 d_rr, d_rl, d_lr, d_ll     = symbols('d_{pq}^{rr} d_{pq}^{rl} d_{pq}^{lr} d_{pq}^{ll}')
 
-# einstein summation
-#mn         ma     ab                bn
-frr  =  (gp_rr * m_rr * conjugate(gq_rr)) +\
-        (gp_rr * m_rl * conjugate(gq_lr)) +\
-        (gp_rl * m_lr * conjugate(gq_rr)) +\
-        (gp_rl * m_ll * conjugate(gq_lr))
+"""
+20260805: after iterating through so many solvers, 
+i found an error in my gradient computation itself.
+"""
 
-#mn         ma     ab                bn
-frl  =  (gp_rr * m_rr * conjugate(gq_rl)) +\
-        (gp_rr * m_rl * conjugate(gq_ll)) +\
-        (gp_rl * m_lr * conjugate(gq_rl)) +\
-        (gp_rl * m_ll * conjugate(gq_ll))
+gp   = Matrix([[gp_rr, gp_rl], [gp_lr, gp_ll]])
+gq   = Matrix([[gq_rr, gq_rl], [gq_lr, gq_ll]])
+mm   = Matrix([[m_rr, m_rl], [m_lr, m_ll]])
+gqh  = gq.transpose().conjugate()
 
-#mn         ma     ab                bn
-flr  =  (gp_lr * m_rr * conjugate(gq_rr)) +\
-        (gp_lr * m_rl * conjugate(gq_lr)) +\
-        (gp_ll * m_lr * conjugate(gq_rr)) +\
-        (gp_ll * m_ll * conjugate(gq_lr))
+fff  = gp * mm * gqh
 
-#mn         ma     ab                bn
-fll  =  (gp_lr * m_rr * conjugate(gq_rl)) +\
-        (gp_lr * m_rl * conjugate(gq_ll)) +\
-        (gp_ll * m_lr * conjugate(gq_rl)) +\
-        (gp_ll * m_ll * conjugate(gq_ll))
+frr  = expand ( fff[0,0] )
+frl  = expand ( fff[0,1] )
+flr  = expand ( fff[1,0] )
+fll  = expand ( fff[1,1] )
 
 ## residuals
 err  = d_rr - frr
@@ -104,13 +96,29 @@ q_ll  = arger ( gq_ll, terms )
 
 ### latex printing
 ## switching it off when generating code
-# print ("RR", p_rr[0], sep='\n')
-# print ("RL", p_rl[0], sep='\n')
-# print ("LR", p_lr[0], sep='\n')
-# print ("LL", p_ll[0], sep='\n')
+print ("RR", p_rr[0], sep='\n')
+print ("RL", p_rl[0], sep='\n')
+print ("LR", p_lr[0], sep='\n')
+print ("LL", p_ll[0], sep='\n')
+
+### model forward pass
+print ("-----MODELFORWARDPASS----")
+
+print ( "RR",  printer ( frr ), sep='\n' )
+print ( "RL",  printer ( frl ), sep='\n' )
+print ( "LR",  printer ( flr ), sep='\n' )
+print ( "LL",  printer ( fll ), sep='\n' )
+
+print ("-----MODELFORWARDPASS----")
 
 ### coefficient printing
 locs = defaultdict(list)
+catamap = {
+    'conj(dpqrr)':'dqprr',
+    'conj(dpqrl)':'dqprl',
+    'conj(dpqlr)':'dqplr',
+    'conj(dpqll)':'dqpll',
+}
 def codeprintaction ( k, v, tag ):
     """
     k : dlr
@@ -123,9 +131,11 @@ def codeprintaction ( k, v, tag ):
     """
     ptag = tag
     pk   = k
-    if pk.startswith("conj(") and pk.endswith(")"):
-        swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
-        pk      = swapper(pk[len('conj('):-len(')')])
+    if pk in catamap.keys():
+        pk = catamap[pk]
+    # if pk.startswith("conj(") and pk.endswith(")"):
+        # swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
+        # pk      = swapper(pk[len('conj('):-len(')')])
 
     stmt = f"const complex_type {ptag}_coeff_{pk} = {v} ; "
 
