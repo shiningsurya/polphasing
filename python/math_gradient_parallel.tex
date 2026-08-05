@@ -17,18 +17,36 @@ To this end, we compute gradient of the loss, that is, $\frac{\partial |S|^2}{\p
 \begin{equation}
 \begin{split}
 \frac{\partial |S|^2}{\partial g_p^{rr}} &= \sum_q \\ 
-- &d_{pq}^{rl} g_q^{ll} \overline{m^{rl}}+\\
-- &d_{pq}^{rr} g_q^{rr} \overline{m^{rr}}+\\
-	&g_p^{rr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right).
+	- &d_{pq}^{rl} g_q^{ll} \overline{m^{rl}}+\\
+	- &d_{pq}^{rr} g_q^{rr} \overline{m^{rr}}+\\
+	g_p^{rr} &\left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right).
 \end{split}
 \end{equation}
 
 \begin{equation}
 \begin{split}
 \frac{\partial |S|^2}{\partial g_p^{ll}} &= \sum_q \\ 
-- &d_{pq}^{ll} g_q^{ll} \overline{m^{ll}}+\\
-- &d_{pq}^{lr} g_q^{rr} \overline{m^{lr}}+\\
-	&g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right).
+	- &d_{pq}^{ll} g_q^{ll} \overline{m^{ll}}+\\
+	- &d_{pq}^{lr} g_q^{rr} \overline{m^{lr}}+\\
+	g_p^{ll} &\left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right).
+\end{split}
+\end{equation}
+
+\begin{equation}
+\begin{split}
+\frac{\partial |S|^2}{\partial g_q^{rr}} &= \sum_p \\ 
+	- g_p^{ll} m^{lr} &\overline{d_{pq}^{lr}}+\\
+	- g_p^{rr} m^{rr} &\overline{d_{pq}^{rr}}+\\
+	g_q^{rr} &\left(g_p^{ll} m^{lr} \overline{g_p^{ll}} \overline{m^{lr}} + g_p^{rr} m^{rr} \overline{g_p^{rr}} \overline{m^{rr}}\right).
+\end{split}
+\end{equation}
+
+\begin{equation}
+\begin{split}
+\frac{\partial |S|^2}{\partial g_q^{ll}} &= \sum_p \\ 
+	- g_p^{ll} m^{ll} &\overline{d_{pq}^{ll}}+\\
+	- g_p^{rr} m^{rl} &\overline{d_{pq}^{rl}}+\\
+	g_q^{ll} &\left(g_p^{ll} m^{ll} \overline{g_p^{ll}} \overline{m^{ll}} + g_p^{rr} m^{rl} \overline{g_p^{rr}} \overline{m^{rl}}\right).
 \end{split}
 \end{equation}
 

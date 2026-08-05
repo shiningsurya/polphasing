@@ -1,7 +1,11 @@
-RR
+GPRR
 - d_{pq}^{rl} g_q^{ll} \overline{m^{rl}}+- d_{pq}^{rr} g_q^{rr} \overline{m^{rr}}+g_p^{rr} \left(g_q^{ll} m^{rl} \overline{g_q^{ll}} \overline{m^{rl}} + g_q^{rr} m^{rr} \overline{g_q^{rr}} \overline{m^{rr}}\right)
-LL
+GPLL
 - d_{pq}^{ll} g_q^{ll} \overline{m^{ll}}+- d_{pq}^{lr} g_q^{rr} \overline{m^{lr}}+g_p^{ll} \left(g_q^{ll} m^{ll} \overline{g_q^{ll}} \overline{m^{ll}} + g_q^{rr} m^{lr} \overline{g_q^{rr}} \overline{m^{lr}}\right)
+GQRR
+- g_p^{ll} m^{lr} \overline{d_{pq}^{lr}}+- g_p^{rr} m^{rr} \overline{d_{pq}^{rr}}+g_q^{rr} \left(g_p^{ll} m^{lr} \overline{g_p^{ll}} \overline{m^{lr}} + g_p^{rr} m^{rr} \overline{g_p^{rr}} \overline{m^{rr}}\right)
+GQLL
+- g_p^{ll} m^{ll} \overline{d_{pq}^{ll}}+- g_p^{rr} m^{rl} \overline{d_{pq}^{rl}}+g_q^{ll} \left(g_p^{ll} m^{ll} \overline{g_p^{ll}} \overline{m^{ll}} + g_p^{rr} m^{rl} \overline{g_p^{rr}} \overline{m^{rl}}\right)
 -------------------------
 const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) ; 
 -------------------------

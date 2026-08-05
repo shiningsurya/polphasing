@@ -82,11 +82,19 @@ q_ll  = arger ( gq_ll, terms )
 
 ### latex printing
 ## switching it off when generating code
-print ("RR", p_rr[0], sep='\n')
-print ("LL", p_ll[0], sep='\n')
+print ("GPRR", p_rr[0], sep='\n')
+print ("GPLL", p_ll[0], sep='\n')
+print ("GQRR", q_rr[0], sep='\n')
+print ("GQLL", q_ll[0], sep='\n')
 
 ### coefficient printing
 locs = defaultdict(list)
+catamap = {
+    'conj(dpqrr)':'dqprr',
+    'conj(dpqrl)':'dqprl',
+    'conj(dpqlr)':'dqplr',
+    'conj(dpqll)':'dqpll',
+}
 def codeprintaction ( k, v, tag ):
     """
     k : dlr
@@ -99,9 +107,8 @@ def codeprintaction ( k, v, tag ):
     """
     ptag = tag
     pk   = k
-    if pk.startswith("conj(") and pk.endswith(")"):
-        swapper = lambda t : t.translate ( str.maketrans({'p':'q','q':'p'}) )
-        pk      = swapper(pk[len('conj('):-len(')')])
+    if pk in catamap.keys():
+        pk = catamap[pk]
 
     stmt = f"const complex_type {ptag}_coeff_{pk} = {v} ; "
 
