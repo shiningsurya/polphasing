@@ -96,10 +96,14 @@ q_ll  = arger ( gq_ll, terms )
 
 ### latex printing
 ## switching it off when generating code
-print ("RR", p_rr[0], sep='\n')
-print ("RL", p_rl[0], sep='\n')
-print ("LR", p_lr[0], sep='\n')
-print ("LL", p_ll[0], sep='\n')
+print ("GPRR", p_rr[0], sep='\n')
+print ("GPRL", p_rl[0], sep='\n')
+print ("GPLR", p_lr[0], sep='\n')
+print ("GPLL", p_ll[0], sep='\n')
+print ("GQRR", q_rr[0], sep='\n')
+print ("GQRL", q_rl[0], sep='\n')
+print ("GQLR", q_lr[0], sep='\n')
+print ("GQLL", q_ll[0], sep='\n')
 
 ### model forward pass
 print ("-----MODELFORWARDPASS----")
