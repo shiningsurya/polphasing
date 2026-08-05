@@ -25,10 +25,10 @@ auto end    = std::chrono::high_resolution_clock::now();
 #endif 
 
 void print_help () {
-	std::cout << "fullpolphase" << std::endl;
-	std::cout << "  Solving full Jones matrix for each antenna using IQU model using multithreading " << std::endl;
+	std::cout << "diagpolphase" << std::endl;
+	std::cout << "  Solving diagonal Jones matrix for each antenna using IQU model using multithreading " << std::endl;
 	std::cout << std::endl;
-	std::cout << " fullpolphase [ARGUMENTS] LTA_FILE" << std::endl;
+	std::cout << " diagpolphase [ARGUMENTS] LTA_FILE" << std::endl;
 	std::cout << "    -h Print help" << std::endl;
 	std::cout << "    -s <scan> scan number of the LTA file" << std::endl;
 	std::cout << "    -t <tag> tag/stem with which to save log and complex gains" << std::endl;
@@ -77,8 +77,6 @@ int main(int argc, char *argv[]) {
 
 	/* other files */
 	const std::string save_file_rr  = tag + std::string("_rr.gains");
-	const std::string save_file_rl  = tag + std::string("_rl.gains");
-	const std::string save_file_lr  = tag + std::string("_lr.gains");
 	const std::string save_file_ll  = tag + std::string("_ll.gains");
 	const std::string log_file      = tag + std::string(".log");
 
@@ -196,8 +194,6 @@ int main(int argc, char *argv[]) {
 
 	/* gain tables */
 	gaintable::gaintable_t    solved_gains_rr = gaintable::prepare_gaintables ( nchannels );
-	gaintable::gaintable_t    solved_gains_rl = gaintable::prepare_gaintables ( nchannels );
-	gaintable::gaintable_t    solved_gains_lr = gaintable::prepare_gaintables ( nchannels );
 	gaintable::gaintable_t    solved_gains_ll = gaintable::prepare_gaintables ( nchannels );
 
 	/* main loop */
@@ -305,11 +301,11 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		/* full jones has four complex gains per antenna */
+		/* diag jones has two complex gains per antenna */
 		/* LBFGS separates real and imaginary so double it*/
-		const int npar        ( nantennas * 4 * 2 );
+		const int npar        ( nantennas * 2 * 2 );
 		LBFGS::Solver                 solver (npar);
-		auto cost = solver.solve_full_jones ( pkg );
+		auto cost = solver.solve_diag_jones ( pkg );
 
 #ifdef CHANDEBUG 
 		{
@@ -351,14 +347,10 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
-			const LBFGS::complex_type  rr ( solver.xpar[8*idx + 0], solver.xpar[8*idx + 1] );
-			const LBFGS::complex_type  rl ( solver.xpar[8*idx + 2], solver.xpar[8*idx + 3] );
-			const LBFGS::complex_type  lr ( solver.xpar[8*idx + 4], solver.xpar[8*idx + 5] );
-			const LBFGS::complex_type  ll ( solver.xpar[8*idx + 6], solver.xpar[8*idx + 7] );
+			const LBFGS::complex_type  rr ( solver.xpar[4*idx + 0], solver.xpar[4*idx + 1] );
+			const LBFGS::complex_type  ll ( solver.xpar[4*idx + 2], solver.xpar[4*idx + 3] );
 
 			solved_gains_rr[iant][ichan]  = rr;
-			solved_gains_rl[iant][ichan]  = rl;
-			solved_gains_lr[iant][ichan]  = lr;
 			solved_gains_ll[iant][ichan]  = ll;
 
 		} /* ant2idx */
@@ -369,8 +361,6 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 	/*        WRITE GAINTABLES             */
 	/***************************************/
 	gaintable::write_complex_solutions ( solved_gains_rr, save_file_rr );
-	gaintable::write_complex_solutions ( solved_gains_rl, save_file_rl );
-	gaintable::write_complex_solutions ( solved_gains_lr, save_file_lr );
 	gaintable::write_complex_solutions ( solved_gains_ll, save_file_ll );
 
 	/***************************************/
@@ -385,4 +375,5 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 
 	return 0;
 }
+
 

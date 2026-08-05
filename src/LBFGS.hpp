@@ -132,8 +132,24 @@ namespace LBFGS {
 
 			/* initialize xpar */
 			std::fill ( xpar, xpar + npar, 0.0f ); 
+		}
+
+		/* initializes xpar */
+		void initialize_full_jones () {
+			/*
+			 * Only the parallel gains are set to unity with zero imaginary.
+			*/
 			for ( int ipar = 0; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
 			for ( int ipar = 6; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
+		}
+		void initialize_diag_jones () {
+			/*
+			 * Only the parallel gains are set to unity with zero imaginary.
+			 * Which in case of diag_jones, is every gain
+			 *
+			 * R I R I R I R I
+			*/
+			for ( int ipar = 0; ipar < npar; ipar+=2 ) xpar[ipar] = 1.0f;
 		}
 
 		// dtor
@@ -143,9 +159,9 @@ namespace LBFGS {
 			if (grad) lbfgs_free ( grad );
 		}
 
-		//template<typename jones_t>
-		// for now only implement full jones
-		real_type operator()(data_t& pkg);
+		/* solving methods */
+		real_type solve_full_jones (data_t& pkg);
+		real_type solve_diag_jones (data_t& pkg);
 
 	}; // solver
 

@@ -1,6 +1,8 @@
 #include "LBFGS.hpp"
 
+#ifdef DEBUG
 #include <iostream>
+#endif
 
 LBFGS::real_type LBFGS::full_jones (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
 
@@ -243,14 +245,8 @@ LBFGS::real_type LBFGS::diag_jones (void *instance, const lbfgsfloatval_t *rgain
 
 		// the following long expressions come from sympy
 		// see :math_gradient_parallel.py:
-		// see :math_gradient_parallel.stdout:
+		// see :math_gradient_parallel.code:
 		// see :math_gradient_parallel.pdf:
-
-		/*
-		 * We follow the strategy in :fullgdsolver::gradient: impl. 
-		 * We iterate through polarbaselines and update correspondingly.
-		 *
-		 */
 
 		// model forward depends on pb2corr
 		complex_type model;
@@ -258,11 +254,10 @@ LBFGS::real_type LBFGS::diag_jones (void *instance, const lbfgsfloatval_t *rgain
 		// do on every pb2corr
 		if ( pb2corr == 0 ) {
 
-			const complex_type Dgprr_coeff_dpqrr = -gqrr*conj(mrr) ; 
-			const complex_type Dgqrr_coeff_dqprr = -gprr*mrr ; 
-
-			const complex_type Dgprr_coeff_gprr = gqrr*mrr*conj(gqrr)*conj(mrr) ; 
-			const complex_type Dgqrr_coeff_gqrr = gprr*mrr*conj(gprr)*conj(mrr) ; 
+const complex_type Dgprr_coeff_dpqrr = -gqrr*conj(mrr) ; 
+const complex_type Dgqrr_coeff_dqprr = -gprr*mrr ; 
+const complex_type Dgprr_coeff_gprr = gqll*mrl*conj(gqll)*conj(mrl) + gqrr*mrr*conj(gqrr)*conj(mrr) ; 
+const complex_type Dgqrr_coeff_gqrr = gpll*mlr*conj(gpll)*conj(mlr) + gprr*mrr*conj(gprr)*conj(mrr) ; 
 
 			grad[iprr] += Dgprr_coeff_gprr*gprr + Dgprr_coeff_dpqrr*data;
 			grad[iqrr] += Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqprr*conj(data);
@@ -272,39 +267,32 @@ LBFGS::real_type LBFGS::diag_jones (void *instance, const lbfgsfloatval_t *rgain
 		} // rr
 		else if ( pb2corr == 1 ) {
 
-			const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) ; 
-			const complex_type Dgqll_coeff_dqprl = -gprr*mrl ; 
+const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) ; 
+const complex_type Dgqll_coeff_dqprl = -gprr*mrl ; 
 
-			const complex_type Dgprr_coeff_gprr = gqll*mrl*conj(gqll)*conj(mrl) ; 
-			const complex_type Dgqll_coeff_gqll = gprr*mrl*conj(gprr)*conj(mrl) ; 
-
-			grad[iprr] += Dgprr_coeff_gprr*gprr + Dgprr_coeff_dpqrl*data; 
-			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqprl*conj(data);
+			grad[iprr] += Dgprr_coeff_dpqrl*data; 
+			grad[iqll] += Dgqll_coeff_dqprl*conj(data);
 
 			model = gprr * mrl * conj(gqll);
 
 		} // rl
 		else if ( pb2corr == 2 ) {
 
-			const complex_type Dgpll_coeff_dpqlr = -gqrr*conj(mlr) ; 
-			const complex_type Dgqrr_coeff_dqplr = -gpll*mlr ; 
+const complex_type Dgpll_coeff_dpqlr = -gqrr*conj(mlr) ; 
+const complex_type Dgqrr_coeff_dqplr = -gpll*mlr ; 
 
-			const complex_type Dgpll_coeff_gpll = gqrr*mlr*conj(gqrr)*conj(mlr) ; 
-			const complex_type Dgqrr_coeff_gqrr = gpll*mlr*conj(gpll)*conj(mlr) ; 
-
-			grad[ipll] +=  Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqlr*data;
-			grad[iqrr] +=  Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqplr*conj(data);
+			grad[ipll] +=  Dgpll_coeff_dpqlr*data;
+			grad[iqrr] +=  Dgqrr_coeff_dqplr*conj(data);
 
 			model = gpll * mlr * conj(gqrr);
 
 		} // lr
 		else if ( pb2corr == 3 ) {
 
-			const complex_type Dgpll_coeff_dpqll = -gqll*conj(mll) ; 
-			const complex_type Dgqll_coeff_dqpll = -gpll*mll ; 
-
-			const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) ; 
-			const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) ; 
+const complex_type Dgpll_coeff_dpqll = -gqll*conj(mll) ; 
+const complex_type Dgqll_coeff_dqpll = -gpll*mll ; 
+const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) + gqrr*mlr*conj(gqrr)*conj(mlr) ; 
+const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) + gprr*mrl*conj(gprr)*conj(mrl) ; 
 
 			grad[ipll] += Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqll*data;
 			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqpll*conj(data);
@@ -338,18 +326,21 @@ int LBFGS::progress_reporter (void *instance, const lbfgsfloatval_t *x, const lb
 	pkg->gnorm  = gnorm;
 	pkg->niter++;
 
-	//std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+#ifdef DEBUG
+	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+#endif
 
 	/* return 0 always */
 	return 0;
 }
 
-// for now this solves full jones
-LBFGS::real_type LBFGS::Solver::operator() (data_t& pkg) {
+LBFGS::real_type LBFGS::Solver::solve_full_jones (data_t& pkg) {
 
 	real_type final_cost (0.0f);
 
 	void* vpkg  = static_cast<void*>(&pkg);
+
+	initialize_full_jones ();
 
   rcode = lbfgs(npar, xpar, &final_cost, full_jones, progress_reporter, vpkg, &param);
 
@@ -357,8 +348,30 @@ LBFGS::real_type LBFGS::Solver::operator() (data_t& pkg) {
   gnorm  = pkg.gnorm;
   niter  = pkg.niter;
 
-	//std::cout << " iteration=" << niter << " cost=" << final_cost << " gnorm=" << gnorm << std::endl;
-	//std::cout << " rcode=" << rcode << std::endl;
+#ifdef DEBUG
+	std::cout << " rcode=" << rcode << std::endl;
+#endif
+
+  return final_cost;
+}
+
+LBFGS::real_type LBFGS::Solver::solve_diag_jones (data_t& pkg) {
+
+	real_type final_cost (0.0f);
+
+	void* vpkg  = static_cast<void*>(&pkg);
+
+	initialize_diag_jones ();
+
+  rcode = lbfgs(npar, xpar, &final_cost, diag_jones, progress_reporter, vpkg, &param);
+
+  cost   = final_cost;
+  gnorm  = pkg.gnorm;
+  niter  = pkg.niter;
+
+#ifdef DEBUG
+	std::cout << " rcode=" << rcode << std::endl;
+#endif
 
   return final_cost;
 }
