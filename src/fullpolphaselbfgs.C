@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 	
 #ifdef CHANDEBUG
 	/* channel 458 has high loss.*/
-	for (int ichan = 458; ichan < 459; ichan++) {
+	for (int ichan = 501; ichan < 502; ichan++) {
 #else
 	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
@@ -263,8 +263,9 @@ int main(int argc, char *argv[]) {
 			const auto& band1 = _bl.band1;
 			const auto& band2 = _bl.band2;
 
+
 			/* ID correlation */
-			const int pb2corr = _bl.band1*2 + _bl.band2;
+			const int pb2corr = band1*2 + band2;
 
 			/* index_b1 b2 */
 			const auto& iant1 = ant2idx.at(ant1);
@@ -309,6 +310,29 @@ int main(int argc, char *argv[]) {
 		const int npar      ( nantennas * 4 * 2 );
 		LBFGS::Solver               solver (npar);
 		auto cost       =          solver ( pkg );
+
+#ifdef CHANDEBUG 
+		{
+			std::ofstream of("pkgchandebug.bin", std::ios::binary);
+of.write (reinterpret_cast<const char*>(&pkg.npolarbaselines), sizeof(int));
+of.write (reinterpret_cast<const char*>(&pkg.nantennas), sizeof(int));
+of.write (reinterpret_cast<const char*>(&pkg.mrr), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&pkg.mrl), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&pkg.mlr), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&pkg.mll), sizeof(LBFGS::complex_type));
+			/* data */
+of.write (reinterpret_cast<const char*>(pkg.data.data()), pkg.data.size()*sizeof(LBFGS::complex_type));
+			/* models */
+of.write (reinterpret_cast<const char*>(pkg.par_model_rr.data()), pkg.par_model_rr.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(pkg.par_model_rl.data()), pkg.par_model_rl.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(pkg.par_model_lr.data()), pkg.par_model_lr.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(pkg.par_model_ll.data()), pkg.par_model_ll.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(pkg.iant1.data()), pkg.iant1.size()*sizeof(int));
+of.write (reinterpret_cast<const char*>(pkg.iant2.data()), pkg.iant2.size()*sizeof(int));
+of.write (reinterpret_cast<const char*>(pkg.pb2corr.data()), pkg.pb2corr.size()*sizeof(int));
+of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
+		}
+#endif
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();

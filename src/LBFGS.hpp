@@ -113,7 +113,7 @@ namespace LBFGS {
 		int                  niter;
 
 		// ctor
-		Solver (int _npar, int n_hessian_corrections = 10, int max_iterations = 1000) : 
+		Solver (int _npar, int n_hessian_corrections = 16, int max_iterations = 1000) : 
 			npar(_npar),
 			niter(0)
 		{
@@ -124,13 +124,16 @@ namespace LBFGS {
 			param.m                 = n_hessian_corrections;
 			/* max iterations */
 			param.max_iterations    = max_iterations;
+			/* linesearch strong wolfe */
+			// param.linesearch        = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE;
 
 			xpar      = lbfgs_malloc ( npar );
 			grad      = lbfgs_malloc ( npar );
 
 			/* initialize xpar */
-			//std::fill ( xpar, xpar + npar, 0.5f ); 
-			for ( int ipar = 0; ipar < npar; ipar++ ) xpar[ipar] = ipar % 2 ? 1.0f : 0.0f;
+			std::fill ( xpar, xpar + npar, 0.0f ); 
+			for ( int ipar = 0; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
+			for ( int ipar = 6; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
 		}
 
 		// dtor

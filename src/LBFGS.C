@@ -1,6 +1,6 @@
 #include "LBFGS.hpp"
 
-//#include <iostream>
+#include <iostream>
 
 LBFGS::real_type LBFGS::full_jones (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
 
@@ -356,6 +356,9 @@ LBFGS::real_type LBFGS::Solver::operator() (data_t& pkg) {
   cost   = final_cost;
   gnorm  = pkg.gnorm;
   niter  = pkg.niter;
+
+	//std::cout << " iteration=" << niter << " cost=" << final_cost << " gnorm=" << gnorm << std::endl;
+	//std::cout << " rcode=" << rcode << std::endl;
 
   return final_cost;
 }
