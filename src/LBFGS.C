@@ -1,6 +1,6 @@
 #include "LBFGS.hpp"
 
-#ifdef DEBUG
+#ifdef DPRINT
 #include <iostream>
 #endif
 
@@ -326,7 +326,7 @@ int LBFGS::progress_reporter (void *instance, const lbfgsfloatval_t *x, const lb
 	pkg->gnorm  = gnorm;
 	pkg->niter++;
 
-#ifdef DEBUG
+#ifdef DPRINT
 	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
 #endif
 
@@ -348,7 +348,7 @@ LBFGS::real_type LBFGS::Solver::solve_full_jones (data_t& pkg) {
   gnorm  = pkg.gnorm;
   niter  = pkg.niter;
 
-#ifdef DEBUG
+#ifdef DPRINT
 	std::cout << " rcode=" << rcode << std::endl;
 #endif
 
@@ -369,7 +369,7 @@ LBFGS::real_type LBFGS::Solver::solve_diag_jones (data_t& pkg) {
   gnorm  = pkg.gnorm;
   niter  = pkg.niter;
 
-#ifdef DEBUG
+#ifdef DPRINT
 	std::cout << " rcode=" << rcode << std::endl;
 #endif
 

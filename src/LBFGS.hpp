@@ -77,7 +77,8 @@ namespace LBFGS {
 				) : npolarbaselines(npbl), nantennas(nant),
 			iant1(npbl), iant2(npbl), pb2corr(npbl), data(npbl),
 			mrr(_mrr), mrl(_mrl), mlr(_mlr), mll(_mll),
-			par_model_rr (npbl), par_model_rl (npbl), par_model_lr (npbl), par_model_ll (npbl) {}
+			par_model_rr (npbl), par_model_rl (npbl), par_model_lr (npbl), par_model_ll (npbl),
+		 cost (0.0f), gnorm(0.0f), niter(0) {}
 	}; 
 
 	using data_t       = struct data_t;
@@ -124,8 +125,8 @@ namespace LBFGS {
 			param.m                 = n_hessian_corrections;
 			/* max iterations */
 			param.max_iterations    = max_iterations;
-			/* linesearch strong wolfe */
-			// param.linesearch        = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE;
+			/* max linesearch */
+			param.max_linesearch    = 64;
 
 			xpar      = lbfgs_malloc ( npar );
 			grad      = lbfgs_malloc ( npar );
