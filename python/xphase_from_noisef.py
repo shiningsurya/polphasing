@@ -1,15 +1,7 @@
 """
-complex gains we solve introduce cross hand phase
 
-there is a phase ramp or a linear slope, which we can subtract out
+crosshand phase from noise diode
 
-whatever remains is technically not leakage but noise in the system 
-
-we see this noise
-
-this script just computes. plot using other script
-
-this computation is pretty heavy
 """
 
 import numpy as np
@@ -19,31 +11,39 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from collections import defaultdict
-###############################
+
 def get_args():
     import argparse
-    agp = argparse.ArgumentParser("xphase_from_gains", description="Computes crosshand phases and residuals and delays")
+    agp = argparse.ArgumentParser("xphase_from_noisef", description="Computes crosshand phases and residuals and delays")
     add = agp.add_argument
-    add ('tag', help="Stem/tag that was passed to polphase")
+    add ('on', help=':write_baseline: of ON scan', )
+    add ('off', help=':write_baseline: of OFF scan', )
+    add ('-o', '--ofile', help='xphase dataframe', required=True, dest='ofile')
     return agp.parse_args()
 
+def make_ngf ( f ):
+
+    ff        = pd.read_csv (f,sep='\\s+')
+    selfrow   = (ff['ant1'] == ff['ant2'])
+    ff        = pd.DataFrame ( ff[['ant1','correlation','complex']][selfrow] )
+    ff['complex'] = ff['complex'].apply(complex)
+    gf        = ff.groupby(['ant1','correlation']).agg(list)
+    gf['complex'] = gf['complex'].apply ( np.array )
+    return gf
 
 if __name__ == "__main__":
     args    = get_args()
-    stem    = args.tag
-    odf     = stem + "_xphase_df.pkl"
-
-    rgains  = pd.read_csv (f"{stem}_rr.gains", sep='\\s+').map(complex)
-    lgains  = pd.read_csv (f"{stem}_ll.gains", sep='\\s+').map(complex)
-
-    mm      = np.abs( rgains.sum(0) ) == 0.
-    goodants =  list(mm[~mm].index)
+    odf     = args.ofile
+    ###################
+    on      = make_ngf ( args.on )
+    of      = make_ngf ( args.off )
+    ### beauty of pandas
+    oo      = on - of
+    ###################
+    ants    = sorted ( set(oo.index.get_level_values(0)) )
 
     freqs   = np.linspace ( 550., 750., 2048, endpoint=True )
     freqs_ghz  = freqs * 1E-3
-
-    # ants    = list(set(rgains.columns).intersection(lgains.columns))
-    ants    = goodants
 
     def measure_d ( freqs_ghz, dphase, dmin=-300, dmax=300, dsize=1024 ):
         """
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     dps   = defaultdict(list)
     for ant in tqdm (ants, desc='antennas', unit='ant'):
-        dphi   = np.angle ( rgains[ant] / lgains[ant] )
+        dphi   = np.angle ( oo.complex.loc[ant, 'rl'] )
         dphase = 0.5 * dphi
         sols   = measure_d ( freqs_ghz, dphase )
         #
