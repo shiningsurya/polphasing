@@ -27,4 +27,4 @@ fi
 
 TAG="SCAN_$1"
 
-src/polphaseomp -t $TAG -m $MODEL -s $SCAN $LTA
+src/diagpolphaselbfgs -t $TAG -m $MODEL -s $SCAN $LTA
