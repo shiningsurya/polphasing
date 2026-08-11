@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 	/* maybe directly read complex<float>  */
   /* NOTICE:avgbldata contains self-terms*/
-	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0. );
+	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0.0f );
 	lta_file.time_average  ( cal_scan_number, avgbldata );
 
 	/***************************************/
