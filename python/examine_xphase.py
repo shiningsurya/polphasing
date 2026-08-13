@@ -14,50 +14,65 @@ to plot delays against antenna
 xphase against channel
 residuals against channel
 """
-DFPKL = "/tmp/TST3323/psols/pp_3323_0_xphase_df.pkl"
-xf    = pd.read_pickle(DFPKL)
-
-xf    = xf.drop(index=['C01','C12', 'C14'])
-
-ants  = sorted(set(xf.index))
-
-COLORS = cycle(['red','green','blue','black','orange','yellow', 'magenta'])
-
-fig     = plt.figure('xphase',figsize=(8,6))
-axde, axxp, axrs = fig.subplots ( 3,1, )
-
-axbi = axde.twinx()
+def get_args ():
+    import argparse
+    agp  = argparse.ArgumentParser ("examine_xphase", description="xphase check")
+    add  = agp.add_argument
+    add ('xphase_df', help="output of :xphase_from_gains.py:")
+    add ('-o', '--outfile', help='Output file', default=None, dest='ofile')
+    add ('-d','--drop', help='Drop the following antennas', nargs='+', dest='badants', default=[])
+    return agp.parse_args()
 
 
-for iant,color in zip(ants,COLORS):
-    axxp.plot ( xf.loc[iant].dphase, color=color, label=iant )
-    axrs.plot ( xf.loc[iant].res, color=color, label=iant )
+if __name__ == "__main__":
+    args    = get_args()
+    DFPKL   = args.xphase_df
+    OFILE   = args.ofile
 
-axde.plot ( xf.delay, c='k', marker='.' )
+    xf    = pd.read_pickle(DFPKL)
+    xf    = xf.drop(index=args.badants)
 
-axbi.plot ( xf.bias, c='b', marker='.' )
+    ants  = sorted(set(xf.index))
 
-axde.grid(axis='x', which='major', ls=':', c='k', alpha=0.4)
+    COLORS = cycle(['red','green','blue','black','orange','yellow', 'magenta'])
 
-axde.set_ylabel ('Delay / ns')
-axbi.set_ylabel ('Bias / ns')
+    fig     = plt.figure('xphase',figsize=(8,6))
+    axde, axxp, axrs = fig.subplots ( 3,1, )
 
-axde.xaxis.tick_top()
-axde.xaxis.set_label_position('top')
-axde.set_xlabel ('Antenna')
+    axbi = axde.twinx()
 
-axbi.yaxis.label.set_color('blue')
-axbi.tick_params(axis='y', color='blue')
 
-axxp.set_ylabel ('Phase / rad')
-axrs.set_ylabel ('Residual / rad')
-axrs.set_xlabel ('Channel')
+    for iant,color in zip(ants,COLORS):
+        axxp.plot ( xf.loc[iant].dphase, color=color, label=iant )
+        axrs.plot ( xf.loc[iant].res, color=color, label=iant )
 
-axrs.sharex(axxp)
+    axde.plot ( xf.delay, c='k', marker='.' )
 
-axrs.axhline(0.,ls=':', c='k')
+    axbi.plot ( xf.bias, c='b', marker='.' )
 
-axde.tick_params(axis='x', labelsize='x-small', labelrotation=45)
+    axde.grid(axis='x', which='major', ls=':', c='k', alpha=0.4)
 
-# plt.show ()
-fig.savefig ('xphase_polphase_3C138.png', dpi=300, bbox_inches='tight')
+    axde.set_ylabel ('Delay / ns')
+    axbi.set_ylabel ('Bias / ns')
+
+    axde.xaxis.tick_top()
+    axde.xaxis.set_label_position('top')
+    axde.set_xlabel ('Antenna')
+
+    axbi.yaxis.label.set_color('blue')
+    axbi.tick_params(axis='y', color='blue')
+
+    axxp.set_ylabel ('Phase / rad')
+    axrs.set_ylabel ('Residual / rad')
+    axrs.set_xlabel ('Channel')
+
+    axrs.sharex(axxp)
+
+    axrs.axhline(0.,ls=':', c='k')
+
+    axde.tick_params(axis='x', labelsize='x-small', labelrotation=45)
+
+    if args.ofile:
+        fig.savefig (args.ofile, dpi=300, bbox_inches='tight')
+    else:
+        plt.show ()

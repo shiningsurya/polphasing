@@ -33,8 +33,8 @@ if __name__ == "__main__":
     stem    = args.tag
     odf     = stem + "_xphase_df.pkl"
 
-    rgains  = pd.read_csv (f"{stem}_rr.gains", sep='\\s+').map(complex)
-    lgains  = pd.read_csv (f"{stem}_ll.gains", sep='\\s+').map(complex)
+    rgains  = pd.read_csv (f"{stem}_r.gains", sep='\\s+').map(complex)
+    lgains  = pd.read_csv (f"{stem}_l.gains", sep='\\s+').map(complex)
 
     mm      = np.abs( rgains.sum(0) ) == 0.
     goodants =  list(mm[~mm].index)
