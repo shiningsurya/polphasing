@@ -84,8 +84,8 @@ int main(int argc, char *argv[]) {
 	optind++;
 
 	/* other files */
-	const std::string save_file_rr  = tag + std::string("_rr.gains");
-	const std::string save_file_ll  = tag + std::string("_ll.gains");
+	const std::string save_file_rr  = tag + std::string("_r.gains");
+	const std::string save_file_ll  = tag + std::string("_l.gains");
 	const std::string log_file      = tag + std::string(".log");
 
 	std::cout << "[inputs] lta="   << lta_path << std::endl;

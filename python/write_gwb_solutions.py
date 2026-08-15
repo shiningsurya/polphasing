@@ -28,20 +28,17 @@ def get_args():
     return agp.parse_args()
 
 
-AMP_LEVEL = 100
 def process_amp ( c ):
     """ complex to amp in string """
     mag = math.sqrt ( c.real*c.real + c.imag*c.imag )
-    amp = 1.0
-    if mag != 0.0: amp = AMP_LEVEL / mag
-    return "%.1f" % amp
+    return "%.1f" % mag
 
 def process_phs ( c ):
     """ complex to phs in string """
     phs = math.degrees ( math.atan2 ( c.imag, c.real ) )
     return "%.0f" % phs
 
-def action ( cgains_file, amp_file, phs_file ):
+def action ( cgains_file, amp_file, phs_file, modifier ):
     """
     read from cgains_file
     write to amp and phs file
@@ -67,7 +64,22 @@ def action ( cgains_file, amp_file, phs_file ):
             if len(_toks) != nants:
                 raise RuntimeError("cgains_file is off")
             for ant,cg in zip (ants, _toks):
-                __cg        = complex ( cg )
+                __cg        = modifier ( complex ( cg ) )
+                """
+                in GWB correlator, we need to apply the inverse of the gain we compute from polphase.
+                Which in case of diagonal complex is simply the reciprocal.
+                That is, exp(-j phi_pp)
+
+                in GWB correlator, the conjugate of the phase table is applied
+                exp(-j phi_tt)
+
+                That means phi_pp = phi_tt
+
+                But when i compare rantsol and polphase, 
+                there is a phase difference.
+
+                so we do trial and error.
+                """
                 cgains[ant].append ( __cg )
                 amp[ant].append ( process_amp ( __cg ) )
                 phs[ant].append ( process_phs ( __cg ) )
@@ -128,13 +140,18 @@ if __name__ == "__main__":
     if not os.path.exists(ODIR):
         os.mkdir (ODIR)
 
+    ##
+    ## modifier
+    modifier = lambda c : c.conjugate()
+    #modifier = lambda c : 1.0 / c
+
     sol_amp_130  = os.path.join ( ODIR, "amp.130.dat" )
     sol_amp_175  = os.path.join ( ODIR, "amp.175.dat" )
     sol_phs_130  = os.path.join ( ODIR, "phas.130.dat" )
     sol_phs_175  = os.path.join ( ODIR, "phas.175.dat" )
 
-    action ( cgains_130, sol_amp_130, sol_phs_130 )
-    action ( cgains_175, sol_amp_175, sol_phs_175 )
+    action ( cgains_130, sol_amp_130, sol_phs_130, modifier )
+    action ( cgains_175, sol_amp_175, sol_phs_175, modifier )
 
 
 

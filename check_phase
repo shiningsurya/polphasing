@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sed -n '16p;32p;64p;128p;256p;512p;1024p'  /home/gpuuser/GWB/common/phasing/phas.130.dat /home/gpuuser/GWB/common/phasing/phas.175.dat
