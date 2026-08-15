@@ -31,6 +31,16 @@ struct baseline_t {
 	antname_t ant1,  ant2;
 	char samp1[8], samp2[8];
 
+	baseline_t ( const std::string& sant1, const std::string& sant2, const int _band1, const int _band2 ) {
+		band1 = _band1;
+		band2 = _band2;
+
+		for (int i = 0; i < 4; i++) {
+			ant1[i] = sant1[i];
+			ant2[i] = sant2[i];
+		}
+	}
+
 	/* ctor using BaselineType from lta.h */
 	baseline_t ( const BaselineType &btype ) {
 		band1 = btype.band[0];

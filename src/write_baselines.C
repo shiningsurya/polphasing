@@ -15,6 +15,10 @@
 #include "lta_file.hpp"
 #include "gaintable.hpp"
 
+#ifdef CUSTOM
+#include "custom_file.hpp"
+#endif
+
 /* overload operator<< for my formats */
 std::ostream& operator<< (std::ostream& os, const gaintable::antname_t& a ) {
 	//os << a[0] << a[1] << a[2] << a[3];
@@ -82,7 +86,11 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 	/*      READ LTA FILE                  */
 	/***************************************/
+#ifdef CUSTOM
+	custom_file lta_file;
+#else
 	LTA lta_file ( lta_path );
+#endif
 
 	int nbaselines   = lta_file.nbaselines;
 	int nchannels    = lta_file.nchannels;

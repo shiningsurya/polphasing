@@ -73,8 +73,13 @@ namespace ants {
 		{ antname_t{"W04"}, antpos_t(74.047829, 19.157845) },
 		{ antname_t{"W05"}, antpos_t(74.053937, 19.185155) },
 		{ antname_t{"W06"}, antpos_t(74.049341, 19.203848) },
+		{ antname_t{"C07"}, antpos_t(74.049341, 19.203848) },
+		{ antname_t{"S05"}, antpos_t(74.049341, 19.203848) },
 	//};
 	};
+/*
+* C07 and S05 are dummy antennas. They are forever flagged. The antsys.hdr shows dummy coordiantes. so i am also giving dummy coordinates here.
+*/
 
 	using ant2par_t   = std::map<antname_t,float>;
 
