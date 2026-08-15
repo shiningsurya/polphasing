@@ -149,8 +149,16 @@ namespace LBFGS {
 			 * Which in case of diag_jones, is every gain
 			 *
 			 * R I R I R I R I
+			 *
+			 * In case of GREF, the layout is
+			 * R R I R I R I
 			*/
+#ifdef GREF
+			xpar[0] = 1.0f;
+			for ( int ipar = 1; ipar < npar; ipar+=2 ) xpar[ipar] = 1.0f;
+#else
 			for ( int ipar = 0; ipar < npar; ipar+=2 ) xpar[ipar] = 1.0f;
+#endif
 		}
 
 		// dtor

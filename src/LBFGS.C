@@ -1,4 +1,22 @@
 #include "LBFGS.hpp"
+/*
+ * There is no absolute phase in an interferometer. 
+ * Arbitrarily set the phase of complex gain of some hand of some antenna to zero.
+ * In this code, we set the complex gain phase of first hand of the first antenna to zero.
+ * This means the imaginary part of RR::C00 is zero and the real part of RR::C00 is positive.
+ * If the sign is not enforced, we would have 0<->pi phase jumps.
+ *
+ * Our LBFGS implementation only solves unconstrained optimization problem. 
+ * Since we are adding only one constraint, it would be excessive to implement and use the bounded version of LBFGS. 
+ * Instead, we use parameter transformation. 
+ * Gain C00:RR = (exp(parameter), 0.0 )
+ *
+ * Encapsulate the reference part in GREF
+ *
+ * In hindsight, this could be done after solving by dividing solved complex gains by that of any reference antenna.3C138_unphased_rr.gains.
+ *
+ * why do we not need to reference when solving for full jones?
+*/
 
 #ifdef DPRINT
 #include <iostream>
@@ -189,6 +207,26 @@ model = gpll*mll*conj(gqll) + gpll*mlr*conj(gqlr) + gplr*mrl*conj(gqll) + gplr*m
 }
 
 LBFGS::real_type LBFGS::diag_jones (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
+	/*
+	 * GREF means gains are reference to the first antenna
+	 *
+	 * n  = (nant-1)*2 + 1 = 2*nant - 1
+	 *
+	 * ng = 2*nant
+	 *
+	 * Usual layout is like this:
+	 * layout = R1 I1 R2 I2 R3 I3 R4 I4 ....  Rng     Ing
+	 * gainidx= 0     1     2     3     ....  ng-1
+	 * index  = 0  1  2  3  4  5  6     ....  2*ng-2  2*ng-1
+	 * antidx = 0           1           ....  nant-1
+	 *
+	 * We are setting I1 = 0 and removing it from the array
+	 * layout = R1 R2 I2 R3 I3 R4 I4 ....  Rng     Ing
+	 * gainidx= 0  1     2     3     ....  ng-1
+	 * index  = 0  1  2  3  4  5  6  ....  2*ng-3  2*ng-2
+	 * antidx = 0        1                 nant-1
+	 * 
+	*/
 
 	/* return this */
 	real_type cost ( 0.0f );
@@ -203,9 +241,17 @@ LBFGS::real_type LBFGS::diag_jones (void *instance, const lbfgsfloatval_t *rgain
 
 	/* populate complex gains vector */
 	vc_type  gains ( ngains, complex_type(0.0f, 0.0f) );
+#ifdef GREF
+	/* this exponentiation is parameter transformation to ensure realpart is positive */
+	gains[0]         = complex_type ( std::exp(rgains[0]), 0.0f );
+	for ( int igain = 1; igain < ngains; igain++ ) {
+		gains[igain]   = complex_type ( rgains[2*igain-1], rgains[2*igain] );
+	}
+#else
 	for ( int igain = 0; igain < ngains; igain++ ) {
 		gains[igain]   = complex_type ( rgains[2*igain+0], rgains[2*igain+1] );
 	}
+#endif
 
 	/* create complex grad vector */
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
@@ -306,12 +352,23 @@ const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) + gprr*mrl*c
 
 	} // iterate over polar baselines
 
+#ifdef GREF
+	/* load complex grad into real and imaginary parts */
+	/* chain rule */
+	rgrad[0]        = grad[0].real() * std::exp (rgains[0]);
+	for (int igain = 1; igain < ngains; igain++) {
+		const complex_type gg ( grad[igain] );
+		rgrad[2*igain-1] = gg.real();
+		rgrad[2*igain] = gg.imag();
+	}
+#else
 	/* load complex grad into real and imaginary parts */
 	for ( int igain = 0; igain < ngains; igain++ ) {
 		const complex_type gg ( grad[igain] );
 		rgrad[2*igain + 0] = gg.real();
 		rgrad[2*igain + 1] = gg.imag();
 	}
+#endif
 
 	return cost;
 }

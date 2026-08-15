@@ -12,6 +12,10 @@
 #include "LBFGS.hpp"
 #include "ants.hpp"
 
+#ifdef CUSTOM
+#include "custom_file.hpp"
+#endif
+
 #ifdef TIMING
 #include <chrono>
 #endif
@@ -37,6 +41,10 @@ void print_help () {
 }
 
 int main(int argc, char *argv[]) {
+
+#ifdef GREF
+	std::cout << " This code sets the phase of first antenna to zero." << std::endl;
+#endif
 
 	/* hello getopt, my old friend */
 	int opt;
@@ -80,13 +88,21 @@ int main(int argc, char *argv[]) {
 	const std::string save_file_ll  = tag + std::string("_ll.gains");
 	const std::string log_file      = tag + std::string(".log");
 
-	std::cout << "[inputs] lta=" << lta_path << " model=" << model_path << std::endl;
-	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;
+	std::cout << "[inputs] lta="   << lta_path << std::endl;
+	std::cout << "[inputs] model=" << model_path << std::endl;
+	std::cout << "[inputs] tag="   << tag  << std::endl;
+	std::cout << "[inputs] scan="  << cal_scan_number << std::endl;
 
 	/***************************************/
 	/*      READ LTA FILE                  */
 	/***************************************/
+#ifdef CUSTOM
+	std::cout << "[customfile] This code is modified to run with customfile input." << std::endl;
+	std::cout << "[customfile] Given LTA file is not read." << std::endl;
+	custom_file lta_file;
+#else
 	LTA lta_file ( lta_path );
+#endif
 
 	int nbaselines   = lta_file.nbaselines;
 	int nchannels    = lta_file.nchannels;
@@ -303,7 +319,12 @@ int main(int argc, char *argv[]) {
 
 		/* diag jones has two complex gains per antenna */
 		/* LBFGS separates real and imaginary so double it*/
+#ifdef GREF
+		/* with GREF defined, we are setting the imaginary of first hand of first antenna to be zero*/
+		const int npar        ( ( nantennas * 2 * 2 ) - 1 );
+#else
 		const int npar        ( nantennas * 2 * 2 );
+#endif
 		LBFGS::Solver                 solver (npar);
 		auto cost = solver.solve_diag_jones ( pkg );
 
@@ -347,8 +368,24 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
+#ifdef GREF
+			LBFGS::complex_type rr;
+			LBFGS::complex_type ll;
+
+			/* see the layout in GREF */
+			if (idx == 0) {
+				/* exponential here to ensure positiveness of first gain */
+				rr  = LBFGS::complex_type ( std::exp(solver.xpar[0]), 0.0f );
+				ll  = LBFGS::complex_type ( solver.xpar[1], solver.xpar[2] );
+			} 
+			else {
+				rr = LBFGS::complex_type ( solver.xpar[4*idx - 1], solver.xpar[4*idx + 0] );
+				ll = LBFGS::complex_type ( solver.xpar[4*idx + 1], solver.xpar[4*idx + 2] );
+			}
+#else
 			const LBFGS::complex_type  rr ( solver.xpar[4*idx + 0], solver.xpar[4*idx + 1] );
 			const LBFGS::complex_type  ll ( solver.xpar[4*idx + 2], solver.xpar[4*idx + 3] );
+#endif
 
 			solved_gains_rr[iant][ichan]  = rr;
 			solved_gains_ll[iant][ichan]  = ll;
