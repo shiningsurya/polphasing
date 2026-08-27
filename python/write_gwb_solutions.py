@@ -36,7 +36,7 @@ def process_amp ( c ):
 def process_phs ( c ):
     """ complex to phs in string """
     phs = math.degrees ( math.atan2 ( c.imag, c.real ) )
-    return "%.0f" % phs
+    return "%.1f" % phs
 
 def action ( cgains_file, amp_file, phs_file, modifier ):
     """
@@ -44,6 +44,7 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
     write to amp and phs file
     """
     cgains    = dict()
+    ## amp, phs : antenna : [channels]
     amp       = dict()
     phs       = dict()
     ichan     = 0
@@ -53,6 +54,7 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
         ## first line has antennas
         ants  = [a.strip()[:3] for a in lines[0].split()]
         nants = len(ants)
+        #print (" read ants", ants, sep='\t')
         ## initilaize cgains
         for ant in ants: 
             cgains[ant] = []
@@ -61,6 +63,7 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
         ## read rest of lines
         for l in lines[1:]:
             _toks = l.split()
+            # print ( "line ", _toks, sep='\t' )
             if len(_toks) != nants:
                 raise RuntimeError("cgains_file is off")
             for ant,cg in zip (ants, _toks):
@@ -83,7 +86,9 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
                 cgains[ant].append ( __cg )
                 amp[ant].append ( process_amp ( __cg ) )
                 phs[ant].append ( process_phs ( __cg ) )
+                # print ( __cg, process_amp(__cg), process_phs(__cg), sep='\t' )
             ichan += 1
+        # print (" read nchans = ", ichan)
     #######################
     ## the amp,phs need to go until 16K
     ## the max channel limit
@@ -105,8 +110,8 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
         ## write solutions
         for _i in range(16384):
             line = ""
-            for ant,_amp in amp.items():
-                line += _amp[_i]
+            for ant in ants:
+                line += amp[ant][_i]
                 line += " "
             line += "\n"
             f.write ( line )
@@ -122,11 +127,13 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
         ## write solutions
         for _i in range(16384):
             line = ""
-            for ant,_phs in phs.items():
-                line += _phs[_i]
+            for ant in ants:
+                line += phs[ant][_i]
                 line += " "
             line += "\n"
             f.write ( line )
+
+    return cgains, amp, phs
 
 
 if __name__ == "__main__":
@@ -135,6 +142,7 @@ if __name__ == "__main__":
     cgains_130   = args.tag + "_r.gains"
     cgains_175   = args.tag + "_l.gains"
 
+    # ODIR = os.path.join ( args.odir, "testtest" )
     ODIR = os.path.join ( args.odir, args.tag )
 
     if not os.path.exists(ODIR):
@@ -150,7 +158,7 @@ if __name__ == "__main__":
     sol_phs_130  = os.path.join ( ODIR, "phas.130.dat" )
     sol_phs_175  = os.path.join ( ODIR, "phas.175.dat" )
 
-    action ( cgains_130, sol_amp_130, sol_phs_130, modifier )
+    rgains, ramps, rphs = action ( cgains_130, sol_amp_130, sol_phs_130, modifier )
     action ( cgains_175, sol_amp_175, sol_phs_175, modifier )
 
 

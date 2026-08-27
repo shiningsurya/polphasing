@@ -13,8 +13,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 CAL     = "3C138"
-## 20260722
-## 2.75x linear pol fraction
 
 # the following three parameters 
 # decide the frequency axis
@@ -78,9 +76,12 @@ flux_jy   = list(perley_butler['flux_jy'])
 lp_frac   = list(perley_butler['lp_frac'])
 # pa_deg    = list(perley_butler['pa_deg']) 
 
+## use the polynomial model!
+__faxis   = FAXIS_GHZ[::16]
+__fjy     = list( PB_Flux ( __faxis, *perley_butler_flux_an ) )
+
 ALPHABETA,_    = curve_fit ( CASA_alphabeta, freq_ghz, flux_jy )
 POL_INDICES,_  = curve_fit ( CASA_poly, freq_ghz, lp_frac )
-
 POL_ANGLES,_   = curve_fit ( CASA_poly, FAXIS_GHZ, np.deg2rad(evpa_3c138(FAXIS_GHZ)) )
 
 with open (CFILE, 'w') as f:
