@@ -22,11 +22,12 @@ namespace logging {
 		vr_type  sse;
 		vr_type  time;
 		vr_type  gnorm;
+		vr_type  fitted_i;
 		vi_type  nfev;
 		vi_type  info;
 
 		log_t ( int nchan ) : 
-			sse ( nchan ), time (nchan), gnorm (nchan), nfev (nchan), info(nchan) {}
+			sse ( nchan ), time (nchan), gnorm (nchan), fitted_i(nchan), nfev (nchan), info(nchan) {}
 
 	};
 
