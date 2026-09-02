@@ -151,7 +151,9 @@ if __name__ == "__main__":
     ##
     ## modifier
     modifier = lambda c : c.conjugate()
-    #modifier = lambda c : 1.0 / c
+    """
+    Just conjugation works. 
+    """
 
     sol_amp_130  = os.path.join ( ODIR, "amp.130.dat" )
     sol_amp_175  = os.path.join ( ODIR, "amp.175.dat" )
