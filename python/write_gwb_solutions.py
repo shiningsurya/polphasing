@@ -25,20 +25,21 @@ def get_args():
     add = agp.add_argument
     add ('tag', help="Stem/tag that was passed to polphase")
     add ('-O', '--outdir', help='Create an output directory here', default='./', dest='odir')
+    add ('-f', '--fullpolphase', help='If to use fullpolphase', action='store_true', dest='fullpolphase')
+    add ('-a','--amp', help='amplitude scaling', default=1., type=float, dest='amp')
     return agp.parse_args()
 
-
-def process_amp ( c ):
+def process_amp ( c, amp ):
     """ complex to amp in string """
     mag = math.sqrt ( c.real*c.real + c.imag*c.imag )
-    return "%.1f" % mag
+    return "%.1f" % (mag/amp)
 
 def process_phs ( c ):
     """ complex to phs in string """
     phs = math.degrees ( math.atan2 ( c.imag, c.real ) )
     return "%.1f" % phs
 
-def action ( cgains_file, amp_file, phs_file, modifier ):
+def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
     """
     read from cgains_file
     write to amp and phs file
@@ -95,7 +96,7 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
     for _ in range(ichan,16384):
         __cg   = complex('1.00+0.00j')
         for ant in ants:
-            amp[ant].append ( process_amp ( __cg ) )
+            amp[ant].append ( process_amp ( __cg, ampscaling ) )
             phs[ant].append ( process_phs ( __cg ) )
     #######################
     ## write amp and phs_file
@@ -139,8 +140,12 @@ def action ( cgains_file, amp_file, phs_file, modifier ):
 if __name__ == "__main__":
     args = get_args ()
 
-    cgains_130   = args.tag + "_r.gains"
-    cgains_175   = args.tag + "_l.gains"
+    if args.fullpolphase:
+        cgains_130   = args.tag + "_rr.gains"
+        cgains_175   = args.tag + "_ll.gains"
+    else:
+        cgains_130   = args.tag + "_r.gains"
+        cgains_175   = args.tag + "_l.gains"
 
     # ODIR = os.path.join ( args.odir, "testtest" )
     ODIR = os.path.join ( args.odir, args.tag )
@@ -160,7 +165,7 @@ if __name__ == "__main__":
     sol_phs_130  = os.path.join ( ODIR, "phas.130.dat" )
     sol_phs_175  = os.path.join ( ODIR, "phas.175.dat" )
 
-    rgains, ramps, rphs = action ( cgains_130, sol_amp_130, sol_phs_130, modifier )
+    rgains, ramps, rphs = action ( cgains_130, sol_amp_130, sol_phs_130, modifier, args.amp )
     action ( cgains_175, sol_amp_175, sol_phs_175, modifier )
 
 

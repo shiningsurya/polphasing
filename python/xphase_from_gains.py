@@ -24,19 +24,32 @@ def get_args():
     import argparse
     agp = argparse.ArgumentParser("xphase_from_gains", description="Computes crosshand phases and residuals and delays")
     add = agp.add_argument
-    add ('tag', help="Stem/tag that was passed to polphase")
+    add ('-p','--polphase', help='Tag of polphase', dest='polphase')
+    add ('-f','--fullpolphase', help='Tag of full polphase', dest='fullpolphase')
     return agp.parse_args()
 
 
 if __name__ == "__main__":
     args    = get_args()
-    stem    = args.tag
-    odf     = stem + "_xphase_df.pkl"
 
-    rgains  = pd.read_csv (f"{stem}_r.gains", sep='\\s+').map(complex)
-    lgains  = pd.read_csv (f"{stem}_l.gains", sep='\\s+').map(complex)
+    if args.polphase:
+        stem     = args.polphase
+        odf      = stem + "_xphase_df.pkl"
+        rrgains  = pd.read_csv (f"{stem}_r.gains", sep='\\s+').map(complex)
+        llgains  = pd.read_csv (f"{stem}_l.gains", sep='\\s+').map(complex)
+        # rlgains  = (rrgains * 0).copy()
+        # lrgains  = (rrgains * 0).copy()
+    elif args.fullpolphase:
+        stem     = args.fullpolphase
+        odf      = stem + "_xphase_df.pkl"
+        rrgains  = pd.read_csv (f"{stem}_rr.gains", sep='\\s+').map(complex)
+        # rlgains  = pd.read_csv (f"{stem}_rl.gains", sep='\\s+').map(complex)
+        # lrgains  = pd.read_csv (f"{stem}_lr.gains", sep='\\s+').map(complex)
+        llgains  = pd.read_csv (f"{stem}_ll.gains", sep='\\s+').map(complex)
+    else:
+        raise RuntimeError("must specify something")
 
-    mm      = np.abs( rgains.sum(0) ) == 0.
+    mm      = np.abs( rrgains.sum(0) ) == 0.
     goodants =  list(mm[~mm].index)
 
     freqs   = np.linspace ( 550., 750., 2048, endpoint=True )
@@ -63,7 +76,9 @@ if __name__ == "__main__":
 
     dps   = defaultdict(list)
     for ant in tqdm (ants, desc='antennas', unit='ant'):
-        dphi   = np.angle ( rgains[ant] / lgains[ant] )
+        # dphi   = np.angle ( ( rrgains[ant] + rlgains[ant] ) / ( llgains[ant] + lrgains[ant] ) )
+        # no need to consider rl and lr
+        dphi   = np.angle ( rrgains[ant] /  llgains[ant] )
         dphase = 0.5 * dphi
         sols   = measure_d ( freqs_ghz, dphase )
         #
