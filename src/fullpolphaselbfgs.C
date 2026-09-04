@@ -12,6 +12,10 @@
 #include "LBFGS.hpp"
 #include "ants.hpp"
 
+#ifdef CUSTOM
+#include "custom_file.hpp"
+#endif
+
 #ifdef TIMING
 #include <chrono>
 #endif
@@ -82,13 +86,21 @@ int main(int argc, char *argv[]) {
 	const std::string save_file_ll  = tag + std::string("_ll.gains");
 	const std::string log_file      = tag + std::string(".log");
 
-	std::cout << "[inputs] lta=" << lta_path << " model=" << model_path << std::endl;
-	std::cout << "[inputs] tag=" << tag << " scan=" << cal_scan_number << std::endl;
+	std::cout << "[inputs] lta="   << lta_path << std::endl;
+	std::cout << "[inputs] model=" << model_path << std::endl;
+	std::cout << "[inputs] tag="   << tag  << std::endl;
+	std::cout << "[inputs] scan="  << cal_scan_number << std::endl;
 
 	/***************************************/
 	/*      READ LTA FILE                  */
 	/***************************************/
+#ifdef CUSTOM
+	std::cout << "[customfile] This code is modified to run with customfile input." << std::endl;
+	std::cout << "[customfile] Given LTA file is not read." << std::endl;
+	custom_file lta_file;
+#else
 	LTA lta_file ( lta_path );
+#endif
 
 	int nbaselines   = lta_file.nbaselines;
 	int nchannels    = lta_file.nchannels;
