@@ -94,9 +94,6 @@ namespace LBFGS {
 		* Our flux reference is from polarized calibrator, because we absolutely need IQU model
 		*
 		* Unless explicitly mentioned, assume the variables are for pol
-		*
-		* For unpolarized source, since we are also fitting for I,
-		* we are conveniently ignoring the parang correction that is needed.
 		*/
 
 		/*
@@ -107,6 +104,8 @@ namespace LBFGS {
 		const int                nantennas;
 		const complex_type       polmrr, polmrl, polmlr, polmll;
 		/* these must correspond to pol */
+		const vr_type            uol_par;
+		/* parallactic angles of antennas */
 
 		/*
 		* Indices of antenna1 and antenna2.
@@ -146,10 +145,11 @@ namespace LBFGS {
 				const complex_type _mrr,
 				const complex_type _mrl,
 				const complex_type _mlr,
-				const complex_type _mll
+				const complex_type _mll,
+				const vr_type  _antidx2par
 				) : npolarbaselines(npbl), nantennas(nant),
 			iant1(npbl), iant2(npbl), pb2corr(npbl), pol_data(npbl), uol_data(npbl),
-			polmrr(_mrr), polmrl(_mrl), polmlr(_mlr), polmll(_mll),
+			polmrr(_mrr), polmrl(_mrl), polmlr(_mlr), polmll(_mll), uol_par ( _antidx2par ),
 			polpar_model_rr (npbl), polpar_model_rl (npbl), polpar_model_lr (npbl), polpar_model_ll (npbl),
 		 cost (0.0f), gnorm(0.0f), niter(0) {}
 	}; 

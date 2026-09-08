@@ -57,6 +57,14 @@ LBFGS::real_type LBFGS::combined_jones (void *instance, const lbfgsfloatval_t *r
 		const int iant1 ( pkg->iant1[ibl] );
 		const int iant2 ( pkg->iant2[ibl] );
 
+		// fetch the par angles of unpolarized scan
+		const real_type __t1 ( pkg->uol_par[iant1] );
+		const real_type __t2 ( pkg->uol_par[iant2] );
+
+		// complex exponentials of parang for unpolarized source
+		const complex_type z1 ( cos (__t1), sin(__t1) );
+		const complex_type z2 ( cos (__t2), sin(__t2) );
+
 		// fetch the pb2corr
 		const int pb2corr    = pkg->pb2corr [ ibl ];
 
@@ -206,23 +214,23 @@ pol_model = gpll*mll*conj(gqll) + gpll*mlr*conj(gqlr) + gplr*mrl*conj(gqll) + gp
 		*/
 		if ( pb2corr == 0 ) {
 
-const complex_type Dgprr_coeff_dpqrr = -Iup*gqrr ; 
-const complex_type Dgprl_coeff_dpqrr = -Iup*gqrl ; 
+const complex_type Dgprr_coeff_dpqrr = -Iup*gqrr*z1*conj(z2) ; 
+const complex_type Dgprl_coeff_dpqrr = -Iup*gqrl*z2*conj(z1) ; 
 
-const complex_type Dgprr_coeff_gprr = (Iup * Iup)*gqlr*conj(gqlr) + (Iup * Iup)*gqrr*conj(gqrr) ; 
-const complex_type Dgprl_coeff_gprr = (Iup * Iup)*gqll*conj(gqlr) + (Iup * Iup)*gqrl*conj(gqrr) ; 
+const complex_type Dgprr_coeff_gprr = (Iup * Iup)*gqlr*z1*z2*conj(gqlr)*conj(z1)*conj(z2) + (Iup * Iup)*gqrr*z1*z2*conj(gqrr)*conj(z1)*conj(z2) ; 
+const complex_type Dgprl_coeff_gprr = (Iup * Iup)*gqll*(z2 * z2)*conj(gqlr)*(conj(z1) * conj(z1)) + (Iup * Iup)*gqrl*(z2 * z2)*conj(gqrr)*(conj(z1) * conj(z1)) ; 
 
-const complex_type Dgqrr_coeff_dqprr = -Iup*gprr ; 
-const complex_type Dgqrl_coeff_dqprr = -Iup*gprl ; 
+const complex_type Dgqrr_coeff_dqprr = -Iup*gprr*z2*conj(z1) ; 
+const complex_type Dgqrl_coeff_dqprr = -Iup*gprl*z1*conj(z2) ; 
 
-const complex_type Dgqrr_coeff_gqrr = (Iup * Iup)*gplr*conj(gplr) + (Iup * Iup)*gprr*conj(gprr) ; 
-const complex_type Dgqrl_coeff_gqrr = (Iup * Iup)*gpll*conj(gplr) + (Iup * Iup)*gprl*conj(gprr) ; 
+const complex_type Dgqrr_coeff_gqrr = (Iup * Iup)*gplr*z1*z2*conj(gplr)*conj(z1)*conj(z2) + (Iup * Iup)*gprr*z1*z2*conj(gprr)*conj(z1)*conj(z2) ; 
+const complex_type Dgqrl_coeff_gqrr = (Iup * Iup)*gpll*(z1 * z1)*conj(gplr)*(conj(z2) * conj(z2)) + (Iup * Iup)*gprl*(z1 * z1)*conj(gprr)*(conj(z2) * conj(z2)) ; 
 
-const complex_type DI_coeff_dpqrr = -gqrl*conj(gprl) - gqrr*conj(gprr) ; 
-const complex_type DI_coeff_dqprr = -gprl*conj(gqrl) - gprr*conj(gqrr) ; 
+const complex_type DI_coeff_dpqrr = -gqrl*z2*conj(gprl)*conj(z1) - gqrr*z1*conj(gprr)*conj(z2) ; 
+const complex_type DI_coeff_dqprr = -gprl*z1*conj(gqrl)*conj(z2) - gprr*z2*conj(gqrr)*conj(z1) ; 
 
 /* this is the constant that must be added once*/
-const complex_type DI_coeff_constant = 2*Iup*gpll*gqll*conj(gpll)*conj(gqll) + 2*Iup*gpll*gqlr*conj(gplr)*conj(gqll) + 2*Iup*gpll*gqrl*conj(gpll)*conj(gqrl) + 2*Iup*gpll*gqrr*conj(gplr)*conj(gqrl) + 2*Iup*gplr*gqll*conj(gpll)*conj(gqlr) + 2*Iup*gplr*gqlr*conj(gplr)*conj(gqlr) + 2*Iup*gplr*gqrl*conj(gpll)*conj(gqrr) + 2*Iup*gplr*gqrr*conj(gplr)*conj(gqrr) + 2*Iup*gprl*gqll*conj(gprl)*conj(gqll) + 2*Iup*gprl*gqlr*conj(gprr)*conj(gqll) + 2*Iup*gprl*gqrl*conj(gprl)*conj(gqrl) + 2*Iup*gprl*gqrr*conj(gprr)*conj(gqrl) + 2*Iup*gprr*gqll*conj(gprl)*conj(gqlr) + 2*Iup*gprr*gqlr*conj(gprr)*conj(gqlr) + 2*Iup*gprr*gqrl*conj(gprl)*conj(gqrr) + 2*Iup*gprr*gqrr*conj(gprr)*conj(gqrr) ; 
+const complex_type DI_coeff_constant = 2*Iup*gpll*gqll*z1*z2*conj(gpll)*conj(gqll)*conj(z1)*conj(z2) + 2*Iup*gpll*gqlr*(z1 * z1)*conj(gplr)*conj(gqll)*(conj(z2) * conj(z2)) + 2*Iup*gpll*gqrl*z1*z2*conj(gpll)*conj(gqrl)*conj(z1)*conj(z2) + 2*Iup*gpll*gqrr*(z1 * z1)*conj(gplr)*conj(gqrl)*(conj(z2) * conj(z2)) + 2*Iup*gplr*gqll*(z2 * z2)*conj(gpll)*conj(gqlr)*(conj(z1) * conj(z1)) + 2*Iup*gplr*gqlr*z1*z2*conj(gplr)*conj(gqlr)*conj(z1)*conj(z2) + 2*Iup*gplr*gqrl*(z2 * z2)*conj(gpll)*conj(gqrr)*(conj(z1) * conj(z1)) + 2*Iup*gplr*gqrr*z1*z2*conj(gplr)*conj(gqrr)*conj(z1)*conj(z2) + 2*Iup*gprl*gqll*z1*z2*conj(gprl)*conj(gqll)*conj(z1)*conj(z2) + 2*Iup*gprl*gqlr*(z1 * z1)*conj(gprr)*conj(gqll)*(conj(z2) * conj(z2)) + 2*Iup*gprl*gqrl*z1*z2*conj(gprl)*conj(gqrl)*conj(z1)*conj(z2) + 2*Iup*gprl*gqrr*(z1 * z1)*conj(gprr)*conj(gqrl)*(conj(z2) * conj(z2)) + 2*Iup*gprr*gqll*(z2 * z2)*conj(gprl)*conj(gqlr)*(conj(z1) * conj(z1)) + 2*Iup*gprr*gqlr*z1*z2*conj(gprr)*conj(gqlr)*conj(z1)*conj(z2) + 2*Iup*gprr*gqrl*(z2 * z2)*conj(gprl)*conj(gqrr)*(conj(z1) * conj(z1)) + 2*Iup*gprr*gqrr*z1*z2*conj(gprr)*conj(gqrr)*conj(z1)*conj(z2) ; 
 
 			grad[iprr] += Dgprr_coeff_dpqrr*uol_data + Dgprr_coeff_gprr*gprr;
 			grad[iprl] += Dgprl_coeff_dpqrr*uol_data + Dgprl_coeff_gprr*gprr;
@@ -233,28 +241,28 @@ const complex_type DI_coeff_constant = 2*Iup*gpll*gqll*conj(gpll)*conj(gqll) + 2
 			igrad += DI_coeff_dpqrr*uol_data + DI_coeff_dqprr*uol_cata;
 			igrad += DI_coeff_constant;
 
-			uol_model = Iup*gprl*conj(gqrl) + Iup*gprr*conj(gqrr);
+			uol_model = Iup*gprl*z1*conj(gqrl)*conj(z2) + Iup*gprr*z2*conj(gqrr)*conj(z1);
 
 		} else if ( pb2corr == 1 ) {
 
-const complex_type Dgprr_coeff_dpqrl = -Iup*gqlr ; 
-const complex_type Dgprl_coeff_dpqrl = -Iup*gqll ; 
+const complex_type Dgprr_coeff_dpqrl = -Iup*gqlr*z1*conj(z2) ; 
+const complex_type Dgprl_coeff_dpqrl = -Iup*gqll*z2*conj(z1) ; 
 
-const complex_type Dgprr_coeff_gprl = (Iup * Iup)*gqlr*conj(gqll) + (Iup * Iup)*gqrr*conj(gqrl) ; 
-const complex_type Dgprl_coeff_gprl = (Iup * Iup)*gqll*conj(gqll) + (Iup * Iup)*gqrl*conj(gqrl) ; 
+const complex_type Dgprr_coeff_gprl = (Iup * Iup)*gqlr*(z1 * z1)*conj(gqll)*(conj(z2) * conj(z2)) + (Iup * Iup)*gqrr*(z1 * z1)*conj(gqrl)*(conj(z2) * conj(z2)) ; 
+const complex_type Dgprl_coeff_gprl = (Iup * Iup)*gqll*z1*z2*conj(gqll)*conj(z1)*conj(z2) + (Iup * Iup)*gqrl*z1*z2*conj(gqrl)*conj(z1)*conj(z2) ; 
 
-const complex_type Dgqrr_coeff_gqrl = (Iup * Iup)*gplr*conj(gpll) + (Iup * Iup)*gprr*conj(gprl) ; 
-const complex_type Dgqrl_coeff_gqrl = (Iup * Iup)*gpll*conj(gpll) + (Iup * Iup)*gprl*conj(gprl) ; 
+const complex_type Dgqrr_coeff_gqrl = (Iup * Iup)*gplr*(z2 * z2)*conj(gpll)*(conj(z1) * conj(z1)) + (Iup * Iup)*gprr*(z2 * z2)*conj(gprl)*(conj(z1) * conj(z1)) ; 
+const complex_type Dgqrl_coeff_gqrl = (Iup * Iup)*gpll*z1*z2*conj(gpll)*conj(z1)*conj(z2) + (Iup * Iup)*gprl*z1*z2*conj(gprl)*conj(z1)*conj(z2) ; 
 
-const complex_type Dgqlr_coeff_dqprl = -Iup*gprr ; 
-const complex_type Dgqll_coeff_dqprl = -Iup*gprl ; 
+const complex_type Dgqlr_coeff_dqprl = -Iup*gprr*z2*conj(z1) ; 
+const complex_type Dgqll_coeff_dqprl = -Iup*gprl*z1*conj(z2) ; 
 
-const complex_type DI_coeff_dpqrl = -gqll*conj(gprl) - gqlr*conj(gprr) ; 
-const complex_type DI_coeff_dqprl = -gprl*conj(gqll) - gprr*conj(gqlr) ; 
+const complex_type DI_coeff_dpqrl = -gqll*z2*conj(gprl)*conj(z1) - gqlr*z1*conj(gprr)*conj(z2) ; 
+const complex_type DI_coeff_dqprl = -gprl*z1*conj(gqll)*conj(z2) - gprr*z2*conj(gqlr)*conj(z1) ; 
 			
 			igrad += DI_coeff_dpqrl*uol_data + DI_coeff_dqprl*uol_cata;
 
-			uol_model = Iup*gprl*conj(gqll) + Iup*gprr*conj(gqlr);
+			uol_model = Iup*gprl*z1*conj(gqll)*conj(z2) + Iup*gprr*z2*conj(gqlr)*conj(z1);
 
 			grad[iprr] += Dgprr_coeff_dpqrl*uol_data + Dgprr_coeff_gprl*gprl;
 			grad[iprl] += Dgprl_coeff_dpqrl*uol_data + Dgprl_coeff_gprl*gprl;
@@ -267,24 +275,24 @@ const complex_type DI_coeff_dqprl = -gprl*conj(gqll) - gprr*conj(gqlr) ;
 
 		} else if ( pb2corr == 2 ) {
 
-const complex_type Dgqrr_coeff_dqplr = -Iup*gplr ; 
-const complex_type Dgqrl_coeff_dqplr = -Iup*gpll ; 
+const complex_type Dgqrr_coeff_dqplr = -Iup*gplr*z2*conj(z1) ; 
+const complex_type Dgqrl_coeff_dqplr = -Iup*gpll*z1*conj(z2) ; 
 
-const complex_type Dgplr_coeff_dpqlr = -Iup*gqrr ; 
-const complex_type Dgpll_coeff_dpqlr = -Iup*gqrl ; 
+const complex_type Dgplr_coeff_dpqlr = -Iup*gqrr*z1*conj(z2) ; 
+const complex_type Dgpll_coeff_dpqlr = -Iup*gqrl*z2*conj(z1) ; 
 
-const complex_type Dgplr_coeff_gplr = (Iup * Iup)*gqlr*conj(gqlr) + (Iup * Iup)*gqrr*conj(gqrr) ; 
-const complex_type Dgpll_coeff_gplr = (Iup * Iup)*gqll*conj(gqlr) + (Iup * Iup)*gqrl*conj(gqrr) ; 
+const complex_type Dgplr_coeff_gplr = (Iup * Iup)*gqlr*z1*z2*conj(gqlr)*conj(z1)*conj(z2) + (Iup * Iup)*gqrr*z1*z2*conj(gqrr)*conj(z1)*conj(z2) ; 
+const complex_type Dgpll_coeff_gplr = (Iup * Iup)*gqll*(z2 * z2)*conj(gqlr)*(conj(z1) * conj(z1)) + (Iup * Iup)*gqrl*(z2 * z2)*conj(gqrr)*(conj(z1) * conj(z1)) ; 
 
-const complex_type Dgqlr_coeff_gqlr = (Iup * Iup)*gplr*conj(gplr) + (Iup * Iup)*gprr*conj(gprr) ; 
-const complex_type Dgqll_coeff_gqlr = (Iup * Iup)*gpll*conj(gplr) + (Iup * Iup)*gprl*conj(gprr) ; 
+const complex_type Dgqlr_coeff_gqlr = (Iup * Iup)*gplr*z1*z2*conj(gplr)*conj(z1)*conj(z2) + (Iup * Iup)*gprr*z1*z2*conj(gprr)*conj(z1)*conj(z2) ; 
+const complex_type Dgqll_coeff_gqlr = (Iup * Iup)*gpll*(z1 * z1)*conj(gplr)*(conj(z2) * conj(z2)) + (Iup * Iup)*gprl*(z1 * z1)*conj(gprr)*(conj(z2) * conj(z2)) ; 
 
-const complex_type DI_coeff_dpqlr = -gqrl*conj(gpll) - gqrr*conj(gplr) ; 
-const complex_type DI_coeff_dqplr = -gpll*conj(gqrl) - gplr*conj(gqrr) ; 
+const complex_type DI_coeff_dpqlr = -gqrl*z2*conj(gpll)*conj(z1) - gqrr*z1*conj(gplr)*conj(z2) ; 
+const complex_type DI_coeff_dqplr = -gpll*z1*conj(gqrl)*conj(z2) - gplr*z2*conj(gqrr)*conj(z1) ; 
 			
 			igrad += DI_coeff_dpqlr*uol_data + DI_coeff_dqplr*uol_cata;
 
-			uol_model = Iup*gpll*conj(gqrl) + Iup*gplr*conj(gqrr);
+			uol_model = Iup*gpll*z1*conj(gqrl)*conj(z2) + Iup*gplr*z2*conj(gqrr)*conj(z1);
 
 			grad[iplr] += Dgplr_coeff_dpqlr*uol_data + Dgplr_coeff_gplr*gplr;
 			grad[ipll] += Dgpll_coeff_dpqlr*uol_data + Dgpll_coeff_gplr*gplr;
@@ -297,24 +305,24 @@ const complex_type DI_coeff_dqplr = -gpll*conj(gqrl) - gplr*conj(gqrr) ;
 
 		} else if ( pb2corr == 3 ) {
 
-const complex_type Dgplr_coeff_dpqll = -Iup*gqlr ; 
-const complex_type Dgpll_coeff_dpqll = -Iup*gqll ; 
+const complex_type Dgplr_coeff_dpqll = -Iup*gqlr*z1*conj(z2) ; 
+const complex_type Dgpll_coeff_dpqll = -Iup*gqll*z2*conj(z1) ; 
 
-const complex_type Dgplr_coeff_gpll = (Iup * Iup)*gqlr*conj(gqll) + (Iup * Iup)*gqrr*conj(gqrl) ; 
-const complex_type Dgpll_coeff_gpll = (Iup * Iup)*gqll*conj(gqll) + (Iup * Iup)*gqrl*conj(gqrl) ; 
+const complex_type Dgplr_coeff_gpll = (Iup * Iup)*gqlr*(z1 * z1)*conj(gqll)*(conj(z2) * conj(z2)) + (Iup * Iup)*gqrr*(z1 * z1)*conj(gqrl)*(conj(z2) * conj(z2)) ; 
+const complex_type Dgpll_coeff_gpll = (Iup * Iup)*gqll*z1*z2*conj(gqll)*conj(z1)*conj(z2) + (Iup * Iup)*gqrl*z1*z2*conj(gqrl)*conj(z1)*conj(z2) ; 
 
-const complex_type Dgqlr_coeff_dqpll = -Iup*gplr ; 
-const complex_type Dgqll_coeff_dqpll = -Iup*gpll ; 
+const complex_type Dgqlr_coeff_dqpll = -Iup*gplr*z2*conj(z1) ; 
+const complex_type Dgqll_coeff_dqpll = -Iup*gpll*z1*conj(z2) ; 
 
-const complex_type Dgqlr_coeff_gqll = (Iup * Iup)*gplr*conj(gpll) + (Iup * Iup)*gprr*conj(gprl) ; 
-const complex_type Dgqll_coeff_gqll = (Iup * Iup)*gpll*conj(gpll) + (Iup * Iup)*gprl*conj(gprl) ; 
+const complex_type Dgqlr_coeff_gqll = (Iup * Iup)*gplr*(z2 * z2)*conj(gpll)*(conj(z1) * conj(z1)) + (Iup * Iup)*gprr*(z2 * z2)*conj(gprl)*(conj(z1) * conj(z1)) ; 
+const complex_type Dgqll_coeff_gqll = (Iup * Iup)*gpll*z1*z2*conj(gpll)*conj(z1)*conj(z2) + (Iup * Iup)*gprl*z1*z2*conj(gprl)*conj(z1)*conj(z2) ; 
 
-const complex_type DI_coeff_dpqll = -gqll*conj(gpll) - gqlr*conj(gplr) ; 
-const complex_type DI_coeff_dqpll = -gpll*conj(gqll) - gplr*conj(gqlr) ; 
+const complex_type DI_coeff_dpqll = -gqll*z2*conj(gpll)*conj(z1) - gqlr*z1*conj(gplr)*conj(z2) ; 
+const complex_type DI_coeff_dqpll = -gpll*z1*conj(gqll)*conj(z2) - gplr*z2*conj(gqlr)*conj(z1) ; 
 
 			igrad += DI_coeff_dpqll*uol_data + DI_coeff_dqpll*uol_cata;
 
-			uol_model = Iup*gpll*conj(gqll) + Iup*gplr*conj(gqlr);
+			uol_model = Iup*gpll*z1*conj(gqll)*conj(z2) + Iup*gplr*z2*conj(gqlr)*conj(z1);
 
 			grad[iplr] += Dgplr_coeff_dpqll*uol_data + Dgplr_coeff_gpll*gpll;
 			grad[ipll] += Dgpll_coeff_dpqll*uol_data + Dgpll_coeff_gpll*gpll;

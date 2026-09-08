@@ -14,7 +14,7 @@ from collections import defaultdict
 
 import sys
 import pandas as pd
-from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex)
+from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex, cos, sin)
 from sympy.printing.pycode import PythonCodePrinter
 # from sympy.printing.ccode import CCodePrinter
 
@@ -35,6 +35,31 @@ m_rr, m_rl, m_lr, m_ll     = symbols('m^{rr} m^{rl} m^{lr} m^{ll}')
 iunpol                     = symbols('I_{up}', real=True)
 d_rr, d_rl, d_lr, d_ll     = symbols('d_{pq}^{rr} d_{pq}^{rl} d_{pq}^{lr} d_{pq}^{ll}')
 
+## parang
+## taken from math_parang.py
+# t1, t2                     = symbols('theta_1 theta_2', real=True)
+# c1,c2         = cos(t1), cos(t2)
+# s1,s2         = sin(t1), sin(t2)
+
+# c1, c2    = symbols('c_1 c_2', real=True)
+# s1, s2    = symbols('s_1 s_2', real=True)
+
+# z1   = c1 + I*s1
+# z2   = c2 + I*s2
+
+z1, z2 = symbols('z_1 z_2')
+
+z1c  = conjugate(z1)
+z2c  = conjugate(z2)
+
+# z1c  = c1 - I*s1
+# z2c  = c2 - I*s2
+
+r1   = Matrix([[z1c, 0],[0, z1]])
+r2   = Matrix([[z2c, 0],[0, z2]])
+
+r2h  = r2.transpose().conjugate()
+
 """
 20260805: after iterating through so many solvers, 
 i found an error in my gradient computation itself.
@@ -43,7 +68,8 @@ i found an error in my gradient computation itself.
 gp   = Matrix([[gp_rr, gp_rl], [gp_lr, gp_ll]])
 gq   = Matrix([[gq_rr, gq_rl], [gq_lr, gq_ll]])
 # mm   = Matrix([[m_rr, m_rl], [m_lr, m_ll]])
-mm   = Matrix([[iunpol, 0], [0, iunpol]])
+# mm   = Matrix([[iunpol, 0], [0, iunpol]])
+mm   = r1 * Matrix([[iunpol, 0], [0, iunpol]]) * r2h
 gqh  = gq.transpose().conjugate()
 
 fff  = gp * mm * gqh
@@ -72,7 +98,7 @@ sss   = srr + srl + slr + sll
 ## i want to print cxxcode
 ## using python because the expressing is simple
 ## using std::conj;
-print_settings  = CustomPythonPrinter (settings={'user_functions':{'conjugate':'conj'}})
+print_settings  = CustomPythonPrinter (settings={'user_functions':{'conjugate':'conj','sin':'sin', 'cos':'cos'}})
 # print_settings  = CCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
 printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
 ## replace sub/super scripts because my variable names do not have them

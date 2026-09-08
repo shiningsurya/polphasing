@@ -180,10 +180,10 @@ int main(int argc, char *argv[]) {
 	*/
 
 	/*
-	 * We do not need to parang unpolarized. Because it does not matter.
-	 * It matters, but it matters so little that i want to just ignore.
+	 * need to parang everything
 	*/
 	const ants::ant2par_t pol_antpar = ants::calculate_parallactic_angle ( pol_scan.mjd, pol_scan.ra, pol_scan.dec );
+	const ants::ant2par_t uol_antpar = ants::calculate_parallactic_angle ( uol_scan.mjd, uol_scan.ra, uol_scan.dec );
 
 	/***************************************/
 	/*        SOLVER RUN                   */
@@ -205,6 +205,16 @@ int main(int argc, char *argv[]) {
 	if ( n_noself_baselines != (0.5 * nantennas * ( nantennas - 1 ) * 4) ) {
 		throw std::runtime_error ("baseline count mismatch");
 	}
+
+	/* antenna index to parallactic angle*/
+	LBFGS::vr_type antidx2par ( nantennas, 0.0f );
+	for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
+		const auto& iant = _i->first;
+		const auto& idx  = _i->second;
+
+		antidx2par[idx]  = uol_antpar.at(iant);
+	}
+
 
 	/* logging */
 	logging::log_t   logger ( nchannels );
@@ -245,7 +255,8 @@ int main(int argc, char *argv[]) {
 		LBFGS::c_data_t  cpkg ( 
 				n_noself_baselines, 
 				nantennas,
-				pol_model_rr, pol_model_rl, pol_model_lr, pol_model_ll
+				pol_model_rr, pol_model_rl, pol_model_lr, pol_model_ll,
+				antidx2par
 		);
 
 		/* initialize data */
