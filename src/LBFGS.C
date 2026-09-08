@@ -30,7 +30,7 @@ LBFGS::real_type LBFGS::combined_jones (void *instance, const lbfgsfloatval_t *r
 	real_type cost ( 0.0f );
 
 	/* get data_t* ptr out of instance */
-	const c_data_t *pkg = reinterpret_cast<const c_data_t*>(instance);
+	c_data_t *pkg = static_cast<c_data_t*>(instance);
 
 	/* zero out gradient */
 	std::fill ( rgrad, rgrad + n, 0.0f );
@@ -72,14 +72,7 @@ LBFGS::real_type LBFGS::combined_jones (void *instance, const lbfgsfloatval_t *r
 		const complex_type pol_data ( pkg->pol_data[ibl] );
 		const complex_type pol_cata ( conj(pol_data) );
 
-		complex_type __uol_data;
-		if (pb2corr == 0 || pb2corr == 3) {
-			// rr or ll
-			__uol_data = complex_type ( Iup, 0.0f );
-		} else {
-			__uol_data = complex_type ( 0.0f, 0.0f );
-		}
-		const complex_type uol_data ( __uol_data );
+		const complex_type uol_data ( pkg->uol_data[ibl] );
 		const complex_type uol_cata ( conj(uol_data) );
 
 		// fetch the par corrected model
@@ -726,6 +719,24 @@ int LBFGS::progress_reporter (void *instance, const lbfgsfloatval_t *x, const lb
 	return 0;
 }
 
+int LBFGS::c_progress_reporter (void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k, int ls ) {
+
+	/* get data_t* ptr out of instance */
+	c_data_t *pkg = static_cast<c_data_t*>(instance);
+
+	/* save cost and gnorm */
+	pkg->cost   = fx;
+	pkg->gnorm  = gnorm;
+	pkg->niter++;
+
+#ifdef DPRINT
+	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+#endif
+
+	/* return 0 always */
+	return 0;
+}
+
 LBFGS::real_type LBFGS::Solver::solve_full_jones (data_t& pkg) {
 
 	real_type final_cost (0.0f);
@@ -776,10 +787,11 @@ LBFGS::real_type LBFGS::Solver::solve_full_jones (c_data_t& pkg) {
 
 	initialize_full_jones ();
 
-	/* TODO initialize unpolarized intensity */
-	xpar[npar-1] = 1.0;
+	/* initialize unpolarized intensity */
+	xpar[npar-1] = 10.0;
 
-  rcode = lbfgs(npar, xpar, &final_cost, combined_jones, progress_reporter, vpkg, &param);
+  rcode = lbfgs(npar, xpar, &final_cost, combined_jones, c_progress_reporter, vpkg, &param);
+  //rcode = lbfgs(npar, xpar, &final_cost, combined_jones, nullptr, vpkg, &param);
 
   cost   = final_cost;
   gnorm  = pkg.gnorm;
