@@ -30,6 +30,17 @@ erl  = d_rl - frl
 elr  = d_lr - flr
 ell  = d_ll - fll
 
+## divide by model
+## to normalize 
+err  = err / m_rr
+erl  = erl / m_rl
+elr  = elr / m_lr
+ell  = ell / m_ll
+"""
+what happens when model is zero (when source is unpolarized)?
+maybe dedicate a new program to unpolarized solving.
+"""
+
 ## norm
 srr  = expand ( conjugate(err) * err )
 srl  = expand ( conjugate(erl) * erl )

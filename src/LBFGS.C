@@ -803,3 +803,162 @@ LBFGS::real_type LBFGS::Solver::solve_full_jones (c_data_t& pkg) {
 
   return final_cost;
 }
+
+#ifdef GREF
+LBFGS::real_type LBFGS::diag_jones_normalized (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
+	/*
+	 * GREF means gains are reference to the first antenna
+	 *
+	 * n  = (nant-1)*2 + 1 = 2*nant - 1
+	 *
+	 * ng = 2*nant
+	 *
+	 * Usual layout is like this:
+	 * layout = R1 I1 R2 I2 R3 I3 R4 I4 ....  Rng     Ing
+	 * gainidx= 0     1     2     3     ....  ng-1
+	 * index  = 0  1  2  3  4  5  6     ....  2*ng-2  2*ng-1
+	 * antidx = 0           1           ....  nant-1
+	 *
+	 * We are setting I1 = 0 and removing it from the array
+	 * layout = R1 R2 I2 R3 I3 R4 I4 ....  Rng     Ing
+	 * gainidx= 0  1     2     3     ....  ng-1
+	 * index  = 0  1  2  3  4  5  6  ....  2*ng-3  2*ng-2
+	 * antidx = 0        1                 nant-1
+	 * 
+	*/
+
+	/* return this */
+	real_type cost ( 0.0f );
+
+	/* get data_t* ptr out of instance */
+	const data_t *pkg = reinterpret_cast<const data_t*>(instance);
+
+	/* zero out gradient */
+	std::fill ( rgrad, rgrad + n, 0.0f );
+
+	const int    ngains ( 2 * pkg->nantennas );
+
+	/* populate complex gains vector */
+	vc_type  gains ( ngains, complex_type(0.0f, 0.0f) );
+	/* this exponentiation is parameter transformation to ensure realpart is positive */
+	gains[0]         = complex_type ( std::exp(rgains[0]), 0.0f );
+	for ( int igain = 1; igain < ngains; igain++ ) {
+		gains[igain]   = complex_type ( rgains[2*igain-1], rgains[2*igain] );
+	}
+
+	/* create complex grad vector */
+	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
+
+	/* iterate over the polar baselines */
+	for ( int ibl = 0; ibl < pkg->npolarbaselines; ibl++ ) {
+
+		// fetch the antenna index
+		const int iant1 ( pkg->iant1[ibl] );
+		const int iant2 ( pkg->iant2[ibl] );
+
+		// fetch the pb2corr
+		const int pb2corr    = pkg->pb2corr [ ibl ];
+
+		// fetch complex data
+		const complex_type data ( pkg->data[ibl] );
+
+		// fetch the par corrected model
+		const complex_type mrr ( pkg->par_model_rr[ibl] );
+		const complex_type mrl ( pkg->par_model_rl[ibl] );
+		const complex_type mlr ( pkg->par_model_lr[ibl] );
+		const complex_type mll ( pkg->par_model_ll[ibl] );
+
+		// set the gain indices
+		const int iprr ( 2*iant1 + 0 );
+		const int ipll ( 2*iant1 + 1 );
+
+		const int iqrr ( 2*iant2 + 0 );
+		const int iqll ( 2*iant2 + 1 );
+
+		// fetch full gains for both antennas
+		const complex_type gprr ( gains[iprr] );
+		const complex_type gpll ( gains[ipll] );
+
+		const complex_type gqrr ( gains[iqrr] );
+		const complex_type gqll ( gains[iqll] );
+
+		// the following long expressions come from sympy
+		// see :math_gradient_parallel.py:
+		// see :math_gradient_parallel.code:
+		// see :math_gradient_parallel.pdf:
+
+		// model forward depends on pb2corr
+		complex_type model;
+
+		// do on every pb2corr
+		if ( pb2corr == 0 ) {
+
+const complex_type Dgprr_coeff_dpqrr = -gqrr/mrr ; 
+const complex_type Dgqrr_coeff_dqprr = -gprr/conj(mrr) ; 
+const complex_type Dgprr_coeff_gprr = gqll*conj(gqll) + gqrr*conj(gqrr) ; 
+const complex_type Dgqrr_coeff_gqrr = gpll*conj(gpll) + gprr*conj(gprr) ; 
+
+			grad[iprr] += Dgprr_coeff_gprr*gprr + Dgprr_coeff_dpqrr*data;
+			grad[iqrr] += Dgqrr_coeff_gqrr*gqrr + Dgqrr_coeff_dqprr*conj(data);
+
+			model = gprr * mrr * conj(gqrr);
+
+			cost += std::norm ( ( data - model ) / mrr );
+
+		} // rr
+		else if ( pb2corr == 1 ) {
+
+const complex_type Dgprr_coeff_dpqrl = -gqll/mrl ; 
+const complex_type Dgqll_coeff_dqprl = -gprr/conj(mrl) ; 
+
+			grad[iprr] += Dgprr_coeff_dpqrl*data; 
+			grad[iqll] += Dgqll_coeff_dqprl*conj(data);
+
+			model = gprr * mrl * conj(gqll);
+
+			cost += std::norm ( ( data - model ) / mrl );
+
+		} // rl
+		else if ( pb2corr == 2 ) {
+
+const complex_type Dgpll_coeff_dpqlr = -gqrr/mlr ; 
+const complex_type Dgqrr_coeff_dqplr = -gpll/conj(mlr) ; 
+
+			grad[ipll] +=  Dgpll_coeff_dpqlr*data;
+			grad[iqrr] +=  Dgqrr_coeff_dqplr*conj(data);
+
+			model = gpll * mlr * conj(gqrr);
+
+			cost += std::norm ( ( data - model ) / mlr );
+
+		} // lr
+		else if ( pb2corr == 3 ) {
+
+const complex_type Dgpll_coeff_dpqll = -gqll/mll ; 
+const complex_type Dgqll_coeff_dqpll = -gpll/conj(mll) ; 
+const complex_type Dgpll_coeff_gpll = gqll*conj(gqll) + gqrr*conj(gqrr) ; 
+const complex_type Dgqll_coeff_gqll = gpll*conj(gpll) + gprr*conj(gprr) ; 
+
+			grad[ipll] += Dgpll_coeff_gpll*gpll + Dgpll_coeff_dpqll*data;
+			grad[iqll] += Dgqll_coeff_gqll*gqll + Dgqll_coeff_dqpll*conj(data);
+
+			model = gpll * mll * conj(gqll);
+
+			cost += std::norm ( ( data - model ) / mll );
+
+		} // ll
+			
+	} // iterate over polar baselines
+
+	/* load complex grad into real and imaginary parts */
+	/* chain rule */
+	rgrad[0]        = grad[0].real() * std::exp (rgains[0]);
+	for (int igain = 1; igain < ngains; igain++) {
+		const complex_type gg ( grad[igain] );
+		rgrad[2*igain-1] = gg.real();
+		rgrad[2*igain] = gg.imag();
+	}
+
+	return cost;
+}
+#endif
