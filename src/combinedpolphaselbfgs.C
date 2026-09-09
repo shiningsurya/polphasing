@@ -231,8 +231,8 @@ int main(int argc, char *argv[]) {
 	auto total_start = std::chrono::high_resolution_clock::now();
 	
 #ifdef CHANDEBUG
-	/* channel 458 has high loss.*/
-	for (int ichan = 501; ichan < 502; ichan++) {
+	/* channel 462 has high loss.*/
+	for (int ichan = 462; ichan < 463; ichan++) {
 #else
 	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
@@ -335,18 +335,18 @@ int main(int argc, char *argv[]) {
 			std::ofstream of("pkgchandebug.bin", std::ios::binary);
 of.write (reinterpret_cast<const char*>(&cpkg.npolarbaselines), sizeof(int));
 of.write (reinterpret_cast<const char*>(&cpkg.nantennas), sizeof(int));
-of.write (reinterpret_cast<const char*>(&cpkg.mrr), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&cpkg.mrl), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&cpkg.mlr), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&cpkg.mll), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&cpkg.polmrr), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&cpkg.polmrl), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&cpkg.polmlr), sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(&cpkg.polmll), sizeof(LBFGS::complex_type));
 			/* data */
 of.write (reinterpret_cast<const char*>(cpkg.pol_data.data()), cpkg.pol_data.size()*sizeof(LBFGS::complex_type));
 of.write (reinterpret_cast<const char*>(cpkg.uol_data.data()), cpkg.uol_data.size()*sizeof(LBFGS::complex_type));
 			/* models */
-of.write (reinterpret_cast<const char*>(cpkg.polpar_model_rr.data()), cpkg.par_model_rr.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(cpkg.polpar_model_rl.data()), cpkg.par_model_rl.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(cpkg.polpar_model_lr.data()), cpkg.par_model_lr.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(cpkg.polpar_model_ll.data()), cpkg.par_model_ll.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(cpkg.polpar_model_rr.data()), cpkg.polpar_model_rr.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(cpkg.polpar_model_rl.data()), cpkg.polpar_model_rl.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(cpkg.polpar_model_lr.data()), cpkg.polpar_model_lr.size()*sizeof(LBFGS::complex_type));
+of.write (reinterpret_cast<const char*>(cpkg.polpar_model_ll.data()), cpkg.polpar_model_ll.size()*sizeof(LBFGS::complex_type));
 of.write (reinterpret_cast<const char*>(cpkg.iant1.data()), cpkg.iant1.size()*sizeof(int));
 of.write (reinterpret_cast<const char*>(cpkg.iant2.data()), cpkg.iant2.size()*sizeof(int));
 of.write (reinterpret_cast<const char*>(cpkg.pb2corr.data()), cpkg.pb2corr.size()*sizeof(int));
@@ -364,7 +364,7 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		logger.nfev   [ ichan ]  = solver.niter;
 		logger.info   [ ichan ]  = solver.rcode;
 		logger.gnorm  [ ichan ]  = solver.gnorm;
-		logger.fitted_i [ ichan ]  = solver.xpar[ 8 * nantennas ];
+		logger.fitted_i [ ichan ]  = std::exp(solver.xpar[ 8 * nantennas ]);
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {

@@ -191,7 +191,7 @@ namespace LBFGS {
 		int                  niter;
 
 		// ctor
-		Solver (int _npar, int n_hessian_corrections = 16, int max_iterations = 1000) : 
+		Solver (int _npar, int n_hessian_corrections = 32, int max_iterations = 1000) : 
 			npar(_npar),
 			niter(0)
 		{
@@ -217,8 +217,13 @@ namespace LBFGS {
 			/*
 			 * Only the parallel gains are set to unity with zero imaginary.
 			*/
-			for ( int ipar = 0; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
-			for ( int ipar = 6; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
+			//for ( int ipar = 0; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
+			//for ( int ipar = 6; ipar < npar; ipar+=8 ) xpar[ipar] = 1.0f;
+
+			// Everything has (1,0)
+			std::fill ( xpar, xpar + npar, 1.0f ); 
+
+
 		}
 		void initialize_diag_jones () {
 			/*

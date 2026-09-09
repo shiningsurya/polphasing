@@ -16,7 +16,16 @@
  * In hindsight, this could be done after solving by dividing solved complex gains by that of any reference antenna.3C138_unphased_rr.gains.
  *
  * why do we not need to reference when solving for full jones?
+ *
+ * COMBINED SOLVING
+ * - We fit for unpolarized I. 
+ *   Which should be positive. 
+ *   So we use the same trick we applied for GREF
+ *   I = exp(parameter)
+ *   derivative_parameter = derivative_I * I
 */
+
+//#define DPRINT
 
 #ifdef DPRINT
 #include <iostream>
@@ -45,10 +54,10 @@ LBFGS::real_type LBFGS::combined_jones (void *instance, const lbfgsfloatval_t *r
 
 	/* create complex grad vector */
 	vc_type       grad ( ngains, complex_type(0.0f, 0.0f) );
-	/* for the unpol StokesI fitting */
-	const real_type  Iup (rgains[2*ngains]);
+	/* for the unpol StokesI fitting, parameterization to ensure positiveness */
+	const real_type  Iup ( std::exp(rgains[2*ngains]) );
 	/* gradient wrt I is purely real, but we keep complex because intermediates are complex */
-	complex_type  igrad (0.0f);
+	complex_type  igrad (0.0f, 0.0f);
 
 	/* iterate over the polar baselines */
 	for ( int ibl = 0; ibl < pkg->npolarbaselines; ibl++ ) {
@@ -115,6 +124,7 @@ LBFGS::real_type LBFGS::combined_jones (void *instance, const lbfgsfloatval_t *r
 		We do this over polarbaseline loop, so that we keep track of all the baselines
 		This is for polarized data
 		*/
+#if 1
 		if ( pb2corr == 0 ) {
 
 const complex_type Dgprr_coeff_dpqrr = -gqrl*conj(mrl) - gqrr*conj(mrr) ; 
@@ -201,6 +211,7 @@ const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) + gpll*mll*c
 pol_model = gpll*mll*conj(gqll) + gpll*mlr*conj(gqlr) + gplr*mrl*conj(gqll) + gplr*mrr*conj(gqlr) ;
 
 		} // ll
+#endif
 		/*
 		We do this over polarbaseline loop, so that we keep track of all the baselines
 		This is for unpolarized data
@@ -329,6 +340,7 @@ const complex_type DI_coeff_dqpll = -gpll*z1*conj(gqll)*conj(z2) - gplr*z2*conj(
 		cost += std::norm ( pol_data - pol_model );
 		cost += std::norm ( uol_data - uol_model );
 		//std::cout << " iterationcost=" << cost << " ";
+		//std::cout <<  " cost uol=" << std::norm(uol_data - uol_model) << " pol=" << std::norm(pol_data - pol_model) << std::endl;
 
 	} // iterate over polar baselines
 	
@@ -341,10 +353,12 @@ const complex_type DI_coeff_dqpll = -gpll*z1*conj(gqll)*conj(z2) - gplr*z2*conj(
 		rgrad[2*igain + 1] = gg.imag();
 	}
 
-	rgrad[2*ngains] = igrad.real();
+	rgrad[2*ngains] = igrad.real() * Iup;
 	/* igrad is purely real mathematically, but we use complex because intermediates are complex */
 
-	//std::cout << " full_jones_cost=" << cost << std::endl; 
+#ifdef DPRINT
+	std::cout << " full_jones_cost=" << cost << " Iup=" << Iup << std::endl; 
+#endif
 
 	return cost;
 }
@@ -729,8 +743,10 @@ int LBFGS::c_progress_reporter (void *instance, const lbfgsfloatval_t *x, const 
 	pkg->gnorm  = gnorm;
 	pkg->niter++;
 
+	const real_type iup ( std::exp(x[n-1]) );
+
 #ifdef DPRINT
-	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << " Iup=" << iup << std::endl;
 #endif
 
 	/* return 0 always */
@@ -788,7 +804,7 @@ LBFGS::real_type LBFGS::Solver::solve_full_jones (c_data_t& pkg) {
 	initialize_full_jones ();
 
 	/* initialize unpolarized intensity */
-	xpar[npar-1] = 10.0;
+	xpar[npar-1] = 3.8;
 
   rcode = lbfgs(npar, xpar, &final_cost, combined_jones, c_progress_reporter, vpkg, &param);
   //rcode = lbfgs(npar, xpar, &final_cost, combined_jones, nullptr, vpkg, &param);
