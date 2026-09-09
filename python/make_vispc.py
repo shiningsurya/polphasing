@@ -17,6 +17,7 @@ def get_args():
     add ('bldata_df', help='Output of :make_bldata:')
     add ('-p','--polphase', help='polphase type :make_solutions_df:', dest='polphase')
     add ('-f','--fullpolphase', help='polphase type :make_solutions_df:', dest='fullpolphase')
+    add ('-t', '--tag', help='Which column is data', default='complex', dest='column')
     return agp.parse_args()
 
 if __name__ == "__main__":
@@ -26,6 +27,7 @@ if __name__ == "__main__":
 
     psr = pd.read_pickle( args.bldata_df )
 
+    column = args.column
 
     ############################
     if args.polphase:
@@ -47,7 +49,7 @@ if __name__ == "__main__":
             # gb = np.exp(1.0j * np.angle(gb))
             ###
 
-            caled = np.array ( row.complex  ) / ga / np.conjugate(gb)
+            caled = np.array ( row[column]  ) / ga / np.conjugate(gb)
             ## append
             dd[corr].append ( caled )
 
@@ -77,10 +79,10 @@ if __name__ == "__main__":
         print ("averaging ... ", end='')
 
         ## do average
-        rr  = np.array(list(psr.complex.loc[irr])).mean(0)
-        rl  = np.array(list(psr.complex.loc[irl])).mean(0)
-        lr  = np.array(list(psr.complex.loc[ilr])).mean(0)
-        ll  = np.array(list(psr.complex.loc[ill])).mean(0)
+        rr  = np.array(list(psr[column].loc[irr])).mean(0)
+        rl  = np.array(list(psr[column].loc[irl])).mean(0)
+        lr  = np.array(list(psr[column].loc[ilr])).mean(0)
+        ll  = np.array(list(psr[column].loc[ill])).mean(0)
 
         print ( "done" )
 
