@@ -1,0 +1,32 @@
+GPRR
+g_p^{rr} \left(g_q^{ll} \overline{g_q^{ll}} + g_q^{rr} \overline{g_q^{rr}}\right)+- \frac{d_{pq}^{rl} g_q^{ll}}{m^{rl}}+- \frac{d_{pq}^{rr} g_q^{rr}}{m^{rr}}
+GPLL
+g_p^{ll} \left(g_q^{ll} \overline{g_q^{ll}} + g_q^{rr} \overline{g_q^{rr}}\right)+- \frac{d_{pq}^{ll} g_q^{ll}}{m^{ll}}+- \frac{d_{pq}^{lr} g_q^{rr}}{m^{lr}}
+GQRR
+g_q^{rr} \left(g_p^{ll} \overline{g_p^{ll}} + g_p^{rr} \overline{g_p^{rr}}\right)+- \frac{g_p^{ll} \overline{d_{pq}^{lr}}}{\overline{m^{lr}}}+- \frac{g_p^{rr} \overline{d_{pq}^{rr}}}{\overline{m^{rr}}}
+GQLL
+g_q^{ll} \left(g_p^{ll} \overline{g_p^{ll}} + g_p^{rr} \overline{g_p^{rr}}\right)+- \frac{g_p^{ll} \overline{d_{pq}^{ll}}}{\overline{m^{ll}}}+- \frac{g_p^{rr} \overline{d_{pq}^{rl}}}{\overline{m^{rl}}}
+-------------------------
+const complex_type Dgprr_coeff_gprr = gqll*conj(gqll) + gqrr*conj(gqrr) ; 
+-------------------------
+const complex_type Dgprr_coeff_dpqrl = -gqll/mrl ; 
+-------------------------
+const complex_type Dgprr_coeff_dpqrr = -gqrr/mrr ; 
+-------------------------
+const complex_type Dgqrr_coeff_gqrr = gpll*conj(gpll) + gprr*conj(gprr) ; 
+-------------------------
+const complex_type Dgqrr_coeff_dqplr = -gpll/conj(mlr) ; 
+-------------------------
+const complex_type Dgqrr_coeff_dqprr = -gprr/conj(mrr) ; 
+-------------------------
+const complex_type Dgpll_coeff_gpll = gqll*conj(gqll) + gqrr*conj(gqrr) ; 
+-------------------------
+const complex_type Dgpll_coeff_dpqll = -gqll/mll ; 
+-------------------------
+const complex_type Dgpll_coeff_dpqlr = -gqrr/mlr ; 
+-------------------------
+const complex_type Dgqll_coeff_gqll = gpll*conj(gpll) + gprr*conj(gprr) ; 
+-------------------------
+const complex_type Dgqll_coeff_dqpll = -gpll/conj(mll) ; 
+-------------------------
+const complex_type Dgqll_coeff_dqprl = -gprr/conj(mrl) ; 

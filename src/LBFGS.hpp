@@ -254,6 +254,9 @@ namespace LBFGS {
 		real_type solve_full_jones (data_t& pkg);
 		real_type solve_full_jones (c_data_t& pkg );
 		real_type solve_diag_jones (data_t& pkg);
+#ifdef GREF
+		real_type solve_diag_jones_normalized (data_t& pkg);
+#endif
 
 	}; // solver
 
