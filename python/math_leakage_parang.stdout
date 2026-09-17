@@ -1,0 +1,17 @@
+RR
+l_p^r*m^{ll}*z_p*conjugate(l_q^r)*conjugate(z_q) + l_p^r*m^{lr}*z_p*z_q + m^{rl}*conjugate(l_q^r)*conjugate(z_p)*conjugate(z_q) + m^{rr}*z_q*conjugate(z_p)
+RL
+l_p^r*m^{ll}*z_p*conjugate(z_q) + l_p^r*m^{lr}*z_p*z_q*conjugate(l_q^l) + m^{rl}*conjugate(z_p)*conjugate(z_q) + m^{rr}*z_q*conjugate(l_q^l)*conjugate(z_p)
+LR
+l_p^l*m^{rl}*conjugate(l_q^r)*conjugate(z_p)*conjugate(z_q) + l_p^l*m^{rr}*z_q*conjugate(z_p) + m^{ll}*z_p*conjugate(l_q^r)*conjugate(z_q) + m^{lr}*z_p*z_q
+LL
+l_p^l*m^{rl}*conjugate(z_p)*conjugate(z_q) + l_p^l*m^{rr}*z_q*conjugate(l_q^l)*conjugate(z_p) + m^{ll}*z_p*conjugate(z_q) + m^{lr}*z_p*z_q*conjugate(l_q^l)
+-----------------
+RR
+lpr*mll*zp*conj(lqr)*conj(zq) + lpr*mlr*zp*zq + mrl*conj(lqr)*conj(zp)*conj(zq) + mrr*zq*conj(zp)
+RL
+lpr*mll*zp*conj(zq) + lpr*mlr*zp*zq*conj(lql) + mrl*conj(zp)*conj(zq) + mrr*zq*conj(lql)*conj(zp)
+LR
+lpl*mrl*conj(lqr)*conj(zp)*conj(zq) + lpl*mrr*zq*conj(zp) + mll*zp*conj(lqr)*conj(zq) + mlr*zp*zq
+LL
+lpl*mrl*conj(zp)*conj(zq) + lpl*mrr*zq*conj(lql)*conj(zp) + mll*zp*conj(zq) + mlr*zp*zq*conj(lql)
