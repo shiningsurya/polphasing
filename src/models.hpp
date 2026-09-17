@@ -73,6 +73,15 @@ namespace models {
 
 	model_type parallactic_correction ( const real_type, const real_type, const complex_type, const complex_type, const complex_type, const complex_type );
 
+	model_type parallactic_leakage_correction ( 
+			// angles
+			const real_type, const real_type, 
+			// leakages
+			const complex_type, const complex_type, 
+			const complex_type, const complex_type, 
+			// input model
+			const model_type );
+
 }; /* models namespace */
 
 std::ostream& operator<< (std::ostream& os, const models::complex_type& g );

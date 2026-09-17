@@ -176,3 +176,36 @@ models::model_type models::parallactic_correction (
 
 	return ret;
 }
+
+models::model_type models::parallactic_leakage_correction ( 
+		// par angles
+		const real_type parp, const real_type parq, 
+		// leakage terms
+		const complex_type lpr, const complex_type lpl, 
+		const complex_type lqr, const complex_type lql, 
+		// input model
+		const model_type input) {
+
+	using std::conj;
+
+	// par complex numbers
+	const complex_type zp ( std::cos(parp), std::sin(parp) );
+	const complex_type zq ( std::cos(parq), std::sin(parq) );
+
+	// unpack input
+	const complex_type mrr ( input[0] );
+	const complex_type mrl ( input[1] );
+	const complex_type mlr ( input[2] );
+	const complex_type mll ( input[3] );
+
+	const complex_type orr = lpr*mll*zp*conj(lqr)*conj(zq) + lpr*mlr*zp*zq + mrl*conj(lqr)*conj(zp)*conj(zq) + mrr*zq*conj(zp);
+
+	const complex_type orl = lpr*mll*zp*conj(zq) + lpr*mlr*zp*zq*conj(lql) + mrl*conj(zp)*conj(zq) + mrr*zq*conj(lql)*conj(zp);
+
+	const complex_type olr = lpl*mrl*conj(lqr)*conj(zp)*conj(zq) + lpl*mrr*zq*conj(zp) + mll*zp*conj(lqr)*conj(zq) + mlr*zp*zq;
+
+	const complex_type oll = lpl*mrl*conj(zp)*conj(zq) + lpl*mrr*zq*conj(lql)*conj(zp) + mll*zp*conj(zq) + mlr*zp*zq*conj(lql);
+
+	return model_type { orr, orl, olr, oll };
+
+}
