@@ -297,11 +297,8 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		/* full jones has four complex gains per antenna */
-		/* LBFGS separates real and imaginary so double it*/
-		// GREF: two imags of reference antenna are omitted
-		LBFGS::UnpolarizedSolver    solver (nantennas);
-		auto cost = solver.solve_full_unpolarized ( pkg );
+		LBFGS::UnpolarizedLeakageSolver    solver (nantennas);
+		auto cost = solver.solve_leakage_unpolarized ( pkg );
 
 #ifdef CHANDEBUG2
 		{
@@ -324,9 +321,9 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 #endif
 
 		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = solver.niter_para + solver.niter_full ;
-		logger.info   [ ichan ]  = solver.rcode_full;
-		logger.gnorm  [ ichan ]  = solver.gnorm_para + solver.gnorm_full;
+		logger.nfev   [ ichan ]  = solver.niter;
+		logger.info   [ ichan ]  = solver.rcode;
+		logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
@@ -335,20 +332,31 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const auto& idx  = _i->second;
 
 			LBFGS::complex_type rr, rl, lr, ll;
+#if 0
 
 			if (idx == 0) {
-				// R R I R I R
-				rr = LBFGS::complex_type ( std::exp(solver.xpar_full[0]), 0.0f );
-				rl = LBFGS::complex_type ( solver.xpar_full[1], solver.xpar_full[2] );
-				lr = LBFGS::complex_type ( solver.xpar_full[3], solver.xpar_full[4] );
-				ll = LBFGS::complex_type ( std::exp(solver.xpar_full[5]), 0.0f );
+				// R R 
+				//rr = LBFGS::complex_type ( std::exp(solver.xpar_para[0]), 0.0f );
+				rr = LBFGS::complex_type ( solver.xpar_para[0], solver.xpar_para[1] );
+				//ll = LBFGS::complex_type ( std::exp(solver.xpar_para[1]), 0.0f );
+				ll = LBFGS::complex_type ( solver.xpar_para[2], solver.xpar_para[3] );
 			} else {
 				// R I R I R I R I 
-				rr = LBFGS::complex_type( solver.xpar_full[8*idx - 2], solver.xpar_full[8*idx - 1] );
-				rl = LBFGS::complex_type( solver.xpar_full[8*idx + 0], solver.xpar_full[8*idx + 1] );
-				lr = LBFGS::complex_type( solver.xpar_full[8*idx + 2], solver.xpar_full[8*idx + 3] );
-				ll = LBFGS::complex_type( solver.xpar_full[8*idx + 4], solver.xpar_full[8*idx + 5] );
+				rr = LBFGS::complex_type( solver.xpar_para[4*idx + 0], solver.xpar_para[4*idx + 1] );
+				ll = LBFGS::complex_type( solver.xpar_para[4*idx + 2], solver.xpar_para[4*idx + 3] );
 			}
+
+			// R I R I R I R I 
+			rr = LBFGS::complex_type( solver.xpar_full[8*idx + 0], solver.xpar_full[8*idx + 1] );
+			rl = LBFGS::complex_type( solver.xpar_full[8*idx + 2], solver.xpar_full[8*idx + 3] );
+			lr = LBFGS::complex_type( solver.xpar_full[8*idx + 4], solver.xpar_full[8*idx + 5] );
+			ll = LBFGS::complex_type( solver.xpar_full[8*idx + 6], solver.xpar_full[8*idx + 7] );
+#else
+			rr = pkg.cgains[4*idx + 0];
+			rl = pkg.cgains[4*idx + 1];
+			lr = pkg.cgains[4*idx + 2];
+			ll = pkg.cgains[4*idx + 3];
+#endif
 
 			solved_gains_rr[iant][ichan]  = rr;
 			solved_gains_rl[iant][ichan]  = rl;

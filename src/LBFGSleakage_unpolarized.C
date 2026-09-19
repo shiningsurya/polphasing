@@ -1,24 +1,80 @@
 #include "LBFGSclean.hpp"
 
+/*
+ * Unpolarized leakage
+*/
 #ifdef DPRINT
 #include <iostream>
 #endif
 
-LBFGS::real_type LBFGS::full_unpolarized (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
+LBFGS::real_type LBFGS::UnpolarizedLeakageSolver::solve_leakage_unpolarized (uata_t& pkg) {
 	/*
-	 * phases of the parallel gains of the reference antenna (first antenna) is zero.
-	 * ==> real part is always positive
-	 * This constraint built into the gradient computation (see GREF)
-	 *
+	 * First solve parallel and then solve only for leakages
+	 * keeping the parallel solved gains as fixed
+	*/
+
+	real_type final_cost (0.0f);
+
+	void* vpkg  = static_cast<void*>(&pkg);
+
+	{
+		// single unpolarized solving 
+		SingleUnpolarizedSolver single_r ( nantennas );
+		SingleUnpolarizedSolver single_l ( nantennas );
+
+		single_r.solve_single_unpolarized<0> ( pkg );
+		single_l.solve_single_unpolarized<3> ( pkg );
+
+		final_cost += single_r.cost;
+		final_cost += single_l.cost;
+
+		// load parallel solved gains into uata_t
+		// xpar      = {RI RI RI RI}
+		//              01 23 45 67
+		for (int iant = 0; iant < nantennas; iant++) {
+			// rr
+			pkg.cgains[4*iant + 0] = complex_type ( single_r.xpar[2*iant + 0], single_r.xpar[2*iant + 1] );
+
+			// ll
+			pkg.cgains[4*iant + 3] = complex_type ( single_l.xpar[2*iant + 0], single_l.xpar[2*iant + 1] );
+		}
+	}
+
+	// full solve 
+	real_type cost_full (0.0f);
+	rcode   = lbfgs(n, xpar, &cost_full, leakage_unpolarized, NULL, vpkg, &param);
+
+  final_cost  += cost_full;
+  //gnorm  = pkg.gnorm;
+  //niter  = pkg.niter;
+
+#ifdef DPRINT
+	std::cout << " rcode=" << rcode << std::endl;
+#endif
+
+	// load cross gains into cgains
+	for (int iant = 0; iant < nantennas; iant++) {
+		// rl
+		pkg.cgains[4*iant + 1] = complex_type ( xpar[4*iant + 0], xpar[4*iant + 1] );
+
+		// lr
+		pkg.cgains[4*iant + 2] = complex_type ( xpar[4*iant + 2], xpar[4*iant + 3] );
+	}
+
+  return final_cost;
+}
+
+LBFGS::real_type LBFGS::leakage_unpolarized (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
+	/*
 	 * Each antenna has four gains. LBFGS requires real parameters. We express the four gains are
 	 * __ rgains layout 
-	 * R I R I R I R I .....
+	 * R I    R I .....
 	 * | one antenna |
-	 * |rr,rl, lr, ll|
+	 * |rl, lr|
 	 *
-	 * GREF layout
-	 * R R I R I R | R I R I R I R I | ....
-	 * rr
+	 * We fix the parallel gains as is, and only solve for cross gains.
+	 *
+	 * The parallel gains must come from unity_data_t;
 	 *
 	*/
 
@@ -31,22 +87,18 @@ LBFGS::real_type LBFGS::full_unpolarized (void *instance, const lbfgsfloatval_t 
 	/* zero out gradient */
 	std::fill ( rgrad, rgrad + n, 0.0f );
 
+	const int    nant   ( pkg->nantennas );
 	const int    ngains ( 4 * pkg->nantennas );
 
 	/* populate complex gains vector */
-	/* despite GREF, the gains are kept as complex to be uniform */
-	vc_type  cgains ( ngains, complex_type(0.0f, 0.0f) );
-	// rr
-	//cgains[0]   = complex_type ( std::exp(rgains[0]), 0.0f );
-	// rl
-	//cgains[1]   = complex_type ( rgains[1], rgains[2] );
-	// lr
-	//cgains[2]   = complex_type ( rgains[3], rgains[4] );
-	// ll
-	//cgains[3]   = complex_type ( std::exp(rgains[5]), 0.0f );
-	for ( int igain = 0; igain < ngains; igain++ ) {
-		//cgains[igain]   = complex_type ( rgains[2*igain-2], rgains[2*igain-1] );
-		cgains[igain]   = complex_type ( rgains[2*igain], rgains[2*igain+1] );
+	/* this is full gains */
+	vc_type  cgains ( pkg->cgains );
+
+	for ( int iant = 0; iant < nant; iant++ ) {
+		// rl
+		cgains[4*iant + 1]   = complex_type ( rgains[4*iant+0], rgains[4*iant+1] );
+		// lr
+		cgains[4*iant + 2]   = complex_type ( rgains[4*iant+2], rgains[4*iant+3] );
 	}
 
 	/* create complex grad vector */
@@ -189,91 +241,25 @@ model = gpll*z1*conj(gqll)*conj(z2) + gplr*z2*conj(gqlr)*conj(z1) ;
 
 		} // ll
 			
-		//std::cout << " iterationcost=" << cost << " ";
 		// update cost
 		cost += std::norm ( data - model );
 
 	} // iterate over polar baselines
+
 	
-	//std::cout << " rgrads=";
-
-	/* load complex grad into real and imaginary parts */
-	// chain rule because of GREF
-	// rr
-	//rgrad[0] = grad[0].real();// * std::exp(rgains[0]);
-	// rl
-	//rgrad[1] = grad[1].real();
-	//rgrad[2] = grad[1].imag();
-	// lr
-	//rgrad[3] = grad[2].real();
-	//rgrad[4] = grad[2].imag();
-	// ll
-	//rgrad[5] = grad[3].real() * std::exp(rgains[5]);
-	// for the rest of grad
-	for ( int igain = 0; igain < ngains; igain++ ) {
-		const complex_type gg ( grad[igain] );
-		rgrad[2*igain + 0] = gg.real();
-		rgrad[2*igain + 1] = gg.imag();
+	// we ignore grad[rr,ll] as we are only
+	// fitting for rl and lr gains
+	for ( int iant = 0; iant < nant; iant++ ) {
+		// rl
+		const complex_type grl ( grad[4*iant + 1] );
+		rgrad[4*iant + 0] = grl.real();
+		rgrad[4*iant + 1] = grl.imag();
+		// lr
+		const complex_type glr ( grad[4*iant + 2] );
+		rgrad[4*iant + 2] = glr.real();
+		rgrad[4*iant + 3] = glr.imag();
 	}
-
-	//std::cout << " full_jones_cost=" << cost << std::endl; 
 
 	return cost;
-}
-
-LBFGS::real_type LBFGS::UnpolarizedSolver::solve_full_unpolarized (uata_t& pkg) {
-	/*
-	 * First solve parallel and then solve full
-	 * using the parallel solve as initial for parallel gains
-	 *
-	 * While ensuring the phases of the parallel gains of the reference antenna are zero
-	*/
-
-	real_type final_cost (0.0f);
-
-	void* vpkg  = static_cast<void*>(&pkg);
-
-	{
-		// single unpolarized solving 
-		SingleUnpolarizedSolver single_r ( nantennas );
-		SingleUnpolarizedSolver single_l ( nantennas );
-
-		single_r.solve_single_unpolarized<0> ( pkg );
-		single_l.solve_single_unpolarized<3> ( pkg );
-
-		final_cost += single_r.cost;
-		final_cost += single_l.cost;
-
-		// load it into xpar_full
-		// xpar_full = {RI RI RI RI}
-		//              01 23 45 67
-		for (int iant = 0; iant < nantennas; iant++) {
-			// rr
-			xpar_full[8*iant + 0] = single_r.xpar[2*iant + 0];
-			xpar_full[8*iant + 1] = single_r.xpar[2*iant + 1];
-
-			// ll
-			xpar_full[8*iant + 6] = single_l.xpar[2*iant + 0];
-			xpar_full[8*iant + 7] = single_l.xpar[2*iant + 1];
-		}
-	}
-
-	// v is obselete
-	// parallel solve 
-	//initialize_parallel ();
-  //rcode_para = lbfgs(n_para, xpar_para, &cost_para, parallel_unpolarized, NULL, vpkg, &param);
-
-	// full solve 
-	rcode_full = lbfgs(n_full, xpar_full, &cost_full, full_unpolarized, NULL, vpkg, &param);
-
-  final_cost   = cost_para + cost_full;
-  //gnorm  = pkg.gnorm;
-  //niter  = pkg.niter;
-
-#ifdef DPRINT
-	std::cout << " rcode=" << rcode_para << std::endl;
-#endif
-
-  return final_cost;
 }
 

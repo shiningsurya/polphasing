@@ -37,7 +37,7 @@ void print_help () {
 	std::cout << "    -s <scan> scan number of the LTA file" << std::endl;
 	std::cout << "    -t <tag> tag/stem with which to save log and complex gains" << std::endl;
 	std::cout << "    -m <model> path to model file" << std::endl;
-	std::cout << "    -l <tag> tag/stem of the full complex gains, solved using unpolarized scan " << std::endl;
+	std::cout << "    -l <tag> tag/stem of the full/leakage complex gains, solved using unpolarized scan " << std::endl;
 	std::cout << std::endl;
 }
 
@@ -253,8 +253,7 @@ int main(int argc, char *argv[]) {
 		/* data package */
 		LBFGS::data_t  pkg ( 
 				n_noself_baselines, 
-				nantennas,
-				model_rr, model_rl, model_lr, model_ll
+				nantennas
 		);
 
 		/* initialize data */
@@ -317,10 +316,10 @@ int main(int argc, char *argv[]) {
 					{model_rr, model_rl, model_lr, model_ll} 
 			);
 
-			pkg.par_model_rr [ ii ] = _par_model[0];
-			pkg.par_model_rl [ ii ] = _par_model[1];
-			pkg.par_model_lr [ ii ] = _par_model[2];
-			pkg.par_model_ll [ ii ] = _par_model[3];
+			pkg.parleak_model_rr [ ii ] = _par_model[0];
+			pkg.parleak_model_rl [ ii ] = _par_model[1];
+			pkg.parleak_model_lr [ ii ] = _par_model[2];
+			pkg.parleak_model_ll [ ii ] = _par_model[3];
 
 			// antenna indices
 			pkg.iant1 [ ii ]    = iant1;
@@ -338,9 +337,9 @@ int main(int argc, char *argv[]) {
 		/* diag jones has two complex gains per antenna */
 		/* LBFGS separates real and imaginary so double it*/
 		/* with GREF defined, we are setting the imaginary of first hand of first antenna to be zero*/
-		const int npar        ( ( nantennas * 2 * 2 ) - 1 );
-		LBFGS::Solver                 solver (npar);
-		auto cost = solver.solve_diag_jones ( pkg );
+		const int npar    ( ( nantennas * 2 * 2 ) - 1 );
+		LBFGS::PolarizedSolver            solver (npar);
+		auto cost = solver.solve_diag_polarized ( pkg );
 
 #ifdef CHANDEBUG 
 		{
@@ -372,9 +371,9 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 #endif
 
 		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = solver.niter;
-		logger.info   [ ichan ]  = solver.rcode;
-		logger.gnorm  [ ichan ]  = solver.gnorm;
+		logger.nfev   [ ichan ]  = solver.niter_para;
+		logger.info   [ ichan ]  = solver.rcode_para;
+		logger.gnorm  [ ichan ]  = solver.gnorm_para;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
@@ -388,12 +387,12 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			/* see the layout in GREF */
 			if (idx == 0) {
 				/* exponential here to ensure positiveness of first gain */
-				rr  = LBFGS::complex_type ( std::exp(solver.xpar[0]), 0.0f );
-				ll  = LBFGS::complex_type ( solver.xpar[1], solver.xpar[2] );
+				rr  = LBFGS::complex_type ( std::exp(solver.xpar_para[0]), 0.0f );
+				ll  = LBFGS::complex_type ( solver.xpar_para[1], solver.xpar_para[2] );
 			} 
 			else {
-				rr = LBFGS::complex_type ( solver.xpar[4*idx - 1], solver.xpar[4*idx + 0] );
-				ll = LBFGS::complex_type ( solver.xpar[4*idx + 1], solver.xpar[4*idx + 2] );
+				rr = LBFGS::complex_type ( solver.xpar_para[4*idx - 1], solver.xpar_para[4*idx + 0] );
+				ll = LBFGS::complex_type ( solver.xpar_para[4*idx + 1], solver.xpar_para[4*idx + 2] );
 			}
 
 			solved_gains_rr[iant][ichan]  = rr;
