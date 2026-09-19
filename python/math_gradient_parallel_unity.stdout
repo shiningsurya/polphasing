@@ -1,0 +1,28 @@
+GPRR
+- d_{pq}^{rr} g_q^{rr} z_{1} \overline{z_{2}}+g_p^{rr} g_q^{rr} z_{1} z_{2} \overline{g_q^{rr}} \overline{z_{1}} \overline{z_{2}}
+GPLL
+- d_{pq}^{ll} g_q^{ll} z_{2} \overline{z_{1}}+g_p^{ll} g_q^{ll} z_{1} z_{2} \overline{g_q^{ll}} \overline{z_{1}} \overline{z_{2}}
+GQRR
+- g_p^{rr} z_{2} \overline{d_{pq}^{rr}} \overline{z_{1}}+g_p^{rr} g_q^{rr} z_{1} z_{2} \overline{g_p^{rr}} \overline{z_{1}} \overline{z_{2}}
+GQLL
+- g_p^{ll} z_{1} \overline{d_{pq}^{ll}} \overline{z_{2}}+g_p^{ll} g_q^{ll} z_{1} z_{2} \overline{g_p^{ll}} \overline{z_{1}} \overline{z_{2}}
+-----MODELFORWARDPASS----
+RR
+gprr*z2*conj(gqrr)*conj(z1)
+RL
+0
+LR
+0
+LL
+gpll*z1*conj(gqll)*conj(z2)
+-----MODELFORWARDPASS----
+-------------------------
+const complex_type Dgprr_coeff_dpqrr = -gqrr*z1*conj(z2) ; 
+const complex_type Dgprr_coeff_gprr = gqrr*z1*z2*conj(gqrr)*conj(z1)*conj(z2) ; 
+const complex_type Dgqrr_coeff_dqprr = -gprr*z2*conj(z1) ; 
+const complex_type Dgqrr_coeff_gqrr = gprr*z1*z2*conj(gprr)*conj(z1)*conj(z2) ; 
+-------------------------
+const complex_type Dgpll_coeff_dpqll = -gqll*z2*conj(z1) ; 
+const complex_type Dgpll_coeff_gpll = gqll*z1*z2*conj(gqll)*conj(z1)*conj(z2) ; 
+const complex_type Dgqll_coeff_dqpll = -gpll*z1*conj(z2) ; 
+const complex_type Dgqll_coeff_gqll = gpll*z1*z2*conj(gpll)*conj(z1)*conj(z2) ; 
