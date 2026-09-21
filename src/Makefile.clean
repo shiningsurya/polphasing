@@ -19,4 +19,10 @@ fullpolphaselbfgsunity: fullpolphaselbfgsunity.C $(LBFGSSOLVER)
 	#g++ -O2 -o $@ -g -fopenmp -std=c++11 -DLBFGS_FLOAT=32 -DLBFGS_IEEE_FLOAT=1 -DTIMING  fullpolphaselbfgsunity.C LBFGSparallel.C LBFGSfull_unpolarized.C $(LBFGSSOLVER) $(LTA) $(MISC) 
 
 diagpolphaselbfgsleakage: diagpolphaselbfgsleakage.C $(LBFGSSOLVER) 
-	g++ -static -O0 -o $@ -g -std=c++11 -DLBFGS_FLOAT=32 -DLBFGS_IEEE_FLOAT=1 -DTIMING  diagpolphaselbfgsleakage.C LBFGSparallel_polarized.C $(LBFGSSOLVER) $(LTA) $(MISC) 
+	g++ -static -O2 -o $@ -g -std=c++11 -DLBFGS_FLOAT=32 -DLBFGS_IEEE_FLOAT=1 -DTIMING  diagpolphaselbfgsleakage.C LBFGSparallel_polarized.C $(LBFGSSOLVER) $(LTA) $(MISC) 
+
+write_baselines: write_baselines.C
+	g++ -O0 -o $@ -g -std=c++11 write_baselines.C $(LTA)
+
+write_self: write_self.C
+	g++ -O0 -o $@ -g -std=c++11 write_self.C $(LTA)

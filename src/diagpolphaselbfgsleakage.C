@@ -88,8 +88,10 @@ int main(int argc, char *argv[]) {
 	const std::string path_leakage_r  = leakage_tag + std::string("_drl.gains");
 	const std::string path_leakage_l  = leakage_tag + std::string("_dlr.gains");
 
-	const std::string save_file_rr  = tag + std::string("_r.gains");
-	const std::string save_file_ll  = tag + std::string("_l.gains");
+	const std::string save_file_rr  = tag + std::string("_rr.gains");
+	const std::string save_file_rl  = tag + std::string("_rl.gains");
+	const std::string save_file_lr  = tag + std::string("_lr.gains");
+	const std::string save_file_ll  = tag + std::string("_ll.gains");
 	const std::string log_file      = tag + std::string(".log");
 
 	std::cout << "[inputs] lta="   << lta_path << std::endl;
@@ -146,6 +148,8 @@ int main(int argc, char *argv[]) {
 	/**/
 	int rant    = 0;
 	std::map<LTA::antname_t,int>  ant2idx;
+	/* only self_baseline index */
+	std::vector<int>     self_baselines;
 	/* contains noself_baseline index */
 	std::vector<int>     noself_baselines;
 
@@ -174,6 +178,9 @@ int main(int argc, char *argv[]) {
 
 		/* we want noself baselines */
 		if ( ant1 != ant2 ) noself_baselines.push_back ( ib );
+
+		/* save self baselines */
+		if ( ant1 == ant2 ) self_baselines.push_back ( ib );
 
 	} /* polar baselines */
 
@@ -221,6 +228,8 @@ int main(int argc, char *argv[]) {
 
 	/* gain tables */
 	gaintable::gaintable_t    solved_gains_rr = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_rl = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_lr = gaintable::prepare_gaintables ( nchannels );
 	gaintable::gaintable_t    solved_gains_ll = gaintable::prepare_gaintables ( nchannels );
 
 	/* main loop */
@@ -300,26 +309,30 @@ int main(int argc, char *argv[]) {
 			// data
 			pkg.data [ ii ]     = LBFGS::complex_type (  _real,  _imag );
 
+			// load leakages
+			pkg.pleakrl [ ii ]  = leakage_r[ant1][ichan];
+			pkg.pleaklr [ ii ]  = leakage_l[ant1][ichan];
+
+			pkg.qleakrl [ ii ]  = leakage_r[ant2][ichan];
+			pkg.qleaklr [ ii ]  = leakage_l[ant2][ichan];
+
 			// parallactic angle correct model
 			// find parallactic angle
 			const float _par1 ( antpar.at(ant1) );
 			const float _par2 ( antpar.at(ant2) );
 
-			// perform parang and leakage correction
-			const auto& _par_model = models::parallactic_leakage_correction ( 
+			// perform parang correction
+			const auto& _par_model = models::parallactic_correction ( 
 					// angles
 					_par1, _par2, 
-					// leakages
-					leakage_r[ant1][ichan], leakage_l[ant1][ichan],
-					leakage_r[ant2][ichan], leakage_l[ant2][ichan],
 					// input model
-					{model_rr, model_rl, model_lr, model_ll} 
+					model_rr, model_rl, model_lr, model_ll 
 			);
 
-			pkg.parleak_model_rr [ ii ] = _par_model[0];
-			pkg.parleak_model_rl [ ii ] = _par_model[1];
-			pkg.parleak_model_lr [ ii ] = _par_model[2];
-			pkg.parleak_model_ll [ ii ] = _par_model[3];
+			pkg.par_model_rr [ ii ] = _par_model[0];
+			pkg.par_model_rl [ ii ] = _par_model[1];
+			pkg.par_model_lr [ ii ] = _par_model[2];
+			pkg.par_model_ll [ ii ] = _par_model[3];
 
 			// antenna indices
 			pkg.iant1 [ ii ]    = iant1;
@@ -334,11 +347,7 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		/* diag jones has two complex gains per antenna */
-		/* LBFGS separates real and imaginary so double it*/
-		/* with GREF defined, we are setting the imaginary of first hand of first antenna to be zero*/
-		const int npar    ( ( nantennas * 2 * 2 ) - 1 );
-		LBFGS::PolarizedSolver            solver (npar);
+		LBFGS::PolarizedSolver       solver (nantennas);
 		auto cost = solver.solve_diag_polarized ( pkg );
 
 #ifdef CHANDEBUG 
@@ -371,31 +380,48 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 #endif
 
 		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = solver.niter_para;
-		logger.info   [ ichan ]  = solver.rcode_para;
-		logger.gnorm  [ ichan ]  = solver.gnorm_para;
+		logger.nfev   [ ichan ]  = solver.niter;
+		logger.info   [ ichan ]  = solver.rcode;
+		logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
+		const LBFGS::real_type xphase ( solver.xpar[4*nantennas] );
+		const LBFGS::complex_type zp  ( std::cos ( xphase ), std::sin(xphase) );
+
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
-			LBFGS::complex_type rr;
-			LBFGS::complex_type ll;
+			// fetch gains
+			const LBFGS::complex_type grr ( solver.xpar[4*idx + 0], solver.xpar[4*idx + 1] );
+			const LBFGS::complex_type gll ( solver.xpar[4*idx + 2], solver.xpar[4*idx + 3] );
 
-			/* see the layout in GREF */
-			if (idx == 0) {
-				/* exponential here to ensure positiveness of first gain */
-				rr  = LBFGS::complex_type ( std::exp(solver.xpar_para[0]), 0.0f );
-				ll  = LBFGS::complex_type ( solver.xpar_para[1], solver.xpar_para[2] );
-			} 
-			else {
-				rr = LBFGS::complex_type ( solver.xpar_para[4*idx - 1], solver.xpar_para[4*idx + 0] );
-				ll = LBFGS::complex_type ( solver.xpar_para[4*idx + 1], solver.xpar_para[4*idx + 2] );
-			}
+			// fetch leakage terms
+			const LBFGS::complex_type drl ( leakage_r[iant][ichan] );
+			const LBFGS::complex_type dlr ( leakage_l[iant][ichan] );
+
+			// rr
+			const LBFGS::complex_type rr ( grr * zp );
+			// rl
+			const LBFGS::complex_type rl ( grr * drl );
+			// lr
+			const LBFGS::complex_type lr ( gll * zp * dlr );
+			// ll
+			const LBFGS::complex_type ll ( gll );
+
+			/*
+			 * Leakage compensated
+			 * inverse of the Jones matrix made of rr, rl, lr, ll
+			 *
+			*/
+			const LBFGS::complex_type det ( 1.0f - drl*dlr );
+			const LBFGS::complex_type lcrr ( ll / det );
+			const LBFGS::complex_type lcll ( rr / det );
 
 			solved_gains_rr[iant][ichan]  = rr;
+			solved_gains_rl[iant][ichan]  = rl;
+			solved_gains_lr[iant][ichan]  = lr;
 			solved_gains_ll[iant][ichan]  = ll;
 
 		} /* ant2idx */
@@ -406,6 +432,8 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 	/*        WRITE GAINTABLES             */
 	/***************************************/
 	gaintable::write_complex_solutions ( solved_gains_rr, save_file_rr );
+	gaintable::write_complex_solutions ( solved_gains_rl, save_file_rl );
+	gaintable::write_complex_solutions ( solved_gains_lr, save_file_lr );
 	gaintable::write_complex_solutions ( solved_gains_ll, save_file_ll );
 
 	/***************************************/
