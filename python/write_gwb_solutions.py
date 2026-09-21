@@ -26,18 +26,19 @@ def get_args():
     add ('tag', help="Stem/tag that was passed to polphase")
     add ('-O', '--outdir', help='Create an output directory here', default='./', dest='odir')
     add ('-f', '--fullpolphase', help='If to use fullpolphase', action='store_true', dest='fullpolphase')
-    add ('-a','--amp', help='amplitude scaling', default=1., type=float, dest='amp')
+    add ('-a','--amp', help='amplitude scaling, computed using :find_gainamp_scaling:', required=True, type=float, dest='amp')
     return agp.parse_args()
 
 def process_amp ( c, amp ):
     """ complex to amp in string """
     mag = math.sqrt ( c.real*c.real + c.imag*c.imag )
-    return "%.1f" % (mag/amp)
+    if mag <= 1E-2 : mag = 1.0
+    return "%.3f" % (amp/mag)
 
 def process_phs ( c ):
     """ complex to phs in string """
     phs = math.degrees ( math.atan2 ( c.imag, c.real ) )
-    return "%.1f" % phs
+    return "%.3f" % phs
 
 def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
     """
@@ -85,7 +86,7 @@ def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
                 so we do trial and error.
                 """
                 cgains[ant].append ( __cg )
-                amp[ant].append ( process_amp ( __cg ) )
+                amp[ant].append ( process_amp ( __cg, ampscaling ) )
                 phs[ant].append ( process_phs ( __cg ) )
                 # print ( __cg, process_amp(__cg), process_phs(__cg), sep='\t' )
             ichan += 1
@@ -166,7 +167,7 @@ if __name__ == "__main__":
     sol_phs_175  = os.path.join ( ODIR, "phas.175.dat" )
 
     rgains, ramps, rphs = action ( cgains_130, sol_amp_130, sol_phs_130, modifier, args.amp )
-    action ( cgains_175, sol_amp_175, sol_phs_175, modifier )
+    rgains, ramps, rphs = action ( cgains_175, sol_amp_175, sol_phs_175, modifier, args.amp )
 
 
 
