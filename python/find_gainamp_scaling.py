@@ -10,7 +10,7 @@ def get_args():
     add('selfcorr', help='Output of :write_self:')
     add ('-f','--full', help='Fullpolphase solution df', dest='sols', required=True)
     add ('-a','--atol', help='Absolute tolerance wrt 0.0', default=0.01, type=float, dest='atol')
-    add ('--replace', help='Replace inverse of small gain amps with', default=100. type=float, dest='rval')
+    add ('--replace', help='Replace inverse of small gain amps with', default=100., type=float, dest='rval')
     add ('-r','--reference', help='Reference value of selfcorr', type=float, default=100., dest='ref')
     return agp.parse_args()
 

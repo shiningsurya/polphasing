@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 	constexpr std::array<char,2> bandmap{'r','l'};
 	std::ofstream of ( ofile );
 
-	of << "ant chan correlation real" << std::endl;
+	of << "ant chan corr real" << std::endl;
 	of << std::fixed << std::setprecision(3) << std::showpos;
 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
