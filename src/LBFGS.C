@@ -785,7 +785,8 @@ LBFGS::real_type LBFGS::Solver::solve_diag_jones (data_t& pkg) {
 
 	initialize_diag_jones ();
 
-  rcode = lbfgs(npar, xpar, &final_cost, diag_jones, progress_reporter, vpkg, &param);
+  //rcode = lbfgs(npar, xpar, &final_cost, diag_jones, progress_reporter, vpkg, &param);
+  rcode = lbfgs(npar, xpar, &final_cost, diag_jones_normalized, progress_reporter, vpkg, &param);
 
   cost   = final_cost;
   gnorm  = pkg.gnorm;

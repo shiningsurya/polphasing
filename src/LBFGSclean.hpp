@@ -112,10 +112,21 @@ namespace LBFGS {
 		*/
 		vc_type                  data;
 
-		vc_type                  parleak_model_rr;
-		vc_type                  parleak_model_rl;
-		vc_type                  parleak_model_lr;
-		vc_type                  parleak_model_ll;
+		/*
+		* Leakage solutions
+		*/
+		vc_type                  pleakrl;
+		vc_type                  pleaklr;
+		vc_type                  qleakrl;
+		vc_type                  qleaklr;
+
+		/*
+		* Par applied model data
+		*/
+		vc_type                  par_model_rr;
+		vc_type                  par_model_rl;
+		vc_type                  par_model_lr;
+		vc_type                  par_model_ll;
 
 		/* state */
 		real_type                cost;
@@ -126,8 +137,10 @@ namespace LBFGS {
 				int npbl, int nant
 				) : npolarbaselines(npbl), nantennas(nant),
 			iant1(npbl), iant2(npbl), pb2corr(npbl), data(npbl),
-			parleak_model_rr (npbl), parleak_model_rl (npbl),
-			parleak_model_lr (npbl), parleak_model_ll (npbl), 
+			pleakrl (npbl), pleaklr(npbl),
+			qleakrl (npbl), qleaklr(npbl),
+			par_model_rr (npbl), par_model_rl (npbl),
+			par_model_lr (npbl), par_model_ll (npbl), 
 		 cost (0.0f), gnorm(0.0f), niter(0) {}
 	}; 
 
@@ -424,9 +437,14 @@ namespace LBFGS {
 	 
 	struct PolarizedSolver {
 		/*
-		 * Internally manages two solvers
-		 * - one for parallel solving
-		 * - one for full solving
+		 * - Solves for diag_complex gains and crosshand phase
+		 *   We need to solve for both, because we consider leakages as well,
+		 *   which makes things non-communitative
+		 *
+		 *   n = (2*2*nantennas) + 1
+		 *   each antenna has two gains and each gain is complex
+		 *   add one because of crosshand phase
+		 *   initialize crosshand phase from 0
 		*/
 
 		/* all parameters of the solver */
@@ -434,19 +452,20 @@ namespace LBFGS {
 
 		/* number of variables/parameters */
 		const int             nantennas;
-		const int             n_para;
+		const int             n;
+		const int             pindex;
 
 		/* xpar, grad */
-		int                  rcode_para;
-		lbfgsfloatval_t       cost_para;
-		lbfgsfloatval_t      gnorm_para;
-		lbfgsfloatval_t      *xpar_para;
-		int                  niter_para;
+		int                  rcode;
+		lbfgsfloatval_t       cost;
+		lbfgsfloatval_t      gnorm;
+		lbfgsfloatval_t      *xpar;
+		int                  niter;
 
 		// ctor
 		PolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
-			nantennas(_nant), n_para ( nantennas*2*2 - 1 ),
-			niter_para(0)
+			nantennas(_nant), n( nantennas*2*2 + 1 ), pindex(2*nantennas),
+			niter(0)
 		{
 			/* load default first*/
 			lbfgs_parameter_init(&param);
@@ -458,34 +477,27 @@ namespace LBFGS {
 			/* max linesearch */
 			param.max_linesearch    = 64;
 
-			/* GREF constraint */
-			xpar_para      = lbfgs_malloc ( n_para );
-
 			/* initialize xpar */
-			std::fill ( xpar_para, xpar_para + n_para, 0.0f ); 
+			xpar              = lbfgs_malloc ( n );
+			std::fill ( xpar, xpar + n, 0.0f ); 
 		}
 
-		void initialize_parallel () {
+		void initialize () {
 			/*
-			 * Only the parallel gains are set to unity with zero imaginary.
-			 * Which in case of diag_jones, is every gain
+			 * xpar has gains and crosshand phase
 			 *
-			 * Because of GREF, the layout is
-			 * R R | R I R I|
-			 * ant | ant    |
-			 *
-			 * GREF in unpolarized case requires us to completely eliminate crosshand phase
+			 * All complex gains are initialized to (1,0)
+			 * crosshand phase is initialized to 0.0
 			 *
 			*/
-			xpar_para[0] = 1.5f;
-			//xpar_para[1] = 5.5f;
-			for ( int ipar = 1; ipar < n_para; ipar+=2 ) xpar_para[ipar] = 5.0f;
+			for ( int iant = 0; iant < nantennas; iant++) xpar [2*iant] = 1.0f;
+			xpar[pindex] = 0.0f;
 		}
 
 		// dtor
 		~PolarizedSolver() {
 
-			if (xpar_para) lbfgs_free ( xpar_para );
+			if (xpar) lbfgs_free ( xpar );
 
 		}
 
