@@ -11,8 +11,11 @@ def get_args():
     add = agp.add_argument
     add ('-p','--polphase', help='Tag of polphase', dest='polphase')
     add ('-f','--fullpolphase', help='Tag of full polphase', dest='fullpolphase')
+    add ('-l','--leakage', help='Tag of full polphase for leakages (drl, dlr)', dest='leakage')
+    add ('-x','--xphase', help='Tag of full polphase for crosshand phase(xp)', dest='xphase')
     add ('-q', '--quartical', help='csv file of quartical solutions :make_quartical_df.py:', dest='quartical')
     add ('-r','--rantsol', help='Tag of rantsol', dest='rantsol')
+    add ('-a','--ampsol', help='Tag of ampsolutions', dest='ampsol')
     add ('-n','--nchan', help='Number of channels', dest='nchans', type=int, default=2048)
     return agp.parse_args()
 
@@ -35,6 +38,42 @@ def make_indexed_gaintable (rg, lg):
     gg    = pd.concat([rr, ll], keys=['r', 'l'], names=['corr', 'ant']).swaplevel().sort_index()
     gg['gains'] = gg['gains'].apply(np.array)
     return gg
+
+def make_indexed_gaintable_leakage (rg, lg):
+    """
+    multindex dataframe with {ant, corr} as index
+
+    it helps a lot down the line
+    """
+    ##
+    trg   = rg.transpose()
+    tlg   = lg.transpose()
+    ###
+    trg['gains']  = trg.values.tolist()
+    tlg['gains']  = tlg.values.tolist()
+    ###
+    rr    = pd.DataFrame ( trg['gains'] )
+    ll    = pd.DataFrame ( tlg['gains'] )
+    ###
+    gg    = pd.concat([rr, ll], keys=['drl', 'dlr'], names=['corr', 'ant']).swaplevel().sort_index()
+    gg['gains'] = gg['gains'].apply(np.array)
+    return gg
+
+def make_indexed_gaintable_xphase (rg):
+    """
+    multindex dataframe with {ant, corr} as index
+
+    it helps a lot down the line
+    """
+    ##
+    trg   = rg.transpose()
+    ###
+    trg['gains']  = trg.values.tolist()
+    ###
+    rr    = pd.DataFrame ( trg['gains'] )
+    ###
+    rr['gains'] = rr['gains'].apply(np.array)
+    return rr
 
 def make_indexed_gaintable_full (rrg, rlg, lrg, llg):
     """
@@ -73,6 +112,21 @@ if __name__ == "__main__":
         gg  = make_indexed_gaintable ( rg, lg )
         gg.to_pickle ( og + "_polphase_df.pkl" )
 
+    if args.leakage:
+        og  = os.path.basename ( args.leakage )
+        rg  = pd.read_csv ( args.leakage + "_drl.gains", sep='\\s+' ).map(complex)
+        lg  = pd.read_csv ( args.leakage + "_dlr.gains", sep='\\s+' ).map(complex)
+
+        gg  = make_indexed_gaintable_leakage ( rg, lg )
+        gg.to_pickle ( og + "_leakage_df.pkl" )
+
+    if args.xphase:
+        og  = os.path.basename ( args.xphase )
+        rg  = pd.read_csv ( args.xphase + "_xp.gains", sep='\\s+' ).map(complex)
+
+        gg  = make_indexed_gaintable_xphase ( rg )
+        gg.to_pickle ( og + "_xp_df.pkl" )
+
     if args.fullpolphase:
         og  = os.path.basename ( args.fullpolphase )
         rrg  = pd.read_csv ( args.fullpolphase + "_rr.gains", sep='\\s+' ).map(complex)
@@ -91,8 +145,13 @@ if __name__ == "__main__":
         gg  = make_indexed_gaintable ( rg, lg )
         gg.to_pickle ( og + "_rantsol_df.pkl" )
 
-        # rg.to_pickle ( og + "_rantsol_r_df.pkl" )
-        # lg.to_pickle ( og + "_rantsol_l_df.pkl" )
+    if args.ampsol:
+        og  = os.path.basename ( args.ampsol )
+        rg  = pd.read_csv ( args.ampsol +"130.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').drop(columns=['#'])
+        lg  = pd.read_csv ( args.ampsol +"175.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').drop(columns=['#'])
+
+        gg  = make_indexed_gaintable ( rg, lg )
+        gg.to_pickle ( og + "_ampsol_df.pkl" )
 
     if args.quartical:
         og  = os.path.basename ( args.quartical )
