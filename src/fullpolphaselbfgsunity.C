@@ -331,40 +331,21 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
-			LBFGS::complex_type rr, rl, lr, ll;
-#if 0
+			const LBFGS::complex_type rr ( pkg.cgains[4*idx + 0] );
+			const LBFGS::complex_type rl ( pkg.cgains[4*idx + 1] );
+			const LBFGS::complex_type lr ( pkg.cgains[4*idx + 2] );
+			const LBFGS::complex_type ll ( pkg.cgains[4*idx + 3] );
 
-			if (idx == 0) {
-				// R R 
-				//rr = LBFGS::complex_type ( std::exp(solver.xpar_para[0]), 0.0f );
-				rr = LBFGS::complex_type ( solver.xpar_para[0], solver.xpar_para[1] );
-				//ll = LBFGS::complex_type ( std::exp(solver.xpar_para[1]), 0.0f );
-				ll = LBFGS::complex_type ( solver.xpar_para[2], solver.xpar_para[3] );
-			} else {
-				// R I R I R I R I 
-				rr = LBFGS::complex_type( solver.xpar_para[4*idx + 0], solver.xpar_para[4*idx + 1] );
-				ll = LBFGS::complex_type( solver.xpar_para[4*idx + 2], solver.xpar_para[4*idx + 3] );
-			}
-
-			// R I R I R I R I 
-			rr = LBFGS::complex_type( solver.xpar_full[8*idx + 0], solver.xpar_full[8*idx + 1] );
-			rl = LBFGS::complex_type( solver.xpar_full[8*idx + 2], solver.xpar_full[8*idx + 3] );
-			lr = LBFGS::complex_type( solver.xpar_full[8*idx + 4], solver.xpar_full[8*idx + 5] );
-			ll = LBFGS::complex_type( solver.xpar_full[8*idx + 6], solver.xpar_full[8*idx + 7] );
-#else
-			rr = pkg.cgains[4*idx + 0];
-			rl = pkg.cgains[4*idx + 1];
-			lr = pkg.cgains[4*idx + 2];
-			ll = pkg.cgains[4*idx + 3];
-#endif
+			const LBFGS::complex_type drl ( pkg.lgains[2*idx + 0] );
+			const LBFGS::complex_type dlr ( pkg.lgains[2*idx + 1] );
 
 			solved_gains_rr[iant][ichan]  = rr;
 			solved_gains_rl[iant][ichan]  = rl;
 			solved_gains_lr[iant][ichan]  = lr;
 			solved_gains_ll[iant][ichan]  = ll;
 
-			solved_leakage_drl[iant][ichan] = rl / rr;
-			solved_leakage_dlr[iant][ichan] = lr / ll;
+			solved_leakage_drl[iant][ichan] = drl;
+			solved_leakage_dlr[iant][ichan] = dlr;
 
 		} /* ant2idx */
 

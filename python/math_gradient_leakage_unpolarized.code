@@ -1,0 +1,36 @@
+-----MODELFORWARDPASS----
+RR
+dprl*gprr*z1*conj(dqrl)*conj(gqrr)*conj(z2) + gprr*z2*conj(gqrr)*conj(z1)
+RL
+dprl*gprr*z1*conj(gqll)*conj(z2) + gprr*z2*conj(dqlr)*conj(gqll)*conj(z1)
+LR
+dplr*gpll*z2*conj(gqrr)*conj(z1) + gpll*z1*conj(dqrl)*conj(gqrr)*conj(z2)
+LL
+dplr*gpll*z2*conj(dqlr)*conj(gqll)*conj(z1) + gpll*z1*conj(gqll)*conj(z2)
+-----MODELFORWARDPASS----
+-------------------------
+const complex_type Ddprl_coeff_dpqrl = -gqll*z2*conj(gprr)*conj(z1) ; 
+const complex_type Ddprl_coeff_dqrl = gprr*gqrr*(z2 * z2)*conj(gprr)*conj(gqrr)*(conj(z1) * conj(z1)) ; 
+const complex_type Ddprl_coeff_dprl = dqrl*gprr*gqrr*z1*z2*conj(dqrl)*conj(gprr)*conj(gqrr)*conj(z1)*conj(z2) + gprr*gqll*z1*z2*conj(gprr)*conj(gqll)*conj(z1)*conj(z2) ; 
+const complex_type Ddqrl_coeff_dprl = gprr*gqrr*(z1 * z1)*conj(gprr)*conj(gqrr)*(conj(z2) * conj(z2)) ; 
+const complex_type Ddqrl_coeff_dqrl = dprl*gprr*gqrr*z1*z2*conj(dprl)*conj(gprr)*conj(gqrr)*conj(z1)*conj(z2) + gpll*gqrr*z1*z2*conj(gpll)*conj(gqrr)*conj(z1)*conj(z2) ; 
+const complex_type Ddqlr_coeff_dqprl = -gprr*z2*conj(gqll)*conj(z1) ; 
+-------------------------
+const complex_type Ddprl_coeff_dpqrr = -dqrl*gqrr*z2*conj(gprr)*conj(z1) ; 
+const complex_type Ddqrl_coeff_dqprr = -dprl*gprr*z1*conj(gqrr)*conj(z2) ; 
+-------------------------
+const complex_type Ddprl_coeff_1 = gprr*gqll*(z2 * z2)*conj(dqlr)*conj(gprr)*conj(gqll)*(conj(z1) * conj(z1)) ; 
+const complex_type Ddqrl_coeff_1 = gpll*gqrr*(z1 * z1)*conj(dplr)*conj(gpll)*conj(gqrr)*(conj(z2) * conj(z2)) ; 
+const complex_type Ddplr_coeff_1 = gpll*gqrr*(z1 * z1)*conj(dqrl)*conj(gpll)*conj(gqrr)*(conj(z2) * conj(z2)) ; 
+const complex_type Ddqlr_coeff_1 = gprr*gqll*(z2 * z2)*conj(dprl)*conj(gprr)*conj(gqll)*(conj(z1) * conj(z1)) ; 
+-------------------------
+const complex_type Ddqrl_coeff_dqplr = -gpll*z1*conj(gqrr)*conj(z2) ; 
+const complex_type Ddplr_coeff_dpqlr = -gqrr*z1*conj(gpll)*conj(z2) ; 
+const complex_type Ddplr_coeff_dqlr = gpll*gqll*(z1 * z1)*conj(gpll)*conj(gqll)*(conj(z2) * conj(z2)) ; 
+const complex_type Ddplr_coeff_dplr = dqlr*gpll*gqll*z1*z2*conj(dqlr)*conj(gpll)*conj(gqll)*conj(z1)*conj(z2) + gpll*gqrr*z1*z2*conj(gpll)*conj(gqrr)*conj(z1)*conj(z2) ; 
+const complex_type Ddqlr_coeff_dplr = gpll*gqll*(z2 * z2)*conj(gpll)*conj(gqll)*(conj(z1) * conj(z1)) ; 
+const complex_type Ddqlr_coeff_dqlr = dplr*gpll*gqll*z1*z2*conj(dplr)*conj(gpll)*conj(gqll)*conj(z1)*conj(z2) + gprr*gqll*z1*z2*conj(gprr)*conj(gqll)*conj(z1)*conj(z2) ; 
+-------------------------
+const complex_type Ddplr_coeff_dpqll = -dqlr*gqll*z1*conj(gpll)*conj(z2) ; 
+const complex_type Ddqlr_coeff_dqpll = -dplr*gpll*z2*conj(gqll)*conj(z1) ; 
+

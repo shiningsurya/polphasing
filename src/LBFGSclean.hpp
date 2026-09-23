@@ -55,8 +55,12 @@ namespace LBFGS {
 		/*
 		 * full gains
 		 * size=4*nantennas
+		 *
+		 * leakage gains
+		 * size=2*nantennas
 		*/
 		vc_type                  cgains;
+		vc_type                  lgains;
 
 		/*
 		* These are parallactic jones elements
@@ -74,6 +78,7 @@ namespace LBFGS {
 				) : npolarbaselines(npbl), nantennas(nant),
 			iant1(npbl), iant2(npbl), pb2corr(npbl), data(npbl),
 			cgains (4*nantennas, complex_type(0.0f, 0.0f)),
+			lgains (2*nantennas, complex_type(0.0f, 0.0f)),
 			par_z1(npbl), par_z2(npbl), 
 		 cost (0.0f), gnorm(0.0f), niter(0) {}
 	}; 
