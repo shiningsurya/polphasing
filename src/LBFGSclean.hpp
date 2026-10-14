@@ -167,6 +167,7 @@ namespace LBFGS {
 	//lbfgsfloatval_t diag_jones (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
 	int progress_reporter (void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k, int ls );
+	int progress_reporter_unity (void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k, int ls );
 
 	/*
 	 * Solver interfaces
@@ -213,7 +214,7 @@ namespace LBFGS {
 			/* max iterations */
 			param.max_iterations    = max_iterations;
 			/* max linesearch */
-			param.max_linesearch    = 64;
+			param.max_linesearch    = 128;
 
 			/* GREF constraint */
 			xpar       = lbfgs_malloc ( n );
@@ -331,26 +332,39 @@ namespace LBFGS {
 		lbfgsfloatval_t      *xpar_para;
 		int                  niter_para;
 
-		int                  rcode_full;
-		lbfgsfloatval_t       cost_full;
-		lbfgsfloatval_t      gnorm_full;
+		int                  rcode;
+		lbfgsfloatval_t       cost;
+		lbfgsfloatval_t      gnorm;
 		lbfgsfloatval_t      *xpar_full;
-		int                  niter_full;
+		int                  niter;
 
 		// ctor
-		UnpolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
+		UnpolarizedSolver (int _nant, int n_hessian_corrections = 16, int max_iterations = 1000) : 
 			nantennas(_nant), n_para ( nantennas*2*2 ), n_full(nantennas*4*2),
-			niter_para(0), niter_full(0) 
+			niter_para(0), niter(0) 
 		{
 			/* load default first*/
 			lbfgs_parameter_init(&param);
+
+			/* gnorm */
+			param.epsilon           = 1E-9;
+			/* fnorm */
+			param.delta             = 1E-9;
+			/* xtol */
+			param.xtol              = 1E-9;
 
 			/* number of corrections to the hessian matrix */
 			param.m                 = n_hessian_corrections;
 			/* max iterations */
 			param.max_iterations    = max_iterations;
 			/* max linesearch */
-			param.max_linesearch    = 64;
+			param.max_linesearch    = 128;
+			/* linesearch algo */
+			param.linesearch        = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE;
+			/* C||x|| */
+			//param.orthantwise_c     = 0.1;
+			//param.orthantwise_start = 0;
+			//param.orthantwise_end   = n_full;
 
 			/* GREF constraint */
 			xpar_para      = lbfgs_malloc ( n_para );
@@ -431,6 +445,9 @@ namespace LBFGS {
 		}
 
 		/* solving methods */
+		real_type solve_parallel_unpolarized_single (uata_t& pkg);
+		real_type solve_parallel_unpolarized (uata_t& pkg);
+		real_type solve_leakage_unpolarized (uata_t& pkg);
 		real_type solve_full_unpolarized (uata_t& pkg);
 
 	}; // solver
@@ -464,7 +481,7 @@ namespace LBFGS {
 
 		// ctor
 		PolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
-			nantennas(_nant), n( nantennas*2*2 + 1 ), pindex(2*nantennas),
+			nantennas(_nant), n( nantennas*2*2 - 1 ), pindex(4*nantennas - 2),
 			niter(0)
 		{
 			/* load default first*/
@@ -489,8 +506,13 @@ namespace LBFGS {
 			 * All complex gains are initialized to (1,0)
 			 * crosshand phase is initialized to 0.0
 			 *
+			 * GGREF makes the layout
+			 * R R RI RI RI .... RI | xphase
+			 *
 			*/
-			for ( int iant = 0; iant < nantennas; iant++) xpar [2*iant] = 1.0f;
+			xpar[0] = 1.0f;
+			xpar[1] = 1.0f;
+			for ( int iant = 1; iant < nantennas; iant++) xpar [4*iant - 2] = 1.0f;
 			xpar[pindex] = 0.0f;
 		}
 

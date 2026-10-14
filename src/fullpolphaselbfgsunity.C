@@ -84,6 +84,9 @@ int main(int argc, char *argv[]) {
 	const std::string save_file_leakage_r  = tag + std::string("_drl.gains");
 	const std::string save_file_leakage_l  = tag + std::string("_dlr.gains");
 
+	const std::string save_file_par_r  = tag + std::string("_pr.gains");
+	const std::string save_file_par_l  = tag + std::string("_pl.gains");
+
 	std::cout << "[inputs] lta="   << lta_path << std::endl;
 	std::cout << "[inputs] tag="   << tag  << std::endl;
 	std::cout << "[inputs] scan="  << cal_scan_number << std::endl;
@@ -207,6 +210,11 @@ int main(int argc, char *argv[]) {
 	gaintable::gaintable_t    solved_leakage_drl = gaintable::prepare_gaintables ( nchannels );
 	gaintable::gaintable_t    solved_leakage_dlr = gaintable::prepare_gaintables ( nchannels );
 
+	gaintable::gaintable_t    used_par_r = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    used_par_l = gaintable::prepare_gaintables ( nchannels );
+
+	/* parangle is same for all channels */
+
 	/* main loop */
 	std::cout << " Starting main solving loop" << std::endl;
 
@@ -275,10 +283,11 @@ int main(int argc, char *argv[]) {
 			// parallactic angle correct model
 			// find parallactic angle
 			
-			//const float _par1 ( antpar.at(ant1) );
-			//const float _par2 ( antpar.at(ant2) );
-			const float _par1 ( 0.0f );
-			const float _par2 ( 0.0f );
+			const float _par1 ( antpar.at(ant1) );
+			const float _par2 ( antpar.at(ant2) );
+			//const float _par1 ( 0.0f );
+			//const float _par2 ( 0.0f );
+//#warning "zeroed out the par"
 
 			// z1, z2
 			pkg.par_z1 [ ii ]   = LBFGS::complex_type ( std::cos ( _par1 ), std::sin ( _par1 ) );
@@ -297,8 +306,11 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		LBFGS::UnpolarizedLeakageSolver    solver (nantennas);
-		auto cost = solver.solve_leakage_unpolarized ( pkg );
+		//LBFGS::UnpolarizedLeakageSolver    solver (nantennas);
+		//auto cost = solver.solve_leakage_unpolarized ( pkg );
+
+		LBFGS::UnpolarizedSolver    solver (nantennas);
+		auto cost = solver.solve_full_unpolarized ( pkg );
 
 #ifdef CHANDEBUG2
 		{
@@ -321,9 +333,9 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 #endif
 
 		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = solver.niter;
+		logger.nfev   [ ichan ]  = pkg.niter;
 		logger.info   [ ichan ]  = solver.rcode;
-		logger.gnorm  [ ichan ]  = solver.gnorm;
+		logger.gnorm  [ ichan ]  = pkg.gnorm;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
@@ -347,6 +359,10 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			solved_leakage_drl[iant][ichan] = drl;
 			solved_leakage_dlr[iant][ichan] = dlr;
 
+			const float _par ( antpar.at(iant) );
+			used_par_r[iant][ichan]  = LBFGS::complex_type ( std::cos ( _par ), -1.0f*std::sin( _par ) );
+			used_par_l[iant][ichan]  = LBFGS::complex_type ( std::cos ( _par ),  1.0f*std::sin( _par ) );
+
 		} /* ant2idx */
 
 	} // channel
@@ -361,6 +377,9 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 
 	gaintable::write_complex_solutions ( solved_leakage_drl, save_file_leakage_r );
 	gaintable::write_complex_solutions ( solved_leakage_dlr, save_file_leakage_l );
+
+	gaintable::write_complex_solutions ( used_par_r, save_file_par_r );
+	gaintable::write_complex_solutions ( used_par_l, save_file_par_l );
 
 	/***************************************/
 	/*        WRITE LOG                    */

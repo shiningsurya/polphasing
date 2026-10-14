@@ -5,12 +5,6 @@
 #endif
 
 LBFGS::real_type LBFGS::PolarizedSolver::solve_diag_polarized (data_t& pkg) {
-	/*
-	 * First solve parallel and then solve full
-	 * using the parallel solve as initial for parallel gains
-	 *
-	 * While ensuring the phases of the parallel gains of the reference antenna are zero
-	*/
 
 	real_type cost (0.0f);
 
@@ -24,7 +18,7 @@ LBFGS::real_type LBFGS::PolarizedSolver::solve_diag_polarized (data_t& pkg) {
 	niter  = pkg.niter;
 
 #ifdef DPRINT
-	std::cout << " rcode=" << rcode_para << std::endl;
+	std::cout << " rcode=" << rcode << std::endl;
 #endif
 
   return cost;
@@ -32,9 +26,30 @@ LBFGS::real_type LBFGS::PolarizedSolver::solve_diag_polarized (data_t& pkg) {
 
 LBFGS::real_type LBFGS::parallel_polarized (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
 	/*
-	 * xpar has 2*complex gains for antennas + crosshand phase
+	 * xpar has 2*complex gains for antennas + crosshand phase - GGREF
 	 *
-	 * RI RI RI RI ... RI | xphase
+	 * R R RI RI ... RI | xphase
+	 * 4*nant -2 + 1 = 4*nant - 1
+	 *
+	 * The imaginary numbers of first antenna (treated as reference) are zero.
+	 * Also, to ensure zero phase, the real parts are positive.
+	 * This is done using exp parameterization.
+	 *
+	 * xpar::xphase is parameterized by a real number because solver is unconstrained.
+	 * We get xphase as 
+	 * 	xphase = 2.0f * arctan ( xpar::xphase )
+	 * 	so xphase is in -pi to pi.
+	 *
+	 * 	chain rule:
+	 * 	- dS/dphi computed in :parallel_polarized:
+	 * 	- dS/dxphase required
+	 * 	dS/dxphase = dS/dphi * dphi/dxphase
+	 * 	dphi/dxphase = 2.0f / ( 1.0f + xphase**2 )
+	 *
+	 * All the crosshand phase should only appear in xphase.
+	 * This implies, we must enforce the phases of the parallel gains
+	 * of the reference antenna to be zero.
+	 * This condition is denoted by GGREF
 	 * 
 	*/
 
@@ -42,21 +57,26 @@ LBFGS::real_type LBFGS::parallel_polarized (void *instance, const lbfgsfloatval_
 	real_type cost ( 0.0f );
 
 	/* get data_t* ptr out of instance */
-	const data_t *pkg = reinterpret_cast<const data_t*>(instance);
+	const data_t *pkg = static_cast<const data_t*>(instance);
 
 	/* zero out gradient */
 	std::fill ( rgrad, rgrad + n, 0.0f );
 
+	const int    nantennas ( pkg->nantennas );
 	const int    ngains ( 2 * pkg->nantennas );
-	const int    pindex ( 4 * pkg->nantennas );
+	const int    pindex ( 4 * pkg->nantennas -2 );
 
 	/* populate complex gains vector */
 	vc_type  gains ( ngains, complex_type(0.0f, 0.0f) );
-	for ( int igain = 0; igain < ngains; igain++ ) {
-		gains[igain]   = complex_type ( rgains[2*igain], rgains[2*igain+1] );
+	gains[0]             = complex_type ( rgains[0], 0.0f );
+	gains[1]             = complex_type ( rgains[1], 0.0f );
+	for ( int iant = 1; iant < nantennas; iant++ ) {
+		gains[2*iant    ]  = complex_type ( rgains[4*iant - 2], rgains[4*iant - 1] );
+		gains[2*iant + 1]  = complex_type ( rgains[4*iant    ], rgains[4*iant + 1] );
 	}
 
-	const real_type xphase ( rgains[pindex] );
+	const real_type par_xphase ( rgains[pindex] );
+	const real_type xphase ( 2.0f * std::atan ( par_xphase ) );
 
 	const complex_type zp  ( std::cos(xphase), std::sin(xphase) );
 	const complex_type czp ( std::cos(xphase), -std::sin(xphase) );
@@ -214,14 +234,23 @@ const complex_type Dphi_coeff_czp = -I*gpll*gqll*mll*conj(gpll)*conj(gqll)*conj(
 	} // iterate over polar baselines
 
 	/* load complex grad into real and imaginary parts */
-	/* chain rule */
-	for (int igain = 0; igain < ngains; igain++) {
-		const complex_type gg ( grad[igain] );
-		rgrad[2*igain]   = gg.real();
-		rgrad[2*igain+1] = gg.imag();
+	// enforced to be only real
+	// the GGREF R R terms
+	rgrad[0]           = grad[0].real();
+	rgrad[1]           = grad[1].real();
+	for ( int iant = 1; iant < nantennas; iant++ ) {
+		const complex_type gr ( grad[2*iant    ] );
+		const complex_type gl ( grad[2*iant + 1] );
+
+		rgrad[4*iant - 2]  = gr.real();
+		rgrad[4*iant - 1]  = gr.imag();
+
+		rgrad[4*iant    ]  = gl.real();
+		rgrad[4*iant + 1]  = gl.imag();
 	}
-	rgrad[pindex]      = xpgrad.real(); 
+	rgrad[pindex]      = xpgrad.real() * 2.0f / ( 1.0f + par_xphase*par_xphase ); 
 	// xpgrad will be purely real
+	// rest because of chain rule
 
 	return cost;
 }
