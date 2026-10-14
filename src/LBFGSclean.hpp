@@ -163,6 +163,13 @@ namespace LBFGS {
 
 	lbfgsfloatval_t parallel_polarized (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 	//lbfgsfloatval_t combined_jones (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+	
+	/*
+	 * Objective functions of IterativeSolving
+	*/
+	lbfgsfloatval_t rr_unpolarized (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+	lbfgsfloatval_t ll_unpolarized (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+	lbfgsfloatval_t rllr_unpolarized (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
 	//lbfgsfloatval_t diag_jones (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
@@ -432,6 +439,207 @@ namespace LBFGS {
 
 		/* solving methods */
 		real_type solve_full_unpolarized (uata_t& pkg);
+
+	}; // solver
+		 //
+	struct IterativeUnpolarizedSolver {
+		/*
+		 * Solves 
+		 * 	(a) Srr and Sll independently
+		 * 	(b) Srl and Slr jointly
+		 * Repeats until convergence or until two or three iterations
+		 *
+		 * At each step, unity_data_t::cgains are updated
+		 *
+		 * GREF condition is manually ensured by SingleUnpolarizedSolver
+		 *
+		 * For each antenna, 
+		 * xpar layout is 
+		 * R I R I R I R I
+		 * 0 1 2 3 4 5 6 7
+		 * rr |rl |lr |ll
+		 *
+		*/
+
+		/* all parameters of the solver */
+		lbfgs_parameter_t    param;
+
+		/* number of variables/parameters */
+		const int             nantennas;
+		const int             n_rr, n_ll;
+		const int             n_full;
+
+		/* xpar, grad */
+		lbfgsfloatval_t      *xpar_rr;
+		lbfgsfloatval_t      cost_rr;
+		lbfgsfloatval_t      gnorm_rr;
+		lbfgsfloatval_t      rcode_rr;
+		int                  niter_rr;
+
+		lbfgsfloatval_t      *xpar_ll;
+		lbfgsfloatval_t      cost_ll;
+		lbfgsfloatval_t      gnorm_ll;
+		lbfgsfloatval_t      rcode_ll;
+		int                  niter_ll;
+
+		lbfgsfloatval_t      *xpar_full;
+		lbfgsfloatval_t      cost_full;
+		lbfgsfloatval_t      gnorm_full;
+		lbfgsfloatval_t      rcode_full;
+		int                  niter_full;
+
+		// ctor
+		IterativeUnpolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
+			nantennas(_nant), n_rr ( nantennas*2*2 ), n_ll ( nantennas*2*2 ), n_full(nantennas*4*2),
+			niter_rr(0), niter_ll(0), niter_full(0) 
+		{
+			/* load default first*/
+			lbfgs_parameter_init(&param);
+
+			/* number of corrections to the hessian matrix */
+			param.m                 = n_hessian_corrections;
+			/* max iterations */
+			param.max_iterations    = max_iterations;
+			/* max linesearch */
+			param.max_linesearch    = 64;
+
+			xpar_rr   = lbfgs_malloc ( n_rr );
+			xpar_ll   = lbfgs_malloc ( n_ll );
+			xpar_full = lbfgs_malloc ( n_full );
+
+			/* initialize xpar */
+			std::fill ( xpar_rr, xpar_rr + n_rr, 0.0f ); 
+			std::fill ( xpar_ll, xpar_ll + n_ll, 0.0f ); 
+			std::fill ( xpar_full, xpar_full + n_full, 0.0f ); 
+		}
+
+		void loadgains_full ( const uata_t &pkg ) {
+			/*
+			 * Load unity_data_t::cgains into xpar_full
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _grr ( pkg.cgains[4*iant + 0] );
+				const complex_type _grl ( pkg.cgains[4*iant + 1] );
+				const complex_type _glr ( pkg.cgains[4*iant + 2] );
+				const complex_type _gll ( pkg.cgains[4*iant + 3] );
+
+				xpar_full[8*iant + 0] = _grr.real();
+				xpar_full[8*iant + 1] = _grr.imag();
+
+				xpar_full[8*iant + 2] = _grl.real();
+				xpar_full[8*iant + 3] = _grl.imag();
+
+				xpar_full[8*iant + 4] = _glr.real();
+				xpar_full[8*iant + 5] = _glr.imag();
+
+				xpar_full[8*iant + 6] = _gll.real();
+				xpar_full[8*iant + 7] = _gll.imag();
+			}
+		}
+
+		void loadgains_rr ( const uata_t &pkg ) {
+			/*
+			 * Load unity_data_t::cgains into xpar_rr
+			 *
+			 * xpar_rr only has grr and drl terms for every antenna
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _grr ( pkg.cgains[4*iant + 0] );
+				const complex_type _grl ( pkg.cgains[4*iant + 1] );
+
+				xpar_rr[4*iant + 0] = _grr.real();
+				xpar_rr[4*iant + 1] = _grr.imag();
+				xpar_rr[4*iant + 2] = _grl.real();
+				xpar_rr[4*iant + 3] = _grl.imag();
+			}
+		}
+
+		void loadgains_ll ( const uata_t &pkg ) {
+			/*
+			 * Load unity_data_t::cgains into xpar_ll
+			 *
+			 * xpar_ll only has gll and dlr terms for every antenna
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _glr ( pkg.cgains[4*iant + 2] );
+				const complex_type _gll ( pkg.cgains[4*iant + 3] );
+
+				xpar_ll[4*iant + 0] = _glr.real();
+				xpar_ll[4*iant + 1] = _glr.imag();
+				xpar_ll[4*iant + 2] = _gll.real();
+				xpar_ll[4*iant + 3] = _gll.imag();
+			}
+		}
+
+		void savegains_full ( uata_t &pkg ) {
+			/*
+			 * Save xpar_full into unity_data_t::cgains
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _grr ( xpar_full[8*iant + 0], xpar_full[8*iant + 1] );
+				const complex_type _grl ( xpar_full[8*iant + 2], xpar_full[8*iant + 3] );
+				const complex_type _glr ( xpar_full[8*iant + 4], xpar_full[8*iant + 5] );
+				const complex_type _gll ( xpar_full[8*iant + 6], xpar_full[8*iant + 7] );
+
+				pkg.cgains[4*iant + 0] = _grr;
+				pkg.cgains[4*iant + 1] = _grl;
+				pkg.cgains[4*iant + 2] = _glr;
+				pkg.cgains[4*iant + 3] = _gll;
+			}
+		}
+
+		void savegains_rr ( uata_t &pkg ) {
+			/*
+			 * Save xpar_rr into unity_data_t::cgains
+			 *
+			 * xpar_rr only has grr and drl terms for every antenna
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _grr ( xpar_rr[4*iant + 0], xpar_rr[4*iant + 1] );
+				const complex_type _grl ( xpar_rr[4*iant + 2], xpar_rr[4*iant + 3] );
+
+				pkg.cgains[4*iant + 0] = _grr;
+				pkg.cgains[4*iant + 1] = _grl;
+			}
+		}
+
+		void savegains_ll ( uata_t &pkg ) {
+			/*
+			 * Save xpar_ll into unity_data_t::cgains
+			 *
+			 * xpar_ll only has gll and dlr terms for every antenna
+			*/
+
+			for (int iant = 0; iant < nantennas; iant++) {
+
+				const complex_type _glr ( xpar_ll[4*iant + 0], xpar_ll[4*iant + 1] );
+				const complex_type _gll ( xpar_ll[4*iant + 2], xpar_ll[4*iant + 3] );
+
+				pkg.cgains[4*iant + 2] = _glr;
+				pkg.cgains[4*iant + 3] = _gll;
+			}
+		}
+
+		// dtor
+		~IterativeUnpolarizedSolver() {
+
+			if (xpar_rr) lbfgs_free ( xpar_rr );
+			if (xpar_ll) lbfgs_free ( xpar_ll );
+			if (xpar_full) lbfgs_free ( xpar_full );
+		}
+
+		/* solving methods */
+		real_type solve (uata_t& pkg);
 
 	}; // solver
 	 
