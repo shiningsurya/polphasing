@@ -309,8 +309,11 @@ int main(int argc, char *argv[]) {
 		//LBFGS::UnpolarizedLeakageSolver    solver (nantennas);
 		//auto cost = solver.solve_leakage_unpolarized ( pkg );
 
-		LBFGS::UnpolarizedSolver    solver (nantennas);
-		auto cost = solver.solve_full_unpolarized ( pkg );
+		//LBFGS::UnpolarizedSolver    solver (nantennas);
+		//auto cost = solver.solve_full_unpolarized ( pkg );
+
+		LBFGS::IterativeUnpolarizedSolver    solver (nantennas);
+		auto cost = solver.solve ( pkg );
 
 #ifdef CHANDEBUG2
 		{
@@ -333,9 +336,9 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 #endif
 
 		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = pkg.niter;
-		logger.info   [ ichan ]  = solver.rcode;
-		logger.gnorm  [ ichan ]  = pkg.gnorm;
+		//logger.nfev   [ ichan ]  = solver.niter;
+		//logger.info   [ ichan ]  = solver.rcode;
+		//logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
