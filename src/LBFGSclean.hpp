@@ -80,7 +80,15 @@ namespace LBFGS {
 			cgains (4*nantennas, complex_type(0.0f, 0.0f)),
 			lgains (2*nantennas, complex_type(0.0f, 0.0f)),
 			par_z1(npbl), par_z2(npbl), 
-		 cost (0.0f), gnorm(0.0f), niter(0) {}
+		 cost (0.0f), gnorm(0.0f), niter(0) {
+		 	 	
+		 	 for (int iant = 0; iant < nantennas; iant++) {
+		 	 	 cgains[4*iant + 0] = complex_type(1.0f, 0.0f);
+		 	 	 cgains[4*iant + 1] = complex_type(0.0f, 0.0f);
+		 	 	 cgains[4*iant + 2] = complex_type(0.0f, 0.0f);
+		 	 	 cgains[4*iant + 3] = complex_type(1.0f, 0.0f);
+			 } // initialize cgains
+		 }
 	}; 
 
 	struct diagleak_data_t {
@@ -484,7 +492,7 @@ namespace LBFGS {
 		/* number of variables/parameters */
 		const int             nantennas;
 		const int             n_rr, n_ll;
-		const int             n_full;
+		const int             n_rllr;
 
 		/* xpar, grad */
 		lbfgsfloatval_t      *xpar_rr;
@@ -499,16 +507,29 @@ namespace LBFGS {
 		lbfgsfloatval_t      rcode_ll;
 		int                  niter_ll;
 
-		lbfgsfloatval_t      *xpar_full;
-		lbfgsfloatval_t      cost_full;
-		lbfgsfloatval_t      gnorm_full;
-		lbfgsfloatval_t      rcode_full;
-		int                  niter_full;
+		lbfgsfloatval_t      *xpar_rllr;
+		lbfgsfloatval_t      cost_rllr;
+		lbfgsfloatval_t      gnorm_rllr;
+		lbfgsfloatval_t      rcode_rllr;
+		int                  niter_rllr;
+
+		/*
+		 * Enforce the phases of the reference antenna to be zero for rr and ll gains
+		 * imaginary part is zero and real part is purely positive.
+		 * The real part positive enforcement is done with parameterizing exp(..)
+		 * This condition is termed as GREF.
+		 *
+		 * For each {rr,ll}, there are completely 2*2*nantennas parameters. 
+		 * For each {rr,ll}, there are {parallel gain, leakage gain}, both of which are complex.
+		 * parallel gain of the reference antenna is zero.
+		 * free parameters = 2*2*nantennas - 1
+		 *
+		*/
 
 		// ctor
-		IterativeUnpolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
-			nantennas(_nant), n_rr ( nantennas*2*2 ), n_ll ( nantennas*2*2 ), n_full(nantennas*4*2),
-			niter_rr(0), niter_ll(0), niter_full(0) 
+		IterativeUnpolarizedSolver (int _nant, int n_hessian_corrections = 200, int max_iterations = 1000) : 
+			nantennas(_nant), n_rr ( nantennas*2*2 - 1 ), n_ll ( nantennas*2*2 - 1 ), n_rllr(nantennas*2*2),
+			niter_rr(0), niter_ll(0), niter_rllr(0) 
 		{
 			/* load default first*/
 			lbfgs_parameter_init(&param);
@@ -517,42 +538,43 @@ namespace LBFGS {
 			param.m                 = n_hessian_corrections;
 			/* max iterations */
 			param.max_iterations    = max_iterations;
+			/* gnorm */
+			param.epsilon           = 1E-9;
+			/* fnorm */
+			param.delta             = 1E-9;
+			/* xtol */
+			param.xtol              = 1E-9;
 			/* max linesearch */
-			param.max_linesearch    = 64;
+			param.max_linesearch    = 128;
+			/* linesearch algo */
+			param.linesearch        = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE;
 
 			xpar_rr   = lbfgs_malloc ( n_rr );
 			xpar_ll   = lbfgs_malloc ( n_ll );
-			xpar_full = lbfgs_malloc ( n_full );
+			xpar_rllr = lbfgs_malloc ( n_rllr );
 
 			/* initialize xpar */
 			std::fill ( xpar_rr, xpar_rr + n_rr, 0.0f ); 
 			std::fill ( xpar_ll, xpar_ll + n_ll, 0.0f ); 
-			std::fill ( xpar_full, xpar_full + n_full, 0.0f ); 
+			std::fill ( xpar_rllr, xpar_rllr + n_rllr, 0.0f ); 
 		}
 
-		void loadgains_full ( const uata_t &pkg ) {
+		void loadgains_rllr ( const uata_t &pkg ) {
 			/*
-			 * Load unity_data_t::cgains into xpar_full
+			 * Load unity_data_t::cgains into xpar_rllr
 			*/
 
 			for (int iant = 0; iant < nantennas; iant++) {
 
-				const complex_type _grr ( pkg.cgains[4*iant + 0] );
 				const complex_type _grl ( pkg.cgains[4*iant + 1] );
 				const complex_type _glr ( pkg.cgains[4*iant + 2] );
-				const complex_type _gll ( pkg.cgains[4*iant + 3] );
 
-				xpar_full[8*iant + 0] = _grr.real();
-				xpar_full[8*iant + 1] = _grr.imag();
+				xpar_rllr[4*iant + 0] = _grl.real();
+				xpar_rllr[4*iant + 1] = _grl.imag();
 
-				xpar_full[8*iant + 2] = _grl.real();
-				xpar_full[8*iant + 3] = _grl.imag();
+				xpar_rllr[4*iant + 2] = _glr.real();
+				xpar_rllr[4*iant + 3] = _glr.imag();
 
-				xpar_full[8*iant + 4] = _glr.real();
-				xpar_full[8*iant + 5] = _glr.imag();
-
-				xpar_full[8*iant + 6] = _gll.real();
-				xpar_full[8*iant + 7] = _gll.imag();
 			}
 		}
 
@@ -563,15 +585,25 @@ namespace LBFGS {
 			 * xpar_rr only has grr and drl terms for every antenna
 			*/
 
-			for (int iant = 0; iant < nantennas; iant++) {
+			{
+				// GREF
+				const complex_type _grr ( pkg.cgains[0] );
+				const complex_type _grl ( pkg.cgains[1] );
+
+				xpar_rr[0]  = std::log (_grr.real());
+				xpar_rr[1]  = _grl.real();
+				xpar_rr[2]  = _grl.imag();
+			}
+
+			for (int iant = 1; iant < nantennas; iant++) {
 
 				const complex_type _grr ( pkg.cgains[4*iant + 0] );
 				const complex_type _grl ( pkg.cgains[4*iant + 1] );
 
-				xpar_rr[4*iant + 0] = _grr.real();
-				xpar_rr[4*iant + 1] = _grr.imag();
-				xpar_rr[4*iant + 2] = _grl.real();
-				xpar_rr[4*iant + 3] = _grl.imag();
+				xpar_rr[4*iant - 1] = _grr.real();
+				xpar_rr[4*iant + 0] = _grr.imag();
+				xpar_rr[4*iant + 1] = _grl.real();
+				xpar_rr[4*iant + 2] = _grl.imag();
 			}
 		}
 
@@ -582,34 +614,40 @@ namespace LBFGS {
 			 * xpar_ll only has gll and dlr terms for every antenna
 			*/
 
-			for (int iant = 0; iant < nantennas; iant++) {
+			{
+				// GREF
+				const complex_type _glr ( pkg.cgains[2] );
+				const complex_type _gll ( pkg.cgains[3] );
+
+				xpar_ll[0]  = _glr.real();
+				xpar_ll[1]  = _glr.imag();
+				xpar_ll[2]  = std::log(_gll.real());
+			}
+
+			for (int iant = 1; iant < nantennas; iant++) {
 
 				const complex_type _glr ( pkg.cgains[4*iant + 2] );
 				const complex_type _gll ( pkg.cgains[4*iant + 3] );
 
-				xpar_ll[4*iant + 0] = _glr.real();
-				xpar_ll[4*iant + 1] = _glr.imag();
-				xpar_ll[4*iant + 2] = _gll.real();
-				xpar_ll[4*iant + 3] = _gll.imag();
+				xpar_ll[4*iant - 1] = _glr.real();
+				xpar_ll[4*iant + 0] = _glr.imag();
+				xpar_ll[4*iant + 1] = _gll.real();
+				xpar_ll[4*iant + 2] = _gll.imag();
 			}
 		}
 
-		void savegains_full ( uata_t &pkg ) {
+		void savegains_rllr ( uata_t &pkg ) {
 			/*
 			 * Save xpar_full into unity_data_t::cgains
 			*/
 
 			for (int iant = 0; iant < nantennas; iant++) {
 
-				const complex_type _grr ( xpar_full[8*iant + 0], xpar_full[8*iant + 1] );
-				const complex_type _grl ( xpar_full[8*iant + 2], xpar_full[8*iant + 3] );
-				const complex_type _glr ( xpar_full[8*iant + 4], xpar_full[8*iant + 5] );
-				const complex_type _gll ( xpar_full[8*iant + 6], xpar_full[8*iant + 7] );
+				const complex_type _grl ( xpar_rllr[4*iant + 0], xpar_rllr[4*iant + 1] );
+				const complex_type _glr ( xpar_rllr[4*iant + 2], xpar_rllr[4*iant + 3] );
 
-				pkg.cgains[4*iant + 0] = _grr;
 				pkg.cgains[4*iant + 1] = _grl;
 				pkg.cgains[4*iant + 2] = _glr;
-				pkg.cgains[4*iant + 3] = _gll;
 			}
 		}
 
@@ -620,10 +658,19 @@ namespace LBFGS {
 			 * xpar_rr only has grr and drl terms for every antenna
 			*/
 
-			for (int iant = 0; iant < nantennas; iant++) {
+			{
+				// GREF
+				const complex_type _grr ( std::exp(xpar_rr[0]), 0.0f );
+				const complex_type _grl ( xpar_rr[1], xpar_rr[2] );
 
-				const complex_type _grr ( xpar_rr[4*iant + 0], xpar_rr[4*iant + 1] );
-				const complex_type _grl ( xpar_rr[4*iant + 2], xpar_rr[4*iant + 3] );
+				pkg.cgains[0] = _grr;
+				pkg.cgains[1] = _grl;
+			}
+
+			for (int iant = 1; iant < nantennas; iant++) {
+
+				const complex_type _grr ( xpar_rr[4*iant - 1], xpar_rr[4*iant + 0] );
+				const complex_type _grl ( xpar_rr[4*iant + 1], xpar_rr[4*iant + 2] );
 
 				pkg.cgains[4*iant + 0] = _grr;
 				pkg.cgains[4*iant + 1] = _grl;
@@ -637,10 +684,19 @@ namespace LBFGS {
 			 * xpar_ll only has gll and dlr terms for every antenna
 			*/
 
-			for (int iant = 0; iant < nantennas; iant++) {
+			{
+				// GREF
+				const complex_type _glr ( xpar_ll[0], xpar_ll[1] );
+				const complex_type _gll ( std::exp(xpar_ll[2]), 0.0f );
 
-				const complex_type _glr ( xpar_ll[4*iant + 0], xpar_ll[4*iant + 1] );
-				const complex_type _gll ( xpar_ll[4*iant + 2], xpar_ll[4*iant + 3] );
+				pkg.cgains[2] = _glr;
+				pkg.cgains[3] = _gll;
+			}
+
+			for (int iant = 1; iant < nantennas; iant++) {
+
+				const complex_type _glr ( xpar_ll[4*iant - 1], xpar_ll[4*iant + 0] );
+				const complex_type _gll ( xpar_ll[4*iant + 1], xpar_ll[4*iant + 2] );
 
 				pkg.cgains[4*iant + 2] = _glr;
 				pkg.cgains[4*iant + 3] = _gll;
@@ -652,7 +708,7 @@ namespace LBFGS {
 
 			if (xpar_rr) lbfgs_free ( xpar_rr );
 			if (xpar_ll) lbfgs_free ( xpar_ll );
-			if (xpar_full) lbfgs_free ( xpar_full );
+			if (xpar_rllr) lbfgs_free ( xpar_rllr );
 		}
 
 		/* solving methods */
