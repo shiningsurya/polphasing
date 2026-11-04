@@ -9,8 +9,10 @@
 #include "gaintable.hpp"
 #include "models.hpp"
 #include "logsolve.hpp"
-#include "LBFGSclean.hpp"
 #include "ants.hpp"
+
+//#include "LBFGSclean.hpp"
+#include "LBFGSsuperiterative.hpp"
 
 #ifdef CUSTOM
 #include "custom_file.hpp"
@@ -22,6 +24,7 @@
 
 //#define CHANDEBUG
 
+//#define IPRINT
 
 #ifdef TIMING
 auto start  = std::chrono::high_resolution_clock::now();
@@ -35,6 +38,7 @@ void print_help () {
 	std::cout << " fullpolphase [ARGUMENTS] LTA_FILE" << std::endl;
 	std::cout << "    -h Print help" << std::endl;
 	std::cout << "    -s <scan> scan number of the LTA file" << std::endl;
+	std::cout << "    -m <model> path to model file" << std::endl;
 	std::cout << "    -t <tag> tag/stem with which to save log and complex gains" << std::endl;
 	std::cout << std::endl;
 }
@@ -46,13 +50,14 @@ int main(int argc, char *argv[]) {
 	int cal_scan_number;
 	std::string tag;
 	std::string lta_path;
+	std::string model_path;
 
 	if ( argc < 2 ) {
 		print_help ();
 		exit (EXIT_SUCCESS);
 	}
 
-	while ( (opt = getopt ( argc, argv, "hs:t:" )) != -1 ) {
+	while ( (opt = getopt ( argc, argv, "hs:t:m:" )) != -1 ) {
 		switch (opt) {
 			case 'h':
 				print_help ();
@@ -63,6 +68,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 't':
 				tag  = optarg;
+				break;
+			case 'm':
+				model_path = optarg;
 				break;
 		} // switch
 	} // getopt
@@ -90,6 +98,12 @@ int main(int argc, char *argv[]) {
 	std::cout << "[inputs] lta="   << lta_path << std::endl;
 	std::cout << "[inputs] tag="   << tag  << std::endl;
 	std::cout << "[inputs] scan="  << cal_scan_number << std::endl;
+	std::cout << "[inputs] model=" << model_path << std::endl;
+
+	/***************************************/
+	/*      READ MODEL FILE                */
+	/***************************************/
+	models::model_data_t calmodel = models::read_model_file ( model_path );
 
 	/***************************************/
 	/*      READ LTA FILE                  */
@@ -224,7 +238,7 @@ int main(int argc, char *argv[]) {
 	/* channel 458 has high loss.*/
 	for (int ichan = 500; ichan < 501; ichan++) {
 #else
-	#pragma omp parallel for num_threads(4) 
+	//#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
 #endif
 		/* when parallelizing inside loop */
@@ -235,6 +249,19 @@ int main(int argc, char *argv[]) {
 				n_noself_baselines, 
 				nantennas
 		);
+
+		/* initialize model */
+		pkg.modeli         = calmodel.stokes_i[ichan];
+
+		/* initialize parang */
+		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
+			const auto& iant = _i->first;
+			const auto& idx  = _i->second;
+			
+			const float _par1 ( antpar.at(iant) );
+
+			//pkg.parang[idx] = _par1;
+		}
 
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
@@ -313,7 +340,31 @@ int main(int argc, char *argv[]) {
 		//auto cost = solver.solve_full_unpolarized ( pkg );
 
 		LBFGS::IterativeUnpolarizedSolver    solver (nantennas);
-		auto cost = solver.solve ( pkg );
+		auto cost = solver.solve ( pkg, 50 );
+
+#ifdef IPRINT
+		/* print for every channel iteration statistics for rr,ll, rllr solvings */
+		std::cout << ichan << " RR cost ";
+		for (int it = 0; it < pkg.iiter[0]; it++) std::cout << pkg.icost[0][it] << " ";
+		std::cout << std::endl;
+		std::cout << ichan << " RR gnorm ";
+		for (int it = 0; it < pkg.iiter[0]; it++) std::cout << pkg.ignorm[0][it] << " ";
+		std::cout << std::endl;
+
+		std::cout << ichan << " LL cost ";
+		for (int it = 0; it < pkg.iiter[1]; it++) std::cout << pkg.icost[1][it] << " ";
+		std::cout << std::endl;
+		std::cout << ichan << " LL gnorm ";
+		for (int it = 0; it < pkg.iiter[1]; it++) std::cout << pkg.ignorm[1][it] << " ";
+		std::cout << std::endl;
+
+		std::cout << ichan << " RLLR cost ";
+		for (int it = 0; it < pkg.iiter[2]; it++) std::cout << pkg.icost[2][it] << " ";
+		std::cout << std::endl;
+		std::cout << ichan << " RLLR gnorm ";
+		for (int it = 0; it < pkg.iiter[2]; it++) std::cout << pkg.ignorm[2][it] << " ";
+		std::cout << std::endl;
+#endif
 
 #ifdef CHANDEBUG2
 		{
@@ -335,7 +386,11 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		logger.time   [ ichan ]  = duration.count();
 #endif
 
-		logger.sse    [ ichan ]  = cost;
+		logger.sse    [ ichan ]  = cost[0] + cost[1] + cost[2] + cost[3];
+		logger.sse_rr [ ichan ]  = cost[0];
+		logger.sse_rl [ ichan ]  = cost[1];
+		logger.sse_lr [ ichan ]  = cost[2];
+		logger.sse_ll [ ichan ]  = cost[3];
 		//logger.nfev   [ ichan ]  = solver.niter;
 		//logger.info   [ ichan ]  = solver.rcode;
 		//logger.gnorm  [ ichan ]  = solver.gnorm;
@@ -351,8 +406,11 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const LBFGS::complex_type lr ( pkg.cgains[4*idx + 2] );
 			const LBFGS::complex_type ll ( pkg.cgains[4*idx + 3] );
 
-			const LBFGS::complex_type drl ( pkg.lgains[2*idx + 0] );
-			const LBFGS::complex_type dlr ( pkg.lgains[2*idx + 1] );
+			//const LBFGS::complex_type drl ( pkg.lgains[2*idx + 0] );
+			//const LBFGS::complex_type dlr ( pkg.lgains[2*idx + 1] );
+
+			const LBFGS::complex_type drl ( rl / rr );
+			const LBFGS::complex_type dlr ( lr / ll );
 
 			solved_gains_rr[iant][ichan]  = rr;
 			solved_gains_rl[iant][ichan]  = rl;

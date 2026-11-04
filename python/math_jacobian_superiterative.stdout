@@ -1,0 +1,158 @@
+##########################################
+######  res_rr_real res_rr_imag    #######
+##########################################
+
+const int idx0 ( 2*ldfjac ) ;
+const int idx1 ( idx0*ip + jbl ) ;
+const int idx2 ( idx1 + ldfjac ) ;
+const int idx3 ( idx0*iq + jbl ) ;
+const int idx4 ( idx3 + ldfjac ) ;
+
+const real_type jac0 ( chi_p - chi_q ) ;
+const real_type jac1 ( cos(jac0) ) ;
+const real_type jac2 ( sin(jac0) ) ;
+const real_type jac3 ( -jac1*uqrr + jac2*vqrr ) ;
+const real_type jac4 ( jac1*vqrr + jac2*uqrr ) ;
+const real_type jac5 ( jac1*uprr + jac2*vprr ) ;
+const real_type jac6 ( -jac1*vprr + jac2*uprr ) ;
+const real_type jac7 ( -jac1*uqlr + jac2*vqlr ) ;
+const real_type jac8 ( jac1*vqlr + jac2*uqlr ) ;
+const real_type jac9 ( jac1*uplr + jac2*vplr ) ;
+const real_type jac10 ( -jac1*vplr + jac2*uplr ) ;
+
+fjac[ idx1 ] = jac3 ;
+fjac[ idx2 ] = -jac4 ;
+fjac[ idx3 ] = -jac5 ;
+fjac[ idx4 ] = jac6 ;
+fjac[ idx1 + 1 ] = jac4 ;
+fjac[ idx2 + 1 ] = jac3 ;
+fjac[ idx3 + 1 ] = jac6 ;
+fjac[ idx4 + 1 ] = jac5 ;
+fjac[ idx1 + 2 ] = jac7 ;
+fjac[ idx2 + 2 ] = -jac8 ;
+fjac[ idx1 + 3 ] = jac8 ;
+fjac[ idx2 + 3 ] = jac7 ;
+fjac[ idx3 + 4 ] = -jac9 ;
+fjac[ idx4 + 4 ] = jac10 ;
+fjac[ idx3 + 5 ] = jac10 ;
+fjac[ idx4 + 5 ] = jac9 ;
+##########################################
+###   res_rl_real, res_rl_imag         ###
+##########################################
+
+const int idx0 ( 2*ldfjac ) ;
+const int idx1 ( idx0*ip + jbl ) ;
+const int idx2 ( idx1 + ldfjac ) ;
+const int idx3 ( idx0*iq + jbl ) ;
+const int idx4 ( idx3 + ldfjac ) ;
+
+const real_type jac0 ( chi_p - chi_q ) ;
+const real_type jac1 ( cos(jac0) ) ;
+const real_type jac2 ( sin(jac0) ) ;
+const real_type jac3 ( -jac1*uqrl - jac2*vqrl ) ;
+const real_type jac4 ( -jac1*vqrl + jac2*uqrl ) ;
+const real_type jac5 ( jac1*uprl - jac2*vprl ) ;
+const real_type jac6 ( -jac1*vprl - jac2*uprl ) ;
+const real_type jac7 ( -jac1*uqll - jac2*vqll ) ;
+const real_type jac8 ( -jac1*vqll + jac2*uqll ) ;
+const real_type jac9 ( jac1*upll - jac2*vpll ) ;
+const real_type jac10 ( -jac1*vpll - jac2*upll ) ;
+
+fjac[ idx1 ] = jac3 ;
+fjac[ idx2 ] = jac4 ;
+fjac[ idx3 ] = -jac5 ;
+fjac[ idx4 ] = jac6 ;
+fjac[ idx1 + 1 ] = -jac4 ;
+fjac[ idx2 + 1 ] = jac3 ;
+fjac[ idx3 + 1 ] = jac6 ;
+fjac[ idx4 + 1 ] = jac5 ;
+fjac[ idx1 + 2 ] = jac7 ;
+fjac[ idx2 + 2 ] = jac8 ;
+fjac[ idx1 + 3 ] = -jac8 ;
+fjac[ idx2 + 3 ] = jac7 ;
+fjac[ idx3 + 4 ] = -jac9 ;
+fjac[ idx4 + 4 ] = jac10 ;
+fjac[ idx3 + 5 ] = jac10 ;
+fjac[ idx4 + 5 ] = jac9 ;
+##########################################
+###   res_lr_real, res_lr_imag         ###
+##########################################
+
+const int idx0 ( 2*ldfjac ) ;
+const int idx1 ( idx0*iq + jbl ) ;
+const int idx2 ( idx1 + ldfjac ) ;
+const int idx3 ( idx0*ip + jbl ) ;
+const int idx4 ( idx3 + 2 ) ;
+const int idx5 ( idx3 + 3 ) ;
+const int idx6 ( idx3 + 4 ) ;
+const int idx7 ( idx3 + 5 ) ;
+
+const real_type jac0 ( chi_p - chi_q ) ;
+const real_type jac1 ( cos(jac0) ) ;
+const real_type jac2 ( sin(jac0) ) ;
+const real_type jac3 ( jac1*uprr + jac2*vprr ) ;
+const real_type jac4 ( -jac1*vprr + jac2*uprr ) ;
+const real_type jac5 ( -jac1*uqrr + jac2*vqrr ) ;
+const real_type jac6 ( jac1*vqrr + jac2*uqrr ) ;
+const real_type jac7 ( -jac1*uqlr + jac2*vqlr ) ;
+const real_type jac8 ( jac1*vqlr + jac2*uqlr ) ;
+const real_type jac9 ( jac1*uplr + jac2*vplr ) ;
+const real_type jac10 ( -jac1*vplr + jac2*uplr ) ;
+
+fjac[ idx1 ] = -jac3 ;
+fjac[ idx2 ] = jac4 ;
+fjac[ idx1 + 1 ] = jac4 ;
+fjac[ idx2 + 1 ] = jac3 ;
+fjac[ idx4 ] = jac5 ;
+fjac[ idx4 + ldfjac ] = -jac6 ;
+fjac[ idx5 ] = jac6 ;
+fjac[ idx5 + ldfjac ] = jac5 ;
+fjac[ idx6 ] = jac7 ;
+fjac[ idx6 + ldfjac ] = -jac8 ;
+fjac[ idx1 + 4 ] = -jac9 ;
+fjac[ idx2 + 4 ] = jac10 ;
+fjac[ idx7 ] = jac8 ;
+fjac[ idx7 + ldfjac ] = jac7 ;
+fjac[ idx1 + 5 ] = jac10 ;
+fjac[ idx2 + 5 ] = jac9 ;
+##########################################
+######  res_ll_real res_ll_imag    #######
+##########################################
+
+const int idx0 ( 2*ldfjac ) ;
+const int idx1 ( idx0*iq + jbl ) ;
+const int idx2 ( idx1 + ldfjac ) ;
+const int idx3 ( idx0*ip + jbl ) ;
+const int idx4 ( idx3 + 2 ) ;
+const int idx5 ( idx3 + 3 ) ;
+const int idx6 ( idx3 + 4 ) ;
+const int idx7 ( idx3 + 5 ) ;
+
+const real_type jac0 ( chi_p - chi_q ) ;
+const real_type jac1 ( cos(jac0) ) ;
+const real_type jac2 ( sin(jac0) ) ;
+const real_type jac3 ( jac1*uprl - jac2*vprl ) ;
+const real_type jac4 ( -jac1*vprl - jac2*uprl ) ;
+const real_type jac5 ( -jac1*uqrl - jac2*vqrl ) ;
+const real_type jac6 ( -jac1*vqrl + jac2*uqrl ) ;
+const real_type jac7 ( -jac1*uqll - jac2*vqll ) ;
+const real_type jac8 ( -jac1*vqll + jac2*uqll ) ;
+const real_type jac9 ( jac1*upll - jac2*vpll ) ;
+const real_type jac10 ( -jac1*vpll - jac2*upll ) ;
+
+fjac[ idx1 ] = -jac3 ;
+fjac[ idx2 ] = jac4 ;
+fjac[ idx1 + 1 ] = jac4 ;
+fjac[ idx2 + 1 ] = jac3 ;
+fjac[ idx4 ] = jac5 ;
+fjac[ idx4 + ldfjac ] = jac6 ;
+fjac[ idx5 ] = -jac6 ;
+fjac[ idx5 + ldfjac ] = jac5 ;
+fjac[ idx6 ] = jac7 ;
+fjac[ idx6 + ldfjac ] = jac8 ;
+fjac[ idx1 + 4 ] = -jac9 ;
+fjac[ idx2 + 4 ] = jac10 ;
+fjac[ idx7 ] = -jac8 ;
+fjac[ idx7 + ldfjac ] = jac7 ;
+fjac[ idx1 + 5 ] = jac10 ;
+fjac[ idx2 + 5 ] = jac9 ;

@@ -180,3 +180,98 @@ LTA::scan_t LTA::get_scan ( int iscan ) {
 	return scan_t ( source, ra, dec, mjd );
 }
 
+void LTA::get_baseline (int iscan, const antname_t& ant1, const antname_t& ant2, vc_type& inout) {
+	/* sanity check */
+	if (iscan >= linfo.scans) throw std::runtime_error ("Chosen scan out of range.");
+
+	/* nrecs records for this scan */
+	int nrecs  = linfo.stab[iscan].recs;
+
+	/* get baseline index */
+	int baseline_rr    = -1;
+	int baseline_rl    = -1;
+	int baseline_lr    = -1;
+	int baseline_ll    = -1;
+
+	for (int ibl = 0; ibl < nbaselines; ibl++) {
+
+		const auto& ib = baselines[ibl];
+
+		int match = 1;
+		for (int im = 0; im < 3; im++) {
+			if (ib.ant1[im] != ant1[im] || ib.ant2[im] != ant2[im]) {
+				match = -1;
+				break;
+			}
+		}
+		//std::cout << "inputs=" << ant1 << " " << ant2 << " testing=" << ib.ant1 << " " << ib.ant2 << " match=" << match << std::endl;
+
+		if ( match > 0) {
+			if ( ib.band1 == 0 && ib.band2 == 0 ) {
+				baseline_rr = ibl;
+			}
+			else if ( ib.band1 == 0 && ib.band2 == 1 ) {
+				baseline_rl = ibl;
+			}
+			else if ( ib.band1 == 1 && ib.band2 == 0 ) {
+				baseline_lr = ibl;
+			}
+			else if ( ib.band1 == 1 && ib.band2 == 1 ) {
+				baseline_ll = ibl;
+			}
+		}
+	}
+	if ( baseline_rr < 0 || baseline_rl < 0 || baseline_lr < 0 || baseline_ll < 0 ) {
+		throw std::runtime_error("did not find baseline");
+	}
+
+	int  data_off  = linfo.lhdr.data_off;
+	int  data_size = linfo.lhdr.data_size;
+
+	/* inout should be nrecs*nchannels*4 complex64 */
+	/* there are four correlations */
+	inout.assign ( 4 * nrecs * nchannels, complex_type(0.0, 0.0));
+	/* layout = (time, channel, corr) */
+
+	/* seek in file */
+	rewind (fp);
+	ltaseek (fp, linfo.stab[iscan].start_rec + linfo.srecs, recl);
+
+	/* space to read */
+	vb_type dbuf ( recl );
+
+	for (int irec = 0; irec < nrecs; irec++) {
+
+		/* read record from file */
+		if ( fread ( dbuf.data(), recl, 1, fp ) != 1 ) 
+			throw std::runtime_error ("Incomplete read while time averaging.");
+
+		/* data offset, cast as float */
+		float *ddata = reinterpret_cast<float*>(dbuf.data() + data_off);
+
+		for (int ichan = 0; ichan < nchannels; ichan++) {
+
+				/* get data */
+				/* index in (baseline, channel) complex<float> */
+				const int _rr      = ichan + nchannels * baseline_rr;
+				const int _rl      = ichan + nchannels * baseline_rl;
+				const int _lr      = ichan + nchannels * baseline_lr;
+				const int _ll      = ichan + nchannels * baseline_ll;
+
+				const complex_type rr ( ddata[2*_rr], ddata[2*_rr + 1] );
+				const complex_type rl ( ddata[2*_rl], ddata[2*_rl + 1] );
+				const complex_type lr ( ddata[2*_lr], ddata[2*_lr + 1] );
+				const complex_type ll ( ddata[2*_ll], ddata[2*_ll + 1] );
+
+				/* layout = (time, channel, corr) */
+				/* (irec, ichan, corr) */
+				inout [ 0 + 4*ichan + 4*nchannels*irec ] = rr;
+				inout [ 1 + 4*ichan + 4*nchannels*irec ] = rl;
+				inout [ 2 + 4*ichan + 4*nchannels*irec ] = lr;
+				inout [ 3 + 4*ichan + 4*nchannels*irec ] = ll;
+
+		} // channel
+
+	} /* rec loop */
+
+}
