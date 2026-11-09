@@ -104,6 +104,65 @@ namespace gaintable {
 
 	int write_amp_solutions ( const gaintable_t& gt );
 
+	struct GainNormalizer {
+		/**/
+		using jones_t    = std::array<gain_type,4>;
+
+		const jones_t        jones_ref;
+		const gain_type      det;
+		const real_type      det_abs;
+		const gain_type      det_phs;
+		const real_type      unitary_scale;
+		const jones_t        unitary_t;
+
+		/* unitary_t is not full unitary matrix, unitary = unitary_t * unitary_scale
+		 *
+		 * It has already been transpose, conjugated.
+		*/
+
+		GainNormalizer ( const gain_type _rr, const gain_type _rl, const gain_type _lr, const gain_type _ll ) :
+			jones_ref {_rr, _rl, _lr, _ll},
+			det ( _rr*_ll - _rl*_lr ),
+			det_abs ( std::abs(det) ),
+			det_phs ( std::conj(det) / det_abs ),
+			unitary_scale ( std::pow( 2.0*det_abs + std::norm(_rr) + std::norm(_rl) + std::norm(_lr) + std::norm(_ll), -0.5 ) ),
+			unitary_t {
+				std::conj(_rr) + det_phs*_ll,
+				std::conj(_lr) - det_phs*_rl,
+				std::conj(_rl) - det_phs*_lr,
+				std::conj(_ll) + det_phs*_rr
+			}
+		{}
+
+		/* apply  
+		 *
+		 * Multiply unitary_t from right side
+		 * do not forget the unitary scale
+		*/
+		jones_t operator() ( const gain_type _rr, const gain_type _rl, const gain_type _lr, const gain_type _ll ) const {
+			jones_t ret;
+
+			// 00
+			ret[0] = _rr*unitary_t[0] + _rl*unitary_t[2] ;
+			// 01
+			ret[1] = _rr*unitary_t[1] + _rl*unitary_t[3] ;
+			// 10
+			ret[2] = _lr*unitary_t[0] + _ll*unitary_t[2] ;
+			// 11
+			ret[3] = _lr*unitary_t[1] + _ll*unitary_t[3] ;
+
+			// scaling
+			ret[0] *= unitary_scale;
+			ret[1] *= unitary_scale;
+			ret[2] *= unitary_scale;
+			ret[3] *= unitary_scale;
+
+			return ret;
+		}
+
+	}; // struct gainnormalizer
+	using normalizer_t = struct GainNormalizer;
+
 }; /* gaintable */
 
 /*
