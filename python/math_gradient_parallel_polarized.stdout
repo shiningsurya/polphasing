@@ -1,0 +1,53 @@
+-----MODELFORWARDPASS----
+RR
+gprr*lprl*mll*cgqrr*clqrl + gprr*lprl*mlr*cgqrr + gprr*mrl*cgqrr*clqrl + gprr*mrr*cgqrr
+RL
+gprr*lprl*mll*cgqll + gprr*lprl*mlr*cgqll*clqlr + gprr*mrl*cgqll + gprr*mrr*cgqll*clqlr
+LR
+gpll*lplr*mrl*cgqrr*clqrl + gpll*lplr*mrr*cgqrr + gpll*mll*cgqrr*clqrl + gpll*mlr*cgqrr
+LL
+gpll*lplr*mrl*cgqll + gpll*lplr*mrr*cgqll*clqlr + gpll*mll*cgqll + gpll*mlr*cgqll*clqlr
+-----MODELFORWARDPASS----
+######################################
+need to edit norm(g[p,q][rr,ll]) terms
+######################################
+
+---------- GPRR   ------------
+
+const complex_type Dgprr_dpqrr_gqrr = -lqrl*clprl*cmll - lqrl*cmrl - clprl*cmlr - cmrr ; 
+Dgprr_dpqrr_gqrr*gqrr 
+const complex_type Dgprr_dpqrl_gqll = -lqlr*clprl*cmlr - lqlr*cmrr - clprl*cmll - cmrl ; 
+Dgprr_dpqrl_gqll*gqll 
+const complex_type Dgprr_gprr_gqll*cgqll = lprl*lqlr*mll*clprl*cmlr + lprl*lqlr*mll*cmrr + lprl*lqlr*mlr*clprl*clqlr*cmlr + lprl*lqlr*mlr*clqlr*cmrr + lprl*mll*clprl*cmll + lprl*mll*cmrl + lprl*mlr*clprl*clqlr*cmll + lprl*mlr*clqlr*cmrl + lqlr*mrl*clprl*cmlr + lqlr*mrl*cmrr + lqlr*mrr*clprl*clqlr*cmlr + lqlr*mrr*clqlr*cmrr + mrl*clprl*cmll + mrl*cmrl + mrr*clprl*clqlr*cmll + mrr*clqlr*cmrl ; 
+const complex_type Dgprr_gprr_gqrr*cgqrr = lprl*lqrl*mll*clprl*clqrl*cmll + lprl*lqrl*mll*clqrl*cmrl + lprl*lqrl*mlr*clprl*cmll + lprl*lqrl*mlr*cmrl + lprl*mll*clprl*clqrl*cmlr + lprl*mll*clqrl*cmrr + lprl*mlr*clprl*cmlr + lprl*mlr*cmrr + lqrl*mrl*clprl*clqrl*cmll + lqrl*mrl*clqrl*cmrl + lqrl*mrr*clprl*cmll + lqrl*mrr*cmrl + mrl*clprl*clqrl*cmlr + mrl*clqrl*cmrr + mrr*clprl*cmlr + mrr*cmrr ; 
+Dgprr_gprr_gqll*cgqll*gqll*cgqll Dgprr_gprr_gqrr*cgqrr*gqrr*cgqrr 
+
+---------- GQRR   ------------
+
+const complex_type Dgqrr_cdpqrr_gprr = -lprl*mll*clqrl - lprl*mlr - mrl*clqrl - mrr ; 
+Dgqrr_cdpqrr_gprr*gprr 
+const complex_type Dgqrr_cdpqlr_gpll = -lplr*mrl*clqrl - lplr*mrr - mll*clqrl - mlr ; 
+Dgqrr_cdpqlr_gpll*gpll 
+const complex_type Dgqrr_gqrr_gpll*cgpll = lplr*lqrl*mrl*clplr*clqrl*cmrl + lplr*lqrl*mrl*clqrl*cmll + lplr*lqrl*mrr*clplr*cmrl + lplr*lqrl*mrr*cmll + lplr*mrl*clplr*clqrl*cmrr + lplr*mrl*clqrl*cmlr + lplr*mrr*clplr*cmrr + lplr*mrr*cmlr + lqrl*mll*clplr*clqrl*cmrl + lqrl*mll*clqrl*cmll + lqrl*mlr*clplr*cmrl + lqrl*mlr*cmll + mll*clplr*clqrl*cmrr + mll*clqrl*cmlr + mlr*clplr*cmrr + mlr*cmlr ; 
+const complex_type Dgqrr_gqrr_gprr*cgprr = lprl*lqrl*mll*clprl*clqrl*cmll + lprl*lqrl*mll*clqrl*cmrl + lprl*lqrl*mlr*clprl*cmll + lprl*lqrl*mlr*cmrl + lprl*mll*clprl*clqrl*cmlr + lprl*mll*clqrl*cmrr + lprl*mlr*clprl*cmlr + lprl*mlr*cmrr + lqrl*mrl*clprl*clqrl*cmll + lqrl*mrl*clqrl*cmrl + lqrl*mrr*clprl*cmll + lqrl*mrr*cmrl + mrl*clprl*clqrl*cmlr + mrl*clqrl*cmrr + mrr*clprl*cmlr + mrr*cmrr ; 
+Dgqrr_gqrr_gpll*cgpll*gpll*cgpll Dgqrr_gqrr_gprr*cgprr*gprr*cgprr 
+
+---------- GPLL   ------------
+
+const complex_type Dgpll_dpqlr_gqrr = -lqrl*clplr*cmrl - lqrl*cmll - clplr*cmrr - cmlr ; 
+Dgpll_dpqlr_gqrr*gqrr 
+const complex_type Dgpll_dpqll_gqll = -lqlr*clplr*cmrr - lqlr*cmlr - clplr*cmrl - cmll ; 
+Dgpll_dpqll_gqll*gqll 
+const complex_type Dgpll_gpll_gqll*cgqll = lplr*lqlr*mrl*clplr*cmrr + lplr*lqlr*mrl*cmlr + lplr*lqlr*mrr*clplr*clqlr*cmrr + lplr*lqlr*mrr*clqlr*cmlr + lplr*mrl*clplr*cmrl + lplr*mrl*cmll + lplr*mrr*clplr*clqlr*cmrl + lplr*mrr*clqlr*cmll + lqlr*mll*clplr*cmrr + lqlr*mll*cmlr + lqlr*mlr*clplr*clqlr*cmrr + lqlr*mlr*clqlr*cmlr + mll*clplr*cmrl + mll*cmll + mlr*clplr*clqlr*cmrl + mlr*clqlr*cmll ; 
+const complex_type Dgpll_gpll_gqrr*cgqrr = lplr*lqrl*mrl*clplr*clqrl*cmrl + lplr*lqrl*mrl*clqrl*cmll + lplr*lqrl*mrr*clplr*cmrl + lplr*lqrl*mrr*cmll + lplr*mrl*clplr*clqrl*cmrr + lplr*mrl*clqrl*cmlr + lplr*mrr*clplr*cmrr + lplr*mrr*cmlr + lqrl*mll*clplr*clqrl*cmrl + lqrl*mll*clqrl*cmll + lqrl*mlr*clplr*cmrl + lqrl*mlr*cmll + mll*clplr*clqrl*cmrr + mll*clqrl*cmlr + mlr*clplr*cmrr + mlr*cmlr ; 
+Dgpll_gpll_gqll*cgqll*gqll*cgqll Dgpll_gpll_gqrr*cgqrr*gqrr*cgqrr 
+
+---------- GQLL   ------------
+
+const complex_type Dgqll_cdpqrl_gprr = -lprl*mll - lprl*mlr*clqlr - mrl - mrr*clqlr ; 
+Dgqll_cdpqrl_gprr*gprr 
+const complex_type Dgqll_cdpqll_gpll = -lplr*mrl - lplr*mrr*clqlr - mll - mlr*clqlr ; 
+Dgqll_cdpqll_gpll*gpll 
+const complex_type Dgqll_gqll_gpll*cgpll = lplr*lqlr*mrl*clplr*cmrr + lplr*lqlr*mrl*cmlr + lplr*lqlr*mrr*clplr*clqlr*cmrr + lplr*lqlr*mrr*clqlr*cmlr + lplr*mrl*clplr*cmrl + lplr*mrl*cmll + lplr*mrr*clplr*clqlr*cmrl + lplr*mrr*clqlr*cmll + lqlr*mll*clplr*cmrr + lqlr*mll*cmlr + lqlr*mlr*clplr*clqlr*cmrr + lqlr*mlr*clqlr*cmlr + mll*clplr*cmrl + mll*cmll + mlr*clplr*clqlr*cmrl + mlr*clqlr*cmll ; 
+const complex_type Dgqll_gqll_gprr*cgprr = lprl*lqlr*mll*clprl*cmlr + lprl*lqlr*mll*cmrr + lprl*lqlr*mlr*clprl*clqlr*cmlr + lprl*lqlr*mlr*clqlr*cmrr + lprl*mll*clprl*cmll + lprl*mll*cmrl + lprl*mlr*clprl*clqlr*cmll + lprl*mlr*clqlr*cmrl + lqlr*mrl*clprl*cmlr + lqlr*mrl*cmrr + lqlr*mrr*clprl*clqlr*cmlr + lqlr*mrr*clqlr*cmrr + mrl*clprl*cmll + mrl*cmrl + mrr*clprl*clqlr*cmll + mrr*clqlr*cmrl ; 
+Dgqll_gqll_gpll*cgpll*gpll*cgpll Dgqll_gqll_gprr*cgprr*gprr*cgprr 

@@ -259,13 +259,6 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 
 	/*
-	 * We need coordinates of each antenna. 
-	 * > we can get them from casa and keep them as static.
-	 *
-	 * We need source coordinates, LST of observation
-	 * > we have to get them from lta_file
-	 *
-	 * --------
 	 *  We put the par angles in map ant2par. 
 	 *  <antname_t,real_type>
 	*/
@@ -360,13 +353,15 @@ int main(int argc, char *argv[]) {
 			/* ensures this is index of noself baseline */
 			/* which is consistent with lta_file        */
 			/* ib only for reading */
-			const int ib     = noself_baselines[ii];
+			const int ipb     = noself_baselines[ii];
+
+			const int ib ( ipb / 4 );
 
 			/* index in (baseline, channel) complex<float> */
-			const int _i     = ichan + nchannels * ib;
+			const int _i     = ichan + nchannels * ipb;
 
 			/* get baseline object */
-			const baseline_t&  _bl = lta_file.baselines [ ib ];
+			const baseline_t&  _bl = lta_file.baselines [ ipb ];
 
 			/*
 			 * (0,0) = rr -> 0 
@@ -397,6 +392,8 @@ int main(int argc, char *argv[]) {
 
 			// data
 			pkg.data [ ii ]     = LBFGS::complex_type (  _real,  _imag );
+			// correlation index
+			pkg.pb2corr  [ ii ] = pb2corr;
 
 			// parallactic angle correct model
 			// find parallactic angle
@@ -411,17 +408,15 @@ int main(int argc, char *argv[]) {
 					model_rr, model_rl, model_lr, model_ll 
 			);
 
-			pkg.par_model_rr [ ii ] = _par_model[0];
-			pkg.par_model_rl [ ii ] = _par_model[1];
-			pkg.par_model_lr [ ii ] = _par_model[2];
-			pkg.par_model_ll [ ii ] = _par_model[3];
+			pkg.par_model_rr [ ib ] = _par_model[0];
+			pkg.par_model_rl [ ib ] = _par_model[1];
+			pkg.par_model_lr [ ib ] = _par_model[2];
+			pkg.par_model_ll [ ib ] = _par_model[3];
 
 			// antenna indices
-			pkg.iant1 [ ii ]    = iant1;
-			pkg.iant2 [ ii ]    = iant2;
+			pkg.iant1 [ ib ]    = iant1;
+			pkg.iant2 [ ib ]    = iant2;
 
-			// correlation index
-			pkg.pb2corr  [ ii ] = pb2corr;
 		} /* baselines */
 
 		/* perform solving */
@@ -431,29 +426,6 @@ int main(int argc, char *argv[]) {
 
 		LBFGS::IterativePolarizedDiagonalSolver     solver (nantennas);
 		auto cost = solver.solve ( pkg, 20 );
-
-#ifdef CHANDEBUG2
-		{
-			std::ofstream of("pkgchandebug.bin", std::ios::binary);
-of.write (reinterpret_cast<const char*>(&pkg.npolarbaselines), sizeof(int));
-of.write (reinterpret_cast<const char*>(&pkg.nantennas), sizeof(int));
-of.write (reinterpret_cast<const char*>(&pkg.mrr), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&pkg.mrl), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&pkg.mlr), sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(&pkg.mll), sizeof(LBFGS::complex_type));
-			/* data */
-of.write (reinterpret_cast<const char*>(pkg.data.data()), pkg.data.size()*sizeof(LBFGS::complex_type));
-			/* models */
-of.write (reinterpret_cast<const char*>(pkg.par_model_rr.data()), pkg.par_model_rr.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(pkg.par_model_rl.data()), pkg.par_model_rl.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(pkg.par_model_lr.data()), pkg.par_model_lr.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(pkg.par_model_ll.data()), pkg.par_model_ll.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(pkg.iant1.data()), pkg.iant1.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(pkg.iant2.data()), pkg.iant2.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(pkg.pb2corr.data()), pkg.pb2corr.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
-		}
-#endif
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
@@ -474,16 +446,15 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		/*
 		 * Should i zerophase by dividing only the grr and gll by reference grr?
 		*/
+		const LBFGS::complex_type xp  ( pkg.cgains[0] / pkg.cgains[1] );
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
 			// fetch gains
-			const LBFGS::complex_type grr ( pkg.cgains[4*idx] );
-			const LBFGS::complex_type gll ( pkg.cgains[4*idx + 3] );
-
-			const LBFGS::complex_type xp  ( grr / gll );
+			const LBFGS::complex_type grr ( pkg.cgains[2*idx] );
+			const LBFGS::complex_type gll ( pkg.cgains[2*idx + 1] );
 
 			/*
 			 * You can phase zero the gll, to get nice phases refant phase zero solutions

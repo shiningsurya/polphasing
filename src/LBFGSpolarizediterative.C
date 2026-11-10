@@ -32,21 +32,25 @@ LBFGS::real_type LBFGS::diagpolarized_rr (void *instance, const lbfgsfloatval_t 
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
 
 	/* iterate over the polar baselines */
-	for ( int ibl = 0; ibl < pkg->npolarbaselines; ibl++ ) {
+	for ( int ibl = 0; ibl < pkg->nbaselines; ibl++ ) {
 
 		// fetch the antenna index
 		const int iant1 ( pkg->iant1[ibl] );
 		const int iant2 ( pkg->iant2[ibl] );
 
-		// fetch the pb2corr
-		const int pb2corr    = pkg->pb2corr [ ibl ];
-
-		// early continue on ll baseline
-		if ( pb2corr == 3 ) continue;
+		// polarbaseline index
+		const int pbl ( 4*ibl );
 
 		// fetch complex data
-		const complex_type data ( pkg->data[ibl] );
-		const complex_type cata ( conj(data) );
+		const complex_type dpqrr ( pkg->data[ pbl    ] );
+		const complex_type dpqrl ( pkg->data[ pbl + 1] );
+		const complex_type dpqlr ( pkg->data[ pbl + 2] );
+		const complex_type dpqll ( pkg->data[ pbl + 3] );
+
+		const complex_type cdpqrr ( conj ( dpqrr ) );
+		const complex_type cdpqrl ( conj ( dpqrl ) );
+		const complex_type cdpqlr ( conj ( dpqlr ) );
+		const complex_type cdpqll ( conj ( dpqll ) );
 
 		// set the gain indices
 		const int iprr ( iant1 );
@@ -55,20 +59,23 @@ LBFGS::real_type LBFGS::diagpolarized_rr (void *instance, const lbfgsfloatval_t 
 		// fetch full gains for both antennas
 		const complex_type gprr ( cgains[iprr] );
 		const complex_type gpll ( pkg->cgains[2*iant1 + 1] );
-		const complex_type gprl ( pkg->leakrl[iant1] * gprr );
-		const complex_type gplr ( pkg->leaklr[iant1] * gpll );
+		const complex_type lprl ( pkg->leakrl[iant1] );
+		const complex_type lplr ( pkg->leaklr[iant1] );
+
+		const complex_type cgprr ( conj ( gprr ) );
+		const complex_type cgpll ( conj ( gpll ) );
+		const complex_type clprl ( conj ( lprl ) );
+		const complex_type clplr ( conj ( lplr ) );
 
 		const complex_type gqrr ( cgains[iqrr] );
 		const complex_type gqll ( pkg->cgains[2*iant2 + 1] );
-		const complex_type gqrl ( pkg->leakrl[iant2] * gqrr );
-		const complex_type gqlr ( pkg->leaklr[iant2] * gqll );
+		const complex_type lqrl ( pkg->leakrl[iant2] );
+		const complex_type lqlr ( pkg->leaklr[iant2] );
 
-		// the following long expressions come from sympy
-		// see :math_gradient_full_polarized.py:
-		// see :math_gradient_full_polarized.code:
-
-		// model forward depends on pb2corr
-		complex_type model;
+		const complex_type cgqrr ( conj ( gqrr ) );
+		const complex_type cgqll ( conj ( gqll ) );
+		const complex_type clqrl ( conj ( lqrl ) );
+		const complex_type clqlr ( conj ( lqlr ) );
 
 		/* model */
 		const complex_type mrr ( pkg->par_model_rr[ibl] );
@@ -76,50 +83,40 @@ LBFGS::real_type LBFGS::diagpolarized_rr (void *instance, const lbfgsfloatval_t 
 		const complex_type mlr ( pkg->par_model_lr[ibl] );
 		const complex_type mll ( pkg->par_model_ll[ibl] );
 
-		/*
-		We do this over polarbaseline loop, so that we keep track of all the baselines
-		*/
-		if ( pb2corr == 0 ) {
+		const complex_type cmrr ( conj ( mrr ) );
+		const complex_type cmrl ( conj ( mrl ) );
+		const complex_type cmlr ( conj ( mlr ) );
+		const complex_type cmll ( conj ( mll ) );
 
-const complex_type Dgprr_coeff_dpqrr = -gqrl*conj(mrl) - gqrr*conj(mrr) ; 
-const complex_type Dgprr_coeff_gprr = gqll*mrl*conj(gqll)*conj(mrl) + gqll*mrr*conj(gqlr)*conj(mrl) + gqlr*mrl*conj(gqll)*conj(mrr) + gqlr*mrr*conj(gqlr)*conj(mrr) + gqrl*mrl*conj(gqrl)*conj(mrl) + gqrl*mrr*conj(gqrr)*conj(mrl) + gqrr*mrl*conj(gqrl)*conj(mrr) + gqrr*mrr*conj(gqrr)*conj(mrr) ; 
+		// the following long expressions come from sympy
+		// see :math_gradient_parallel_polarized.py:
+		// see :math_gradient_parallel_polarized.stdout:
+		
+const complex_type Dgprr_dpqrr_gqrr = -lqrl*clprl*cmll - lqrl*cmrl - clprl*cmlr - cmrr ; 
+const complex_type Dgprr_dpqrl_gqll = -lqlr*clprl*cmlr - lqlr*cmrr - clprl*cmll - cmrl ; 
+const complex_type Dgprr_gprr_ngqll = lprl*lqlr*mll*clprl*cmlr + lprl*lqlr*mll*cmrr + lprl*lqlr*mlr*clprl*clqlr*cmlr + lprl*lqlr*mlr*clqlr*cmrr + lprl*mll*clprl*cmll + lprl*mll*cmrl + lprl*mlr*clprl*clqlr*cmll + lprl*mlr*clqlr*cmrl + lqlr*mrl*clprl*cmlr + lqlr*mrl*cmrr + lqlr*mrr*clprl*clqlr*cmlr + lqlr*mrr*clqlr*cmrr + mrl*clprl*cmll + mrl*cmrl + mrr*clprl*clqlr*cmll + mrr*clqlr*cmrl ; 
+const complex_type Dgprr_gprr_ngqrr = lprl*lqrl*mll*clprl*clqrl*cmll + lprl*lqrl*mll*clqrl*cmrl + lprl*lqrl*mlr*clprl*cmll + lprl*lqrl*mlr*cmrl + lprl*mll*clprl*clqrl*cmlr + lprl*mll*clqrl*cmrr + lprl*mlr*clprl*cmlr + lprl*mlr*cmrr + lqrl*mrl*clprl*clqrl*cmll + lqrl*mrl*clqrl*cmrl + lqrl*mrr*clprl*cmll + lqrl*mrr*cmrl + mrl*clprl*clqrl*cmlr + mrl*clqrl*cmrr + mrr*clprl*cmlr + mrr*cmrr ; 
+		
+		grad[iprr] += Dgprr_dpqrr_gqrr*gqrr*dpqrr + Dgprr_dpqrl_gqll*gqll*dpqrl;
+		grad[iprr] += Dgprr_gprr_ngqll*gqll*cgqll*gprr + Dgprr_gprr_ngqrr*gqrr*cgqrr*gprr;
 
-const complex_type Dgqrr_coeff_dqprr = -gprl*mlr - gprr*mrr ; 
-const complex_type Dgqrr_coeff_gqrr = gpll*mlr*conj(gpll)*conj(mlr) + gpll*mlr*conj(gplr)*conj(mrr) + gplr*mrr*conj(gpll)*conj(mlr) + gplr*mrr*conj(gplr)*conj(mrr) + gprl*mlr*conj(gprl)*conj(mlr) + gprl*mlr*conj(gprr)*conj(mrr) + gprr*mrr*conj(gprl)*conj(mlr) + gprr*mrr*conj(gprr)*conj(mrr) ; 
-
-			grad[iprr] += Dgprr_coeff_dpqrr*data + Dgprr_coeff_gprr*gprr;
-
-			grad[iqrr] += Dgqrr_coeff_dqprr*cata + Dgqrr_coeff_gqrr*gqrr;
-
-model = gprl*mll*conj(gqrl) + gprl*mlr*conj(gqrr) + gprr*mrl*conj(gqrl) + gprr*mrr*conj(gqrr) ;
-
-		} // rr
-		else if ( pb2corr == 1 ) {
-
-const complex_type Dgprr_coeff_dpqrl = -gqll*conj(mrl) - gqlr*conj(mrr) ; 
-const complex_type Dgprr_coeff_gprl = gqll*mll*conj(gqll)*conj(mrl) + gqll*mlr*conj(gqlr)*conj(mrl) + gqlr*mll*conj(gqll)*conj(mrr) + gqlr*mlr*conj(gqlr)*conj(mrr) + gqrl*mll*conj(gqrl)*conj(mrl) + gqrl*mlr*conj(gqrr)*conj(mrl) + gqrr*mll*conj(gqrl)*conj(mrr) + gqrr*mlr*conj(gqrr)*conj(mrr) ; 
-
-const complex_type Dgqrr_coeff_gqrl = gpll*mlr*conj(gpll)*conj(mll) + gpll*mlr*conj(gplr)*conj(mrl) + gplr*mrr*conj(gpll)*conj(mll) + gplr*mrr*conj(gplr)*conj(mrl) + gprl*mlr*conj(gprl)*conj(mll) + gprl*mlr*conj(gprr)*conj(mrl) + gprr*mrr*conj(gprl)*conj(mll) + gprr*mrr*conj(gprr)*conj(mrl) ; 
-
-			grad[iprr] += Dgprr_coeff_dpqrl*data + Dgprr_coeff_gprl*gprl;
-
-			grad[iqrr] += Dgqrr_coeff_gqrl*gqrl;
-
-model = gprl*mll*conj(gqll) + gprl*mlr*conj(gqlr) + gprr*mrl*conj(gqll) + gprr*mrr*conj(gqlr) ;
-
-		} // rl
-		else if ( pb2corr == 2 ) {
-
-const complex_type Dgqrr_coeff_dqplr = -gpll*mlr - gplr*mrr ; 
-
-			grad[iqrr] += Dgqrr_coeff_dqplr*cata;
-
-model = gpll*mll*conj(gqrl) + gpll*mlr*conj(gqrr) + gplr*mrl*conj(gqrl) + gplr*mrr*conj(gqrr) ;
-
-		} // lr
+const complex_type Dgqrr_cdpqrr_gprr = -lprl*mll*clqrl - lprl*mlr - mrl*clqrl - mrr ; 
+const complex_type Dgqrr_cdpqlr_gpll = -lplr*mrl*clqrl - lplr*mrr - mll*clqrl - mlr ; 
+const complex_type Dgqrr_gqrr_ngpll = lplr*lqrl*mrl*clplr*clqrl*cmrl + lplr*lqrl*mrl*clqrl*cmll + lplr*lqrl*mrr*clplr*cmrl + lplr*lqrl*mrr*cmll + lplr*mrl*clplr*clqrl*cmrr + lplr*mrl*clqrl*cmlr + lplr*mrr*clplr*cmrr + lplr*mrr*cmlr + lqrl*mll*clplr*clqrl*cmrl + lqrl*mll*clqrl*cmll + lqrl*mlr*clplr*cmrl + lqrl*mlr*cmll + mll*clplr*clqrl*cmrr + mll*clqrl*cmlr + mlr*clplr*cmrr + mlr*cmlr ; 
+const complex_type Dgqrr_gqrr_ngprr = lprl*lqrl*mll*clprl*clqrl*cmll + lprl*lqrl*mll*clqrl*cmrl + lprl*lqrl*mlr*clprl*cmll + lprl*lqrl*mlr*cmrl + lprl*mll*clprl*clqrl*cmlr + lprl*mll*clqrl*cmrr + lprl*mlr*clprl*cmlr + lprl*mlr*cmrr + lqrl*mrl*clprl*clqrl*cmll + lqrl*mrl*clqrl*cmrl + lqrl*mrr*clprl*cmll + lqrl*mrr*cmrl + mrl*clprl*clqrl*cmlr + mrl*clqrl*cmrr + mrr*clprl*cmlr + mrr*cmrr ; 
+		
+		grad[iqrr] += Dgqrr_cdpqrr_gprr*gprr*cdpqrr + Dgqrr_cdpqlr_gpll*gpll*cdpqlr;
+		grad[iqrr] += Dgqrr_gqrr_ngpll*gpll*cgpll*gqrr + Dgqrr_gqrr_ngprr*gprr*cgprr*gqrr;
 			
 		// update cost
-		cost += std::norm ( data - model );
+		// rr
+		cost += std::norm ( dpqrr - gprr*lprl*mll*cgqrr*clqrl - gprr*lprl*mlr*cgqrr - gprr*mrl*cgqrr*clqrl - gprr*mrr*cgqrr );
+		// rl
+		cost += std::norm ( dpqrl - gprr*lprl*mll*cgqll - gprr*lprl*mlr*cgqll*clqlr - gprr*mrl*cgqll - gprr*mrr*cgqll*clqlr );
+		// lr
+		cost += std::norm ( dpqlr - gpll*lplr*mrl*cgqrr*clqrl - gpll*lplr*mrr*cgqrr - gpll*mll*cgqrr*clqrl - gpll*mlr*cgqrr );
+		// ll
+		//cost += std::norm ( dpqll - gpll*lplr*mrl*cgqll - gpll*lplr*mrr*cgqll*clqlr - gpll*mll*cgqll - gpll*mlr*cgqll*clqlr );
 
 	} // iterate over polar baselines
 	
@@ -135,7 +132,7 @@ model = gpll*mll*conj(gqrl) + gpll*mlr*conj(gqrr) + gplr*mrl*conj(gqrl) + gplr*m
 
 LBFGS::real_type LBFGS::diagpolarized_ll (void *instance, const lbfgsfloatval_t *rgains, lbfgsfloatval_t *rgrad, const int n, const lbfgsfloatval_t step) {
 	/*
-	 * Solving for ll gain, populates the derivative of rr that appears in {rr,rl,lr} baselines.
+	 * Solving for ll gain, populates the derivative of ll that appears in {rl,lr,ll} baselines.
 	*/
 
 	/* return this */
@@ -159,43 +156,50 @@ LBFGS::real_type LBFGS::diagpolarized_ll (void *instance, const lbfgsfloatval_t 
 	vc_type  grad ( ngains, complex_type(0.0f, 0.0f) );
 
 	/* iterate over the polar baselines */
-	for ( int ibl = 0; ibl < pkg->npolarbaselines; ibl++ ) {
+	for ( int ibl = 0; ibl < pkg->nbaselines; ibl++ ) {
 
 		// fetch the antenna index
 		const int iant1 ( pkg->iant1[ibl] );
 		const int iant2 ( pkg->iant2[ibl] );
 
-		// fetch the pb2corr
-		const int pb2corr    = pkg->pb2corr [ ibl ];
-
-		// early continue on rr baseline
-		if ( pb2corr == 0 ) continue;
+		// polarbaseline index
+		const int pbl ( 4*ibl );
 
 		// fetch complex data
-		const complex_type data ( pkg->data[ibl] );
-		const complex_type cata ( conj(data) );
+		const complex_type dpqrr ( pkg->data[ pbl    ] );
+		const complex_type dpqrl ( pkg->data[ pbl + 1] );
+		const complex_type dpqlr ( pkg->data[ pbl + 2] );
+		const complex_type dpqll ( pkg->data[ pbl + 3] );
+
+		const complex_type cdpqrr ( conj ( dpqrr ) );
+		const complex_type cdpqrl ( conj ( dpqrl ) );
+		const complex_type cdpqlr ( conj ( dpqlr ) );
+		const complex_type cdpqll ( conj ( dpqll ) );
 
 		// set the gain indices
 		const int ipll ( iant1 );
 		const int iqll ( iant2 );
 
 		// fetch full gains for both antennas
-		const complex_type gprr ( pkg->cgains[2*iant1 + 0] );
+		const complex_type gprr ( pkg->cgains[2*iant1] );
 		const complex_type gpll ( cgains[ipll] );
-		const complex_type gprl ( pkg->leakrl[iant1] * gprr );
-		const complex_type gplr ( pkg->leaklr[iant1] * gpll );
+		const complex_type lprl ( pkg->leakrl[iant1] );
+		const complex_type lplr ( pkg->leaklr[iant1] );
 
-		const complex_type gqrr ( pkg->cgains[2*iant2 + 0] );
+		const complex_type cgprr ( conj ( gprr ) );
+		const complex_type cgpll ( conj ( gpll ) );
+		const complex_type clprl ( conj ( lprl ) );
+		const complex_type clplr ( conj ( lplr ) );
+
+		const complex_type gqrr ( pkg->cgains[2*iant2] );
 		const complex_type gqll ( cgains[iqll] );
-		const complex_type gqrl ( pkg->leakrl[iant2] * gqrr );
-		const complex_type gqlr ( pkg->leaklr[iant2] * gqll );
+		const complex_type lqrl ( pkg->leakrl[iant2] );
+		const complex_type lqlr ( pkg->leaklr[iant2] );
 
-		// the following long expressions come from sympy
-		// see :math_gradient_full_polarized.py:
-		// see :math_gradient_full_polarized.code:
-
-		// model forward depends on pb2corr
-		complex_type model;
+		const complex_type cgqrr ( conj ( gqrr ) );
+		const complex_type cgqll ( conj ( gqll ) );
+		const complex_type clqrl ( conj ( lqrl ) );
+		const complex_type clqlr ( conj ( lqlr ) );
 
 		/* model */
 		const complex_type mrr ( pkg->par_model_rr[ibl] );
@@ -203,49 +207,40 @@ LBFGS::real_type LBFGS::diagpolarized_ll (void *instance, const lbfgsfloatval_t 
 		const complex_type mlr ( pkg->par_model_lr[ibl] );
 		const complex_type mll ( pkg->par_model_ll[ibl] );
 
-		/*
-		We do this over polarbaseline loop, so that we keep track of all the baselines
-		*/
-		if ( pb2corr == 1 ) {
+		const complex_type cmrr ( conj ( mrr ) );
+		const complex_type cmrl ( conj ( mrl ) );
+		const complex_type cmlr ( conj ( mlr ) );
+		const complex_type cmll ( conj ( mll ) );
 
-const complex_type Dgqll_coeff_dqprl = -gprl*mll - gprr*mrl ; 
+		// the following long expressions come from sympy
+		// see :math_gradient_parallel_polarized.py:
+		// see :math_gradient_parallel_polarized.stdout:
+		
+const complex_type Dgpll_dpqlr_gqrr = -lqrl*clplr*cmrl - lqrl*cmll - clplr*cmrr - cmlr ; 
+const complex_type Dgpll_dpqll_gqll = -lqlr*clplr*cmrr - lqlr*cmlr - clplr*cmrl - cmll ; 
+const complex_type Dgpll_gpll_ngqll = lplr*lqlr*mrl*clplr*cmrr + lplr*lqlr*mrl*cmlr + lplr*lqlr*mrr*clplr*clqlr*cmrr + lplr*lqlr*mrr*clqlr*cmlr + lplr*mrl*clplr*cmrl + lplr*mrl*cmll + lplr*mrr*clplr*clqlr*cmrl + lplr*mrr*clqlr*cmll + lqlr*mll*clplr*cmrr + lqlr*mll*cmlr + lqlr*mlr*clplr*clqlr*cmrr + lqlr*mlr*clqlr*cmlr + mll*clplr*cmrl + mll*cmll + mlr*clplr*clqlr*cmrl + mlr*clqlr*cmll ; 
+const complex_type Dgpll_gpll_ngqrr = lplr*lqrl*mrl*clplr*clqrl*cmrl + lplr*lqrl*mrl*clqrl*cmll + lplr*lqrl*mrr*clplr*cmrl + lplr*lqrl*mrr*cmll + lplr*mrl*clplr*clqrl*cmrr + lplr*mrl*clqrl*cmlr + lplr*mrr*clplr*cmrr + lplr*mrr*cmlr + lqrl*mll*clplr*clqrl*cmrl + lqrl*mll*clqrl*cmll + lqrl*mlr*clplr*cmrl + lqrl*mlr*cmll + mll*clplr*clqrl*cmrr + mll*clqrl*cmlr + mlr*clplr*cmrr + mlr*cmlr ; 
 
-			grad[iqll] += Dgqll_coeff_dqprl*cata;
+		grad[ipll] += Dgpll_dpqlr_gqrr*gqrr*dpqlr + Dgpll_dpqll_gqll*gqll*dpqll;
+		grad[ipll] += Dgpll_gpll_ngqll*gqll*cgqll*gpll + Dgpll_gpll_ngqrr*gqrr*cgqrr*gpll;
 
-model = gprl*mll*conj(gqll) + gprl*mlr*conj(gqlr) + gprr*mrl*conj(gqll) + gprr*mrr*conj(gqlr) ;
+const complex_type Dgqll_cdpqrl_gprr = -lprl*mll - lprl*mlr*clqlr - mrl - mrr*clqlr ; 
+const complex_type Dgqll_cdpqll_gpll = -lplr*mrl - lplr*mrr*clqlr - mll - mlr*clqlr ; 
+const complex_type Dgqll_gqll_ngpll = lplr*lqlr*mrl*clplr*cmrr + lplr*lqlr*mrl*cmlr + lplr*lqlr*mrr*clplr*clqlr*cmrr + lplr*lqlr*mrr*clqlr*cmlr + lplr*mrl*clplr*cmrl + lplr*mrl*cmll + lplr*mrr*clplr*clqlr*cmrl + lplr*mrr*clqlr*cmll + lqlr*mll*clplr*cmrr + lqlr*mll*cmlr + lqlr*mlr*clplr*clqlr*cmrr + lqlr*mlr*clqlr*cmlr + mll*clplr*cmrl + mll*cmll + mlr*clplr*clqlr*cmrl + mlr*clqlr*cmll ; 
+const complex_type Dgqll_gqll_ngprr = lprl*lqlr*mll*clprl*cmlr + lprl*lqlr*mll*cmrr + lprl*lqlr*mlr*clprl*clqlr*cmlr + lprl*lqlr*mlr*clqlr*cmrr + lprl*mll*clprl*cmll + lprl*mll*cmrl + lprl*mlr*clprl*clqlr*cmll + lprl*mlr*clqlr*cmrl + lqlr*mrl*clprl*cmlr + lqlr*mrl*cmrr + lqlr*mrr*clprl*clqlr*cmlr + lqlr*mrr*clqlr*cmrr + mrl*clprl*cmll + mrl*cmrl + mrr*clprl*clqlr*cmll + mrr*clqlr*cmrl ; 
 
-		} // rl
-		else if ( pb2corr == 2 ) {
-
-const complex_type Dgpll_coeff_dpqlr = -gqrl*conj(mll) - gqrr*conj(mlr) ; 
-const complex_type Dgpll_coeff_gplr = gqll*mrl*conj(gqll)*conj(mll) + gqll*mrr*conj(gqlr)*conj(mll) + gqlr*mrl*conj(gqll)*conj(mlr) + gqlr*mrr*conj(gqlr)*conj(mlr) + gqrl*mrl*conj(gqrl)*conj(mll) + gqrl*mrr*conj(gqrr)*conj(mll) + gqrr*mrl*conj(gqrl)*conj(mlr) + gqrr*mrr*conj(gqrr)*conj(mlr) ; 
-const complex_type Dgqll_coeff_gqlr = gpll*mll*conj(gpll)*conj(mlr) + gpll*mll*conj(gplr)*conj(mrr) + gplr*mrl*conj(gpll)*conj(mlr) + gplr*mrl*conj(gplr)*conj(mrr) + gprl*mll*conj(gprl)*conj(mlr) + gprl*mll*conj(gprr)*conj(mrr) + gprr*mrl*conj(gprl)*conj(mlr) + gprr*mrl*conj(gprr)*conj(mrr) ; 
-			
-			grad[ipll] += Dgpll_coeff_dpqlr*data + Dgpll_coeff_gplr*gplr;
-
-			grad[iqll] += Dgqll_coeff_gqlr*gqlr;
-
-model = gpll*mll*conj(gqrl) + gpll*mlr*conj(gqrr) + gplr*mrl*conj(gqrl) + gplr*mrr*conj(gqrr) ;
-
-		} // lr
-		else if ( pb2corr == 3 ) {
-
-const complex_type Dgpll_coeff_dpqll = -gqll*conj(mll) - gqlr*conj(mlr) ; 
-const complex_type Dgpll_coeff_gpll = gqll*mll*conj(gqll)*conj(mll) + gqll*mlr*conj(gqlr)*conj(mll) + gqlr*mll*conj(gqll)*conj(mlr) + gqlr*mlr*conj(gqlr)*conj(mlr) + gqrl*mll*conj(gqrl)*conj(mll) + gqrl*mlr*conj(gqrr)*conj(mll) + gqrr*mll*conj(gqrl)*conj(mlr) + gqrr*mlr*conj(gqrr)*conj(mlr) ; 
-
-const complex_type Dgqll_coeff_dqpll = -gpll*mll - gplr*mrl ; 
-const complex_type Dgqll_coeff_gqll = gpll*mll*conj(gpll)*conj(mll) + gpll*mll*conj(gplr)*conj(mrl) + gplr*mrl*conj(gpll)*conj(mll) + gplr*mrl*conj(gplr)*conj(mrl) + gprl*mll*conj(gprl)*conj(mll) + gprl*mll*conj(gprr)*conj(mrl) + gprr*mrl*conj(gprl)*conj(mll) + gprr*mrl*conj(gprr)*conj(mrl) ; 
-
-			grad[ipll] += Dgpll_coeff_dpqll*data + Dgpll_coeff_gpll*gpll;
-			
-			grad[iqll] += Dgqll_coeff_dqpll*cata + Dgqll_coeff_gqll*gqll;
-
-model = gpll*mll*conj(gqll) + gpll*mlr*conj(gqlr) + gplr*mrl*conj(gqll) + gplr*mrr*conj(gqlr) ;
-
-		} // ll
+		grad[iqll] += Dgqll_cdpqrl_gprr*gprr*cdpqrl + Dgqll_cdpqll_gpll*gpll*cdpqll;
+		grad[iqll] += Dgqll_gqll_ngpll*gpll*cgpll*gqll + Dgqll_gqll_ngprr*gprr*cgprr*gqll;
 			
 		// update cost
-		cost += std::norm ( data - model );
+		// rr
+		//cost += std::norm ( dpqrr - gprr*lprl*mll*cgqrr*clqrl - gprr*lprl*mlr*cgqrr - gprr*mrl*cgqrr*clqrl - gprr*mrr*cgqrr );
+		// rl
+		cost += std::norm ( dpqrl - gprr*lprl*mll*cgqll - gprr*lprl*mlr*cgqll*clqlr - gprr*mrl*cgqll - gprr*mrr*cgqll*clqlr );
+		// lr
+		cost += std::norm ( dpqlr - gpll*lplr*mrl*cgqrr*clqrl - gpll*lplr*mrr*cgqrr - gpll*mll*cgqrr*clqrl - gpll*mlr*cgqrr );
+		// ll
+		cost += std::norm ( dpqll - gpll*lplr*mrl*cgqll - gpll*lplr*mrr*cgqll*clqlr - gpll*mll*cgqll - gpll*mlr*cgqll*clqlr );
 
 	} // iterate over polar baselines
 	
@@ -258,6 +253,7 @@ model = gpll*mll*conj(gqll) + gpll*mlr*conj(gqlr) + gplr*mrl*conj(gqll) + gplr*m
 
 	return cost;
 }
+
 
 LBFGS::diagcost_t LBFGS::IterativePolarizedDiagonalSolver::solve (data_t& pkg, int n ) {
 
