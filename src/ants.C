@@ -54,3 +54,34 @@ ants::ant2par_t ants::calculate_parallactic_angle ( double tmjd, double source_r
 
 	return ret;
 }
+
+ants::baseline_uv ants::calculate_uvwave ( double tmjd, double source_ra_rad, double source_dec_rad ){
+
+	/*return this*/
+	baseline_uv ret;
+
+	/* get hourangle */
+	const double lst  = calculate_lst ( tmjd, GMRT_POS );
+	const double ha   = lst - source_ra_rad;
+
+	/* precompute cos and sin */
+	const double sinha ( std::sin ( ha ) );
+	const double cosha ( std::cos ( ha ) );
+	const double sindec( std::sin ( source_dec_rad ) );
+	const double cosdec( std::cos ( source_dec_rad ) );
+
+	/* iterate over and save */
+	for ( auto _it = bl2xyz.begin(); _it != bl2xyz.end(); _it++ ) {
+
+		const auto& _bl   = _it->first;
+		const auto& _xyz  = _it->second;
+
+		const double lu ( sinha*_xyz[0] + cosha*_xyz[1] );
+		const double lv ( -sindec*cosha*_xyz[0] + sindec*sinha*_xyz[1] + cosdec*_xyz[2] );
+
+		ret[_bl]  = std::sqrt ( lu*lu + lv*lv );
+
+	} // iteration
+
+	return ret;
+}
