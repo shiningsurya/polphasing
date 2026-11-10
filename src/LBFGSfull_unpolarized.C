@@ -221,6 +221,36 @@ model = gpll*z1*conj(gqll)*conj(z2) + gplr*z2*conj(gqlr)*conj(z1) ;
 	return cost;
 }
 
+LBFGS::real_type LBFGS::UnpolarizedSolver::solve_parallel_unpolarized_single (uata_t& pkg) {
+
+	real_type final_cost (0.0f);
+
+	// single unpolarized solving 
+	SingleUnpolarizedSolver single_r ( nantennas );
+	SingleUnpolarizedSolver single_l ( nantennas );
+
+	single_r.solve_single_unpolarized<0> ( pkg );
+	single_l.solve_single_unpolarized<3> ( pkg );
+
+	final_cost += single_r.cost;
+	final_cost += single_l.cost;
+
+	// load it into xpar_full
+	// xpar_full = {RI RI RI RI}
+	//              01 23 45 67
+	for (int iant = 0; iant < nantennas; iant++) {
+		// rr
+		xpar_full[8*iant + 0] = single_r.xpar[2*iant + 0];
+		xpar_full[8*iant + 1] = single_r.xpar[2*iant + 1];
+
+		// ll
+		xpar_full[8*iant + 6] = single_l.xpar[2*iant + 0];
+		xpar_full[8*iant + 7] = single_l.xpar[2*iant + 1];
+	}
+
+	return final_cost;
+}
+
 LBFGS::real_type LBFGS::UnpolarizedSolver::solve_full_unpolarized (uata_t& pkg) {
 	/*
 	 * First solve parallel and then solve full
@@ -233,30 +263,7 @@ LBFGS::real_type LBFGS::UnpolarizedSolver::solve_full_unpolarized (uata_t& pkg) 
 
 	void* vpkg  = static_cast<void*>(&pkg);
 
-	{
-		// single unpolarized solving 
-		SingleUnpolarizedSolver single_r ( nantennas );
-		SingleUnpolarizedSolver single_l ( nantennas );
-
-		single_r.solve_single_unpolarized<0> ( pkg );
-		single_l.solve_single_unpolarized<3> ( pkg );
-
-		final_cost += single_r.cost;
-		final_cost += single_l.cost;
-
-		// load it into xpar_full
-		// xpar_full = {RI RI RI RI}
-		//              01 23 45 67
-		for (int iant = 0; iant < nantennas; iant++) {
-			// rr
-			xpar_full[8*iant + 0] = single_r.xpar[2*iant + 0];
-			xpar_full[8*iant + 1] = single_r.xpar[2*iant + 1];
-
-			// ll
-			xpar_full[8*iant + 6] = single_l.xpar[2*iant + 0];
-			xpar_full[8*iant + 7] = single_l.xpar[2*iant + 1];
-		}
-	}
+	solve_parallel_unpolarized_single ( pkg );
 
 	// v is obselete
 	// parallel solve 
@@ -264,9 +271,9 @@ LBFGS::real_type LBFGS::UnpolarizedSolver::solve_full_unpolarized (uata_t& pkg) 
   //rcode_para = lbfgs(n_para, xpar_para, &cost_para, parallel_unpolarized, NULL, vpkg, &param);
 
 	// full solve 
-	rcode_full = lbfgs(n_full, xpar_full, &cost_full, full_unpolarized, NULL, vpkg, &param);
+	rcode = lbfgs(n_full, xpar_full, &cost, full_unpolarized, progress_reporter_unity, vpkg, &param);
 
-  final_cost   = cost_para + cost_full;
+  final_cost  += cost;
   //gnorm  = pkg.gnorm;
   //niter  = pkg.niter;
 
@@ -274,6 +281,58 @@ LBFGS::real_type LBFGS::UnpolarizedSolver::solve_full_unpolarized (uata_t& pkg) 
 	std::cout << " rcode=" << rcode_para << std::endl;
 #endif
 
+	// load cross gains into cgains
+	for (int iant = 0; iant < nantennas; iant++) {
+		// rr
+		const complex_type rr ( xpar_full[8*iant + 0], xpar_full[8*iant + 1] );
+		
+		// rl
+		const complex_type rl ( xpar_full[8*iant + 2], xpar_full[8*iant + 3] );
+
+		// lr
+		const complex_type lr ( xpar_full[8*iant + 4], xpar_full[8*iant + 5] );
+
+		// ll
+		const complex_type ll ( xpar_full[8*iant + 6], xpar_full[8*iant + 7] );
+
+		// drl
+		const complex_type drl ( rl / rr );
+
+		// dlr
+		const complex_type dlr ( lr / ll );
+
+		// rr
+		pkg.cgains[4*iant + 0] = rr;
+		// rl
+		pkg.cgains[4*iant + 1] = rl;
+		// lr
+		pkg.cgains[4*iant + 2] = lr;
+		// ll
+		pkg.cgains[4*iant + 3] = ll;
+
+		// save leakages
+		pkg.lgains[2*iant + 0] = drl;
+		pkg.lgains[2*iant + 1] = dlr;
+
+	}
+
   return final_cost;
 }
 
+int LBFGS::progress_reporter_unity (void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k, int ls ) {
+
+	/* get data_t* ptr out of instance */
+	uata_t *pkg = static_cast<uata_t*>(instance);
+
+	/* save cost and gnorm */
+	pkg->cost   = fx;
+	pkg->gnorm  = gnorm;
+	pkg->niter++;
+
+#ifdef DPRINT
+	std::cout << " iteration=" << k << " cost=" << fx << " gnorm=" << gnorm << std::endl;
+#endif
+
+	/* return 0 always */
+	return 0;
+}

@@ -20,6 +20,10 @@ namespace logging {
 	struct log_t {
 	
 		vr_type  sse;
+		vr_type  sse_rr;
+		vr_type  sse_ll;
+		vr_type  sse_rl;
+		vr_type  sse_lr;
 		vr_type  time;
 		vr_type  gnorm;
 		vr_type  fitted_i;
@@ -27,7 +31,7 @@ namespace logging {
 		vi_type  info;
 
 		log_t ( int nchan ) : 
-			sse ( nchan ), time (nchan), gnorm (nchan), fitted_i(nchan), nfev (nchan), info(nchan) {}
+			sse ( nchan ), sse_rr(nchan), sse_ll(nchan), sse_rl(nchan), sse_lr(nchan), time (nchan), gnorm (nchan), fitted_i(nchan), nfev (nchan), info(nchan) {}
 
 	};
 

@@ -19,6 +19,8 @@ import os
 import sys
 import math
 
+BADANTS = ['E04','E05','E06','S04','S05','S06','W04','W05','W06', 'C07']
+
 def get_args():
     import argparse
     agp = argparse.ArgumentParser("write_gwb_solutions", description="Writing solutions in GWB format")
@@ -32,8 +34,8 @@ def get_args():
 def process_amp ( c, amp ):
     """ complex to amp in string """
     mag = math.sqrt ( c.real*c.real + c.imag*c.imag )
-    if mag <= 1E-2 : mag = 1.0
-    return "%.3f" % (amp/mag)
+    if mag <= 1E-3 : mag = 1.0
+    return "%.5f" % (amp/mag)
 
 def process_phs ( c ):
     """ complex to phs in string """
@@ -70,6 +72,8 @@ def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
                 raise RuntimeError("cgains_file is off")
             for ant,cg in zip (ants, _toks):
                 __cg        = modifier ( complex ( cg ) )
+                if ant in BADANTS: 
+                    __cg = complex('1.00+0.00j')
                 """
                 in GWB correlator, we need to apply the inverse of the gain we compute from polphase.
                 Which in case of diagonal complex is simply the reciprocal.
@@ -160,6 +164,11 @@ if __name__ == "__main__":
     """
     Just conjugation works. 
     """
+    #modifier = lambda c : c
+    #print (f" conjugating seems to work for GWB.")
+    #print (f" However, for offline correlator, we need to pass identity.")
+
+    #print (" disabling the following antennas: ", BADANTS, sep='\n')
 
     sol_amp_130  = os.path.join ( ODIR, "amp.130.dat" )
     sol_amp_175  = os.path.join ( ODIR, "amp.175.dat" )

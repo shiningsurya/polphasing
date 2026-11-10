@@ -17,6 +17,8 @@
 #include <numeric>
 #include <algorithm>
 
+#include <complex>
+
 #include <cstring>
 
 
@@ -84,6 +86,8 @@ class LTA {
 		using vb_type   = std::vector<char>;
 		using vi_type   = std::vector<int>;
 		using vf_type   = std::vector<float>;
+		using complex_type  = std::complex<float>;
+		using vc_type   = std::vector<complex_type>;
 
 		struct scan_t {
 			const std::string source;
@@ -130,6 +134,9 @@ class LTA {
 		/* time average one scan */
 		void time_average ( int iscan, vf_type& inout );
 
+		/* one baseline (time, channel, corr) data */
+		void get_baseline ( const int iscan, const antname_t& ant1, const antname_t& ant2, vc_type& inout );
+
 		/* get properties of :iscan: scan */
 		scan_t get_scan ( int iscan );
 
@@ -141,3 +148,5 @@ class LTA {
 		friend std::ostream& operator<< (std::ostream&, const LTA &);
 
 };
+
+std::ostream& operator<< (std::ostream& os, const LTA::antname_t& a );

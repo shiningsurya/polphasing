@@ -7,6 +7,7 @@
 
 #include "lta_file.hpp"
 #include "gaintable.hpp"
+#include "selftable.hpp"
 #include "models.hpp"
 #include "logsolve.hpp"
 #include "LBFGSclean.hpp"
@@ -92,7 +93,16 @@ int main(int argc, char *argv[]) {
 	const std::string save_file_rl  = tag + std::string("_rl.gains");
 	const std::string save_file_lr  = tag + std::string("_lr.gains");
 	const std::string save_file_ll  = tag + std::string("_ll.gains");
+	const std::string save_file_xp  = tag + std::string("_xp.gains");
+	const std::string save_file_gr  = tag + std::string("_gr.gains");
+	const std::string save_file_gl  = tag + std::string("_gl.gains");
 	const std::string log_file      = tag + std::string(".log");
+
+	const std::string save_self_rr  = tag + std::string("_rr.self");
+	const std::string save_self_ll  = tag + std::string("_ll.self");
+
+	const std::string save_file_par_r  = tag + std::string("_pr.gains");
+	const std::string save_file_par_l  = tag + std::string("_pl.gains");
 
 	std::cout << "[inputs] lta="   << lta_path << std::endl;
 	std::cout << "[inputs] model=" << model_path << std::endl;
@@ -132,7 +142,7 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 	/* maybe directly read complex<float>  */
   /* NOTICE:avgbldata contains self-terms*/
-	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0. );
+	LTA::vf_type avgbldata ( 2 * nbaselines * nchannels, 0.0f );
 
 	const LTA::scan_t cal_scan = lta_file.get_scan ( cal_scan_number );
 
@@ -184,6 +194,65 @@ int main(int argc, char *argv[]) {
 
 	} /* polar baselines */
 
+	const int nantennas   (ant2idx.size()); 
+
+	/***************************************/
+	/*        WRITE SELF CORRELATIONS      */ 
+	/***************************************/
+	selftable::selftable_t    self_rr = selftable::prepare_selftables ( nchannels );
+	selftable::selftable_t    self_ll = selftable::prepare_selftables ( nchannels );
+
+	const int n_self ( self_baselines.size() );
+	if ( n_self != nantennas * 4 ) {
+		std::cout << self_baselines.size() << " " << nantennas << std::endl;
+		throw std::runtime_error ("self baseline count mismatch");
+	}
+	for (int ii = 0; ii < n_self; ii++) {
+
+			const int ib     = self_baselines[ii];
+
+			/*
+			 * (0,0) = rr -> 0 
+			 * (0,1) = rl -> 1 
+			 * (1,0) = lr -> 2 
+			 * (1,1) = ll -> 3
+			*/
+			/* get baseline object */
+			const baseline_t&  _bl = lta_file.baselines [ ib ];
+
+			/* get antennas */
+			const auto& ant1  = _bl.ant1;
+			const auto& ant2  = _bl.ant2;
+
+			if ( ant1 != ant2 ) throw std::runtime_error("expected selfcorr");
+
+			/* get bands */
+			const auto& band1 = _bl.band1;
+			const auto& band2 = _bl.band2;
+
+			/* ID correlation */
+			const int pb2corr = band1*2 + band2;
+
+			for (int ichan = 0; ichan < nchannels; ichan++) {
+					/* index in (baseline, channel) complex<float> */
+					const int _i     = ichan + nchannels * ib;
+
+					/* copy data */
+					// only real because rr and ll of selfcorr are purely real
+					const float _real ( avgbldata[2*_i] );
+
+					// data
+					if ( pb2corr == 0 ) self_rr[ant1][ichan] = _real;
+					else if ( pb2corr == 3 ) self_ll[ant1][ichan] = _real;
+
+			} // channel
+
+	} // selfcorr
+	
+	// write selfcorr
+	selftable::write_selftables ( self_rr, save_self_rr );
+	selftable::write_selftables ( self_ll, save_self_ll );
+
 	/***************************************/
 	/*        MEASURE PAR ANGLES           */ 
 	/***************************************/
@@ -217,7 +286,6 @@ int main(int argc, char *argv[]) {
 	 * npar  = 4 * nantennas
 	 *
 	 */
-	int nantennas    = ant2idx.size(); 
 	int n_noself_baselines  = noself_baselines.size();
 	if ( n_noself_baselines != (0.5 * nantennas * ( nantennas - 1 ) * 4) ) {
 		throw std::runtime_error ("baseline count mismatch");
@@ -231,6 +299,14 @@ int main(int argc, char *argv[]) {
 	gaintable::gaintable_t    solved_gains_rl = gaintable::prepare_gaintables ( nchannels );
 	gaintable::gaintable_t    solved_gains_lr = gaintable::prepare_gaintables ( nchannels );
 	gaintable::gaintable_t    solved_gains_ll = gaintable::prepare_gaintables ( nchannels );
+
+	gaintable::gaintable_t    solved_gains_xp = gaintable::prepare_gaintables ( nchannels );
+
+	gaintable::gaintable_t    solved_gains_gr = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    solved_gains_gl = gaintable::prepare_gaintables ( nchannels );
+
+	gaintable::gaintable_t    used_par_r = gaintable::prepare_gaintables ( nchannels );
+	gaintable::gaintable_t    used_par_l = gaintable::prepare_gaintables ( nchannels );
 
 	/* main loop */
 	std::cout << " Starting main solving loop" << std::endl;
@@ -385,44 +461,54 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
-		const LBFGS::real_type xphase ( solver.xpar[4*nantennas] );
-		const LBFGS::complex_type zp  ( std::cos ( xphase ), std::sin(xphase) );
-
+		const LBFGS::real_type par_xphase ( solver.xpar[4*nantennas - 2] );
+		const LBFGS::real_type xphase ( 2.0f * std::atan ( par_xphase ) );
+		const LBFGS::complex_type xp  ( std::cos ( xphase ), std::sin(xphase) );
+		/*
+		 * Should i zerophase by dividing only the grr and gll by reference grr?
+		*/
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
 			const auto& idx  = _i->second;
 
 			// fetch gains
-			const LBFGS::complex_type grr ( solver.xpar[4*idx + 0], solver.xpar[4*idx + 1] );
-			const LBFGS::complex_type gll ( solver.xpar[4*idx + 2], solver.xpar[4*idx + 3] );
+			LBFGS::complex_type  grr, gll;
+			if ( idx == 0 ) {
+			    grr = LBFGS::complex_type ( solver.xpar[0], 0.0f );
+			    gll = LBFGS::complex_type ( solver.xpar[1], 0.0f );
+			}
+			else {
+			    grr = LBFGS::complex_type ( solver.xpar[4*idx - 2], solver.xpar[4*idx - 1] );
+			    gll = LBFGS::complex_type ( solver.xpar[4*idx    ], solver.xpar[4*idx + 1] );
+			}
 
 			// fetch leakage terms
 			const LBFGS::complex_type drl ( leakage_r[iant][ichan] );
 			const LBFGS::complex_type dlr ( leakage_l[iant][ichan] );
 
 			// rr
-			const LBFGS::complex_type rr ( grr * zp );
+			const LBFGS::complex_type rr ( grr * xp );
 			// rl
 			const LBFGS::complex_type rl ( grr * drl );
 			// lr
-			const LBFGS::complex_type lr ( gll * zp * dlr );
+			const LBFGS::complex_type lr ( gll * xp * dlr );
 			// ll
 			const LBFGS::complex_type ll ( gll );
-
-			/*
-			 * Leakage compensated
-			 * inverse of the Jones matrix made of rr, rl, lr, ll
-			 *
-			*/
-			const LBFGS::complex_type det ( 1.0f - drl*dlr );
-			const LBFGS::complex_type lcrr ( ll / det );
-			const LBFGS::complex_type lcll ( rr / det );
 
 			solved_gains_rr[iant][ichan]  = rr;
 			solved_gains_rl[iant][ichan]  = rl;
 			solved_gains_lr[iant][ichan]  = lr;
 			solved_gains_ll[iant][ichan]  = ll;
+
+			solved_gains_xp[iant][ichan]  = xp;
+
+			solved_gains_gr[iant][ichan]  = grr;
+			solved_gains_gl[iant][ichan]  = gll;
+
+			const float _par ( antpar.at(iant) );
+			used_par_r[iant][ichan]  = LBFGS::complex_type ( std::cos ( _par ), -1.0f*std::sin( _par ) );
+			used_par_l[iant][ichan]  = LBFGS::complex_type ( std::cos ( _par ),  1.0f*std::sin( _par ) );
 
 		} /* ant2idx */
 
@@ -435,6 +521,14 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 	gaintable::write_complex_solutions ( solved_gains_rl, save_file_rl );
 	gaintable::write_complex_solutions ( solved_gains_lr, save_file_lr );
 	gaintable::write_complex_solutions ( solved_gains_ll, save_file_ll );
+
+	gaintable::write_complex_solutions ( solved_gains_xp, save_file_xp );
+
+	gaintable::write_complex_solutions ( solved_gains_gr, save_file_gr );
+	gaintable::write_complex_solutions ( solved_gains_gl, save_file_gl );
+
+	gaintable::write_complex_solutions ( used_par_r, save_file_par_r );
+	gaintable::write_complex_solutions ( used_par_l, save_file_par_l );
 
 	/***************************************/
 	/*        WRITE LOG                    */
