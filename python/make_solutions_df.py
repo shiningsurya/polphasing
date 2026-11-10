@@ -11,15 +11,13 @@ def get_args():
     add = agp.add_argument
     add ('-p','--polphase', help='Tag of polphase', dest='polphase')
     add ('-f','--fullpolphase', help='Tag of full polphase', dest='fullpolphase')
-<<<<<<< HEAD
     add ('-a','--all', help='Tag of gains, will take all available', dest='alltag')
-=======
     add ('-l','--leakage', help='Tag of full polphase for leakages (drl, dlr)', dest='leakage')
     add ('-x','--xphase', help='Tag of full polphase for crosshand phase(xp)', dest='xphase')
->>>>>>> 2f945e89659c8f78c185e60a18601d7c3e3341e8
     add ('-q', '--quartical', help='csv file of quartical solutions :make_quartical_df.py:', dest='quartical')
+    add ('-g', '--gwb', help='Directory of amps,phas 130,175 dat, output of :write_gwb_solutions.py:', dest='gwb')
     add ('-r','--rantsol', help='Tag of rantsol', dest='rantsol')
-    add ('-a','--ampsol', help='Tag of ampsolutions', dest='ampsol')
+    add ('--ampsol', help='Tag of ampsolutions', dest='ampsol')
     add ('-n','--nchan', help='Number of channels', dest='nchans', type=int, default=2048)
     return agp.parse_args()
 
@@ -174,6 +172,18 @@ if __name__ == "__main__":
 
         gg  = make_indexed_gaintable ( rg, lg )
         gg.to_pickle ( og + "_ampsol_df.pkl" )
+
+    if args.gwb:
+        og  = os.path.basename ( args.gwb )
+        pr  = pd.read_csv ( args.gwb +"/phas.130.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').map(lambda x : np.exp(1.0j*np.deg2rad(x))).drop(columns=['#'])
+        pl  = pd.read_csv ( args.gwb +"/phas.175.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').map(lambda x : np.exp(1.0j*np.deg2rad(x))).drop(columns=['#'])
+        ar  = pd.read_csv ( args.gwb +"/amp.130.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').drop(columns=['#'])
+        al  = pd.read_csv ( args.gwb +"/amp.175.dat",sep='\\s+', nrows=args.nchans).shift(1,axis='columns').drop(columns=['#'])
+        gr  = ar * pr
+        gl  = al * pl
+        gg  = make_indexed_gaintable ( gr, gl )
+        gg.to_pickle ( og + "_gwb_df.pkl" )
+
 
     if args.quartical:
         og  = os.path.basename ( args.quartical )

@@ -63,10 +63,16 @@ if __name__ == "__main__":
 
     dps   = defaultdict(list)
     for ant in tqdm (ants, desc='antennas', unit='ant'):
+        rr     = np.abs ( oo.complex.loc[ant, 'rr'] )
+        ll     = np.abs ( oo.complex.loc[ant, 'll'] )
+        arl    = np.abs ( oo.complex.loc[ant, 'rl'] )
         dphi   = np.angle ( oo.complex.loc[ant, 'rl'] )
         dphase = 0.5 * dphi
         sols   = measure_d ( freqs_ghz, dphase )
         #
+        dps['rr'].append ( rr )
+        dps['ll'].append ( ll )
+        dps['arl'].append ( arl )
         dps['ant'].append ( ant )
         dps['dphase'].append ( dphase )
         dps['dphi'].append ( dphi )
