@@ -527,7 +527,7 @@ namespace ants {
 
 	double calculate_lst ( double tmjd, antpos_t ant );
 
-	baseline_uv calculate_uvwave ( double tmjd, double source_ra_rad, double source_dec_rad );
+	baseline_uv calculate_uvwave ( double tmjd, double source_ra_rad, double source_dec_rad, double freq_hz );
 
 }; // namespace 
 	

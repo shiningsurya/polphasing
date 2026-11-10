@@ -133,6 +133,12 @@ int main(int argc, char *argv[]) {
 	lta_file.time_average  ( cal_scan_number, avgbldata );
 
 	/***************************************/
+	/*        UVCUT  PREPARE               */
+	/***************************************/
+
+	const ants::baseline_uv buv = ants::calculate_uvwave ( cal_scan.mjd, cal_scan.ra, cal_scan.dec, calmodel.fedge );
+
+	/***************************************/
 	/*        SOLVER PREPARE               */
 	/***************************************/
 
@@ -178,13 +184,6 @@ int main(int argc, char *argv[]) {
 	/***************************************/
 
 	/*
-	 * We need coordinates of each antenna. 
-	 * > we can get them from casa and keep them as static.
-	 *
-	 * We need source coordinates, LST of observation
-	 * > we have to get them from lta_file
-	 *
-	 * --------
 	 *  We put the par angles in map ant2par. 
 	 *  <antname_t,real_type>
 	*/
@@ -247,35 +246,26 @@ int main(int argc, char *argv[]) {
 		/* data package */
 		LBFGS::uata_t  pkg ( 
 				n_noself_baselines, 
-				nantennas
+				nantennas,
+				calmodel.stokes_i[ichan]
 		);
-
-		/* initialize model */
-		pkg.modeli         = calmodel.stokes_i[ichan];
-
-		/* initialize parang */
-		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
-			const auto& iant = _i->first;
-			const auto& idx  = _i->second;
-			
-			const float _par1 ( antpar.at(iant) );
-
-			//pkg.parang[idx] = _par1;
-		}
 
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
 
 			/* ensures this is index of noself baseline */
 			/* which is consistent with lta_file        */
-			/* ib only for reading */
-			const int ib     = noself_baselines[ii];
+			/* ipb only for reading */
+			const int ipb    = noself_baselines[ii];
+
+			/* actual baseline */
+			const int ib  ( ipb / 4 );
 
 			/* index in (baseline, channel) complex<float> */
-			const int _i     = ichan + nchannels * ib;
+			const int _i     = ichan + nchannels * ipb;
 
 			/* get baseline object */
-			const baseline_t&  _bl = lta_file.baselines [ ib ];
+			const baseline_t&  _bl = lta_file.baselines [ ipb ];
 
 			/*
 			 * (0,0) = rr -> 0 
@@ -304,28 +294,26 @@ int main(int argc, char *argv[]) {
 			const float _real ( avgbldata[2*_i] );
 			const float _imag ( avgbldata[2*_i + 1] );
 
+			// correlation index
+			pkg.pb2corr  [ ipb ] = pb2corr;
+
 			// data
-			pkg.data [ ii ]     = LBFGS::complex_type (  _real,  _imag );
+			pkg.data [ pb2corr + 4*ib ]   = LBFGS::complex_type (  _real,  _imag );
 
 			// parallactic angle correct model
 			// find parallactic angle
 			
 			const float _par1 ( antpar.at(ant1) );
 			const float _par2 ( antpar.at(ant2) );
-			//const float _par1 ( 0.0f );
-			//const float _par2 ( 0.0f );
-//#warning "zeroed out the par"
 
 			// z1, z2
-			pkg.par_z1 [ ii ]   = LBFGS::complex_type ( std::cos ( _par1 ), std::sin ( _par1 ) );
-			pkg.par_z2 [ ii ]   = LBFGS::complex_type ( std::cos ( _par2 ), std::sin ( _par2 ) );
+			pkg.par_za [ ib ]   = LBFGS::complex_type ( std::cos ( _par1-_par2 ), std::sin ( _par1-_par2 ) );
+			pkg.par_zb [ ib ]   = LBFGS::complex_type ( std::cos ( _par2-_par1 ), std::sin ( _par2-_par1 ) );
 
 			// antenna indices
-			pkg.iant1 [ ii ]    = iant1;
-			pkg.iant2 [ ii ]    = iant2;
+			pkg.iant1 [ ib ]    = iant1;
+			pkg.iant2 [ ib ]    = iant2;
 
-			// correlation index
-			pkg.pb2corr  [ ii ] = pb2corr;
 		} /* baselines */
 
 		/* perform solving */
@@ -333,52 +321,8 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		//LBFGS::UnpolarizedLeakageSolver    solver (nantennas);
-		//auto cost = solver.solve_leakage_unpolarized ( pkg );
-
-		//LBFGS::UnpolarizedSolver    solver (nantennas);
-		//auto cost = solver.solve_full_unpolarized ( pkg );
-
 		LBFGS::IterativeUnpolarizedSolver    solver (nantennas);
 		auto cost = solver.solve ( pkg, 50 );
-
-#ifdef IPRINT
-		/* print for every channel iteration statistics for rr,ll, rllr solvings */
-		std::cout << ichan << " RR cost ";
-		for (int it = 0; it < pkg.iiter[0]; it++) std::cout << pkg.icost[0][it] << " ";
-		std::cout << std::endl;
-		std::cout << ichan << " RR gnorm ";
-		for (int it = 0; it < pkg.iiter[0]; it++) std::cout << pkg.ignorm[0][it] << " ";
-		std::cout << std::endl;
-
-		std::cout << ichan << " LL cost ";
-		for (int it = 0; it < pkg.iiter[1]; it++) std::cout << pkg.icost[1][it] << " ";
-		std::cout << std::endl;
-		std::cout << ichan << " LL gnorm ";
-		for (int it = 0; it < pkg.iiter[1]; it++) std::cout << pkg.ignorm[1][it] << " ";
-		std::cout << std::endl;
-
-		std::cout << ichan << " RLLR cost ";
-		for (int it = 0; it < pkg.iiter[2]; it++) std::cout << pkg.icost[2][it] << " ";
-		std::cout << std::endl;
-		std::cout << ichan << " RLLR gnorm ";
-		for (int it = 0; it < pkg.iiter[2]; it++) std::cout << pkg.ignorm[2][it] << " ";
-		std::cout << std::endl;
-#endif
-
-#ifdef CHANDEBUG2
-		{
-			std::ofstream of("pkgchandebug.bin", std::ios::binary);
-of.write (reinterpret_cast<const char*>(&pkg.npolarbaselines), sizeof(int));
-of.write (reinterpret_cast<const char*>(&pkg.nantennas), sizeof(int));
-			/* data */
-of.write (reinterpret_cast<const char*>(pkg.data.data()), pkg.data.size()*sizeof(LBFGS::complex_type));
-of.write (reinterpret_cast<const char*>(pkg.iant1.data()), pkg.iant1.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(pkg.iant2.data()), pkg.iant2.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(pkg.pb2corr.data()), pkg.pb2corr.size()*sizeof(int));
-of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
-		}
-#endif
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
@@ -396,6 +340,10 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		//logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
+		/* gainnormalizer 
+		 * with first antenna gains
+		*/
+		const gaintable::normalizer_t    gnormer ( pkg.cgains[0], pkg.cgains[1], pkg.cgains[2], pkg.cgains[3] );
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
@@ -406,16 +354,19 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const LBFGS::complex_type lr ( pkg.cgains[4*idx + 2] );
 			const LBFGS::complex_type ll ( pkg.cgains[4*idx + 3] );
 
+			/* normalizing */
+			const auto ng  ( gnormer ( rr, rl, lr, ll ) );
+
 			//const LBFGS::complex_type drl ( pkg.lgains[2*idx + 0] );
 			//const LBFGS::complex_type dlr ( pkg.lgains[2*idx + 1] );
 
-			const LBFGS::complex_type drl ( rl / rr );
-			const LBFGS::complex_type dlr ( lr / ll );
+			const LBFGS::complex_type drl ( ng[1] / ng[0] );
+			const LBFGS::complex_type dlr ( ng[2] / ng[3] );
 
-			solved_gains_rr[iant][ichan]  = rr;
-			solved_gains_rl[iant][ichan]  = rl;
-			solved_gains_lr[iant][ichan]  = lr;
-			solved_gains_ll[iant][ichan]  = ll;
+			solved_gains_rr[iant][ichan]  = ng[0];
+			solved_gains_rl[iant][ichan]  = ng[1];
+			solved_gains_lr[iant][ichan]  = ng[2];
+			solved_gains_ll[iant][ichan]  = ng[3];
 
 			solved_leakage_drl[iant][ichan] = drl;
 			solved_leakage_dlr[iant][ichan] = dlr;

@@ -55,10 +55,13 @@ ants::ant2par_t ants::calculate_parallactic_angle ( double tmjd, double source_r
 	return ret;
 }
 
-ants::baseline_uv ants::calculate_uvwave ( double tmjd, double source_ra_rad, double source_dec_rad ){
+ants::baseline_uv ants::calculate_uvwave ( double tmjd, double source_ra_rad, double source_dec_rad, double freq_hz ){
 
 	/*return this*/
 	baseline_uv ret;
+
+	/* wavelength */
+	const double wav ( 299792458.0 / freq_hz );
 
 	/* get hourangle */
 	const double lst  = calculate_lst ( tmjd, GMRT_POS );
@@ -79,7 +82,7 @@ ants::baseline_uv ants::calculate_uvwave ( double tmjd, double source_ra_rad, do
 		const double lu ( sinha*_xyz[0] + cosha*_xyz[1] );
 		const double lv ( -sindec*cosha*_xyz[0] + sindec*sinha*_xyz[1] + cosdec*_xyz[2] );
 
-		ret[_bl]  = std::sqrt ( lu*lu + lv*lv );
+		ret[_bl]  = std::sqrt ( lu*lu + lv*lv ) / wav;
 
 	} // iteration
 
