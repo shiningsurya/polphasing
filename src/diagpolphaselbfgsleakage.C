@@ -10,7 +10,6 @@
 #include "selftable.hpp"
 #include "models.hpp"
 #include "logsolve.hpp"
-#include "LBFGSclean.hpp"
 #include "ants.hpp"
 
 #ifdef CUSTOM
@@ -20,6 +19,8 @@
 #ifdef TIMING
 #include <chrono>
 #endif
+
+#include "LBFGSpolarizediterative.hpp"
 
 //#define CHANDEBUG
 
@@ -341,6 +342,18 @@ int main(int argc, char *argv[]) {
 				nantennas
 		);
 
+		/* initialize gains */
+		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
+
+			const auto& iant = _i->first;
+			const auto& idx  = _i->second;
+
+			// load leakages
+			pkg.leakrl [ idx ]  = leakage_r[iant][ichan];
+			pkg.leaklr [ idx ]  = leakage_l[iant][ichan];
+
+		}
+
 		/* initialize data */
 		for ( int ii = 0; ii < n_noself_baselines; ii++ ) {
 
@@ -385,13 +398,6 @@ int main(int argc, char *argv[]) {
 			// data
 			pkg.data [ ii ]     = LBFGS::complex_type (  _real,  _imag );
 
-			// load leakages
-			pkg.pleakrl [ ii ]  = leakage_r[ant1][ichan];
-			pkg.pleaklr [ ii ]  = leakage_l[ant1][ichan];
-
-			pkg.qleakrl [ ii ]  = leakage_r[ant2][ichan];
-			pkg.qleaklr [ ii ]  = leakage_l[ant2][ichan];
-
 			// parallactic angle correct model
 			// find parallactic angle
 			const float _par1 ( antpar.at(ant1) );
@@ -423,10 +429,10 @@ int main(int argc, char *argv[]) {
 		start  = std::chrono::high_resolution_clock::now();
 #endif
 
-		LBFGS::PolarizedSolver       solver (nantennas);
-		auto cost = solver.solve_diag_polarized ( pkg );
+		LBFGS::IterativePolarizedDiagonalSolver     solver (nantennas);
+		auto cost = solver.solve ( pkg, 20 );
 
-#ifdef CHANDEBUG 
+#ifdef CHANDEBUG2
 		{
 			std::ofstream of("pkgchandebug.bin", std::ios::binary);
 of.write (reinterpret_cast<const char*>(&pkg.npolarbaselines), sizeof(int));
@@ -455,15 +461,16 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 		logger.time   [ ichan ]  = duration.count();
 #endif
 
-		logger.sse    [ ichan ]  = cost;
-		logger.nfev   [ ichan ]  = solver.niter;
-		logger.info   [ ichan ]  = solver.rcode;
-		logger.gnorm  [ ichan ]  = solver.gnorm;
+		logger.sse    [ ichan ]  = cost[0] + cost[1];
+		logger.sse_rr [ ichan ]  = cost[0];
+		logger.sse_ll [ ichan ]  = cost[1];
+		//logger.nfev   [ ichan ]  = solver.niter;
+		//logger.info   [ ichan ]  = solver.rcode;
+		//logger.gnorm  [ ichan ]  = solver.gnorm;
 
 		/* save into gain table */
-		const LBFGS::real_type par_xphase ( solver.xpar[4*nantennas - 2] );
-		const LBFGS::real_type xphase ( 2.0f * std::atan ( par_xphase ) );
-		const LBFGS::complex_type xp  ( std::cos ( xphase ), std::sin(xphase) );
+		//const LBFGS::real_type par_xphase ( solver.xpar[4*nantennas - 2] );
+		//const LBFGS::real_type xphase ( 2.0f * std::atan ( par_xphase ) );
 		/*
 		 * Should i zerophase by dividing only the grr and gll by reference grr?
 		*/
@@ -473,26 +480,25 @@ of.write (reinterpret_cast<const char*>(solver.xpar), npar*sizeof(float));
 			const auto& idx  = _i->second;
 
 			// fetch gains
-			LBFGS::complex_type  grr, gll;
-			if ( idx == 0 ) {
-			    grr = LBFGS::complex_type ( solver.xpar[0], 0.0f );
-			    gll = LBFGS::complex_type ( solver.xpar[1], 0.0f );
-			}
-			else {
-			    grr = LBFGS::complex_type ( solver.xpar[4*idx - 2], solver.xpar[4*idx - 1] );
-			    gll = LBFGS::complex_type ( solver.xpar[4*idx    ], solver.xpar[4*idx + 1] );
-			}
+			const LBFGS::complex_type grr ( pkg.cgains[4*idx] );
+			const LBFGS::complex_type gll ( pkg.cgains[4*idx + 3] );
+
+			const LBFGS::complex_type xp  ( grr / gll );
+
+			/*
+			 * You can phase zero the gll, to get nice phases refant phase zero solutions
+			*/
 
 			// fetch leakage terms
 			const LBFGS::complex_type drl ( leakage_r[iant][ichan] );
 			const LBFGS::complex_type dlr ( leakage_l[iant][ichan] );
 
 			// rr
-			const LBFGS::complex_type rr ( grr * xp );
+			const LBFGS::complex_type rr ( grr );
 			// rl
 			const LBFGS::complex_type rl ( grr * drl );
 			// lr
-			const LBFGS::complex_type lr ( gll * xp * dlr );
+			const LBFGS::complex_type lr ( gll * dlr );
 			// ll
 			const LBFGS::complex_type ll ( gll );
 
