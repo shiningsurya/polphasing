@@ -22,7 +22,7 @@
 #include <chrono>
 #endif
 
-//#define CHANDEBUG
+#define CHANDEBUG
 
 //#define IPRINT
 
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
 			const int ipb    = noself_baselines[ii];
 
 			/* actual baseline */
-			const int ib  ( ipb / 4 );
+			const int ib  ( ii / 4 );
 
 			/* index in (baseline, channel) complex<float> */
 			const int _i     = ichan + nchannels * ipb;
@@ -295,10 +295,10 @@ int main(int argc, char *argv[]) {
 			const float _imag ( avgbldata[2*_i + 1] );
 
 			// correlation index
-			pkg.pb2corr  [ ipb ] = pb2corr;
+			pkg.pb2corr  [ ii ] = pb2corr;
 
 			// data
-			pkg.data [ pb2corr + 4*ib ]   = LBFGS::complex_type (  _real,  _imag );
+			pkg.data [ ii ]   = LBFGS::complex_type (  _real,  _imag );
 
 			// parallactic angle correct model
 			// find parallactic angle

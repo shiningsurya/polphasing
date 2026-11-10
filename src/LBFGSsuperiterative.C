@@ -1,6 +1,8 @@
 #include "LBFGSsuperiterative.hpp"
 
-//#define DPRINT
+#include "earlystopping.hpp"
+
+#define DPRINT
 
 #ifdef DPRINT
 #include <iostream>
@@ -518,6 +520,11 @@ LBFGS::cost_t LBFGS::IterativeUnpolarizedSolver::solve (uata_t& pkg, int n ) {
 
 	cost_t    final_cost;
 
+	EarlyStopping esrr;
+	EarlyStopping esrl;
+	EarlyStopping eslr;
+	EarlyStopping esll;
+
 	void* vpkg  = static_cast<void*>(&pkg);
 
 	for (int __i = 0; __i < n; __i++) {
@@ -528,6 +535,10 @@ LBFGS::cost_t LBFGS::IterativeUnpolarizedSolver::solve (uata_t& pkg, int n ) {
 		rcode_rr = lbfgs(n_rr, xpar_rr, &cost_rr, unpolarized_rr, NULL, vpkg, &param);
 		rcode_ll = lbfgs(n_ll, xpar_ll, &cost_ll, unpolarized_ll, NULL, vpkg, &param);
 
+		/* push back costs */
+		esrr.push_back ( cost_rr );
+		esll.push_back ( cost_ll );
+
 		/* save solved gains into pkg.cgains */
 		savegains_rrll ( pkg );
 
@@ -535,19 +546,24 @@ LBFGS::cost_t LBFGS::IterativeUnpolarizedSolver::solve (uata_t& pkg, int n ) {
 		rcode_rl = lbfgs(n_rl, xpar_rl, &cost_rl, unpolarized_rl, NULL, vpkg, &param);
 		rcode_lr = lbfgs(n_lr, xpar_lr, &cost_lr, unpolarized_lr, NULL, vpkg, &param);
 
+		/* push back costs */
+		esrl.push_back ( cost_rl );
+		eslr.push_back ( cost_lr );
+
 		/* save solved gains into pkg.cgains */
 		savegains_rllr ( pkg );
-
-		final_cost[0]  = cost_rr;
-		final_cost[1]  = cost_rl;
-		final_cost[2]  = cost_lr;
-		final_cost[3]  = cost_ll;
 
 #ifdef DPRINT
 	std::cout << "iter=" << __i << " costs rr=" << cost_rr << " rl=" << cost_rl << " lr=" << cost_lr << " ll=" << cost_ll << std::endl;
 #endif
 		
 	} // solving iterations
+		
+	final_cost[0]  = cost_rr;
+	final_cost[1]  = cost_rl;
+	final_cost[2]  = cost_lr;
+	final_cost[3]  = cost_ll;
+
 
   return final_cost;
 }

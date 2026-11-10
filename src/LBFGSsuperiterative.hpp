@@ -80,7 +80,7 @@ namespace LBFGS {
 		unity_data_t ( 
 				int npbl, int nant, real_type _modeli
 				) : npolarbaselines(npbl), nbaselines(npbl/4), nantennas(nant), modeli(_modeli),
-			iant1(nbaselines), iant2(nbaselines), pb2corr(npbl), data(npbl),
+			iant1(nbaselines), iant2(nbaselines), pb2corr(npolarbaselines), data(npolarbaselines),
 			cgains (4*nantennas, complex_type(0.0f, 0.0f)),
 			lgains (2*nantennas, complex_type(0.0f, 0.0f)),
 			par_za(nbaselines), par_zb(nbaselines), 
@@ -128,7 +128,6 @@ namespace LBFGS {
 
 		/* all parameters of the solver */
 		lbfgs_parameter_t    param;
-
 
 		/* xpar, grad */
 		lbfgsfloatval_t      *xpar_rr;
