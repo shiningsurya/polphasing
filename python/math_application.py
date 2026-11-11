@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import sys
 import pandas as pd
-from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex, cos, sin)
+from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex, cos, sin, cse)
 from sympy.printing.pycode import PythonCodePrinter
 # from sympy.printing.ccode import CCodePrinter
 
@@ -37,6 +37,11 @@ Jq   = Matrix([[gq_rr, gq_rl],[gq_lr, gq_ll]])
 D    = Matrix([[d_rr, d_rl],[d_lr, d_ll]])
 
 JqH  = Jq.transpose().conjugate()
+"""
+D = Jp M JqH
+
+inv(Jq) D inv(JqH)
+"""
 
 BB   = Jp.inv() * D * JqH.inv()
 
@@ -55,13 +60,28 @@ class CustomPythonPrinter(PythonCodePrinter):
 
         # Fall back to default behavior for all other powers
         return super()._print_Pow(expr)
+    def _print_conjugate(self, expr):
+        ist = self._print(expr.args[0])
+        return f"c{ist}"
 
-print_settings  = CustomPythonPrinter (settings={'user_functions':{'conjugate':'conj','sin':'sin', 'cos':'cos'}})
+        # Fall back to default behavior for all other powers
+        return super()._print_Pow(expr)
+
+print_settings  = CustomPythonPrinter (settings={'user_functions':{'sin':'sin', 'cos':'cos'}})
 # print_settings  = CCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
 printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
 
-print ("-- RR", printer(brr), "", sep='\n')
-print ("-- RL", printer(brl), "", sep='\n')
-print ("-- LR", printer(blr), "", sep='\n')
-print ("-- LL", printer(bll), "", sep='\n')
+defs, exps = cse ( (brr, brl, blr, bll), ignore=(d_rr, d_rl, d_lr, d_ll) )
 
+# print ("-- RR", printer(brr), "", sep='\n')
+# print ("-- RL", printer(brl), "", sep='\n')
+# print ("-- LR", printer(blr), "", sep='\n')
+# print ("-- LL", printer(bll), "", sep='\n')
+
+for k,v in defs:
+    print (f" const complex_type {k} ( {printer(v)} ) ;")
+
+print ("--RR", printer(exps[0]), "", sep='\n')
+print ("--RL", printer(exps[1]), "", sep='\n')
+print ("--LR", printer(exps[2]), "", sep='\n')
+print ("--LL", printer(exps[3]), "", sep='\n')
