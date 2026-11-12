@@ -106,7 +106,9 @@ namespace gaintable {
 
 	struct GainNormalizer {
 		/**/
-		using jones_t    = std::array<gain_type,4>;
+		using real_type   = double;
+		using gain_type   = std::complex<real_type>;
+		using jones_t     = std::array<gain_type,4>;
 
 		const jones_t        jones_ref;
 		const gain_type      det;

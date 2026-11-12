@@ -105,6 +105,8 @@ namespace LBFGS {
 	lbfgsfloatval_t unpolarized_lr (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 	lbfgsfloatval_t unpolarized_ll (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
+	lbfgsfloatval_t unpolarized_all (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+
 	int progress_reporter (void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k, int ls );
 
 	/*
@@ -125,6 +127,7 @@ namespace LBFGS {
 		const int             n_rl; 
 		const int             n_lr; 
 		const int             n_ll; 
+		const int            n_all; 
 
 		/* all parameters of the solver */
 		lbfgs_parameter_t    param;
@@ -154,11 +157,18 @@ namespace LBFGS {
 		lbfgsfloatval_t      rcode_ll;
 		int                  niter_ll;
 
+		lbfgsfloatval_t     *xpar_all;
+		lbfgsfloatval_t      cost_all;
+		lbfgsfloatval_t     gnorm_all;
+		lbfgsfloatval_t     rcode_all;
+		int                 niter_all;
+
 		// ctor
-		IterativeUnpolarizedSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
+		IterativeUnpolarizedSolver (int _nant, int n_hessian_corrections = 24, int max_iterations = 1000) : 
 			nantennas(_nant), 
 			n_rr ( nantennas*2 ), n_rl ( nantennas*2 ), n_lr ( nantennas*2 ), n_ll ( nantennas*2 ),
-			niter_rr(0), niter_ll(0), niter_rl(0), niter_lr(0)
+			n_all ( nantennas*2*4 ),
+			niter_rr(0), niter_ll(0), niter_rl(0), niter_lr(0), niter_all(0)
 		{
 			/* load default first*/
 			lbfgs_parameter_init(&param);
@@ -168,18 +178,20 @@ namespace LBFGS {
 			/* max iterations */
 			param.max_iterations    = max_iterations;
 			/* max linesearch */
-			param.max_linesearch    = 64;
+			param.max_linesearch    = 24;
 
 			xpar_rr   = lbfgs_malloc ( n_rr );
 			xpar_rl   = lbfgs_malloc ( n_rl );
 			xpar_lr   = lbfgs_malloc ( n_lr );
 			xpar_ll   = lbfgs_malloc ( n_ll );
+			xpar_all  = lbfgs_malloc ( n_all );
 
 			/* initialize xpar */
 			std::fill ( xpar_rr, xpar_rr + n_rr, 0.0f ); 
 			std::fill ( xpar_rl, xpar_rl + n_rl, 0.0f ); 
 			std::fill ( xpar_lr, xpar_lr + n_lr, 0.0f ); 
 			std::fill ( xpar_ll, xpar_ll + n_ll, 0.0f ); 
+			std::fill ( xpar_all, xpar_all + n_all, 0.0f ); 
 		}
 
 		void loadgains ( const uata_t &pkg ) {
@@ -246,10 +258,12 @@ namespace LBFGS {
 			if (xpar_rl) lbfgs_free ( xpar_rl );
 			if (xpar_lr) lbfgs_free ( xpar_lr );
 			if (xpar_ll) lbfgs_free ( xpar_ll );
+			if (xpar_all)lbfgs_free ( xpar_all );
 		}
 
 		/* solving methods */
 		cost_t solve (uata_t& pkg, int n = 3);
+		real_type allsolve (uata_t& pkg);
 
 	}; // solver
 	 

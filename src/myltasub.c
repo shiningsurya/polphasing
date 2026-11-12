@@ -1776,6 +1776,7 @@ int make_scantab(FILE *fp, LtaInfo *linfo)
   for(i=1;i<linfo->scans;i++)
     stab[i].start_rec=stab[i-1].start_rec+stab[i-1].recs+linfo->srecs;
 
+  free(dbuf);
   return 0;
 }
 int print_corr_lite(CorrLite *corrlite)

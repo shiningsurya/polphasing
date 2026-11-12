@@ -22,7 +22,7 @@
 #include <chrono>
 #endif
 
-#define CHANDEBUG
+//#define CHANDEBUG
 
 //#define IPRINT
 
@@ -322,7 +322,8 @@ int main(int argc, char *argv[]) {
 #endif
 
 		LBFGS::IterativeUnpolarizedSolver    solver (nantennas);
-		auto cost = solver.solve ( pkg, 50 );
+		solver.allsolve ( pkg );
+		auto cost = solver.solve ( pkg, 8 );
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
