@@ -200,6 +200,19 @@ int main(int argc, char *argv[]) {
 
 	const ants::ant2par_t antpar = ants::calculate_parallactic_angle ( cal_scan.mjd, cal_scan.ra, cal_scan.dec );
 
+	std::cout << " mjd=" << cal_scan.mjd << " ra=" << cal_scan.ra << " dec=" << cal_scan.dec << std::endl;
+		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
+
+			const auto& iant = _i->first;
+			const auto& idx  = _i->second;
+
+			const float par ( antpar.at(iant) );
+
+			std::cout << iant << " " << par << std::endl;
+
+		} /* ant2idx */
+
+
 	/***************************************/
 	/*        SOLVER RUN                   */
 	/***************************************/
@@ -278,7 +291,7 @@ int main(int argc, char *argv[]) {
 			/* ib only for reading */
 			const int ipb     = noself_baselines[ii];
 
-			const int ib ( ipb / 4 );
+			const int ib ( ii / 4 );
 
 			/* index in (baseline, channel) complex<float> */
 			const int _i     = ichan + nchannels * ipb;
@@ -421,9 +434,12 @@ int main(int argc, char *argv[]) {
 
 		} /* baselines */
 
-		const complex_type xp2 ( ( arl + blr ) / ( alr + brl ) );
+		// when i derived it
+		//const complex_type xp2 ( ( arl + blr ) / ( alr + brl ) );
+		//const real_type phi ( 0.5 * std::arg ( xp2 ) );
 
-		const real_type phi ( 0.5 * std::arg ( xp2 ) );
+		// C8 of BY25
+		const real_type phi ( std::arg ( blr + arl ) );
 
 		const complex_type xp ( std::cos ( phi ), std::sin ( phi ) );
 
