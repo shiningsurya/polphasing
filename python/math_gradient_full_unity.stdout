@@ -1,62 +1,94 @@
 GPRR
-- d_{pq}^{rr} g_q^{rr} z_{1} \overline{z_{2}}+- d_{pq}^{rl} g_q^{lr} z_{1} \overline{z_{2}}+g_p^{rl} \left(g_q^{lr} z_{1}^{2} \overline{g_q^{ll}} \overline{z_{2}}^{2} + g_q^{rr} z_{1}^{2} \overline{g_q^{rl}} \overline{z_{2}}^{2}\right)+g_p^{rr} \left(g_q^{lr} z_{1} z_{2} \overline{g_q^{lr}} \overline{z_{1}} \overline{z_{2}} + g_q^{rr} z_{1} z_{2} \overline{g_q^{rr}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_p^{rr} \left(g_q^{lr} \overline{g_q^{lr}} + g_q^{rr} \overline{g_q^{rr}}\right)+- M_{I} d_{pq}^{rr} g_q^{rr} z_{a}+- M_{I} d_{pq}^{rl} g_q^{lr} z_{a}+M_{I}^{2} g_p^{rl} z_{a}^{2} \left(g_q^{lr} \overline{g_q^{ll}} + g_q^{rr} \overline{g_q^{rl}}\right)
 GPRL
-- d_{pq}^{rr} g_q^{rl} z_{2} \overline{z_{1}}+- d_{pq}^{rl} g_q^{ll} z_{2} \overline{z_{1}}+g_p^{rr} \left(g_q^{ll} z_{2}^{2} \overline{g_q^{lr}} \overline{z_{1}}^{2} + g_q^{rl} z_{2}^{2} \overline{g_q^{rr}} \overline{z_{1}}^{2}\right)+g_p^{rl} \left(g_q^{ll} z_{1} z_{2} \overline{g_q^{ll}} \overline{z_{1}} \overline{z_{2}} + g_q^{rl} z_{1} z_{2} \overline{g_q^{rl}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_p^{rl} \left(g_q^{ll} \overline{g_q^{ll}} + g_q^{rl} \overline{g_q^{rl}}\right)+- M_{I} d_{pq}^{rr} g_q^{rl} z_{b}+- M_{I} d_{pq}^{rl} g_q^{ll} z_{b}+M_{I}^{2} g_p^{rr} z_{b}^{2} \left(g_q^{ll} \overline{g_q^{lr}} + g_q^{rl} \overline{g_q^{rr}}\right)
 GPLR
-- d_{pq}^{lr} g_q^{rr} z_{1} \overline{z_{2}}+- d_{pq}^{ll} g_q^{lr} z_{1} \overline{z_{2}}+g_p^{ll} \left(g_q^{lr} z_{1}^{2} \overline{g_q^{ll}} \overline{z_{2}}^{2} + g_q^{rr} z_{1}^{2} \overline{g_q^{rl}} \overline{z_{2}}^{2}\right)+g_p^{lr} \left(g_q^{lr} z_{1} z_{2} \overline{g_q^{lr}} \overline{z_{1}} \overline{z_{2}} + g_q^{rr} z_{1} z_{2} \overline{g_q^{rr}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_p^{lr} \left(g_q^{lr} \overline{g_q^{lr}} + g_q^{rr} \overline{g_q^{rr}}\right)+- M_{I} d_{pq}^{lr} g_q^{rr} z_{a}+- M_{I} d_{pq}^{ll} g_q^{lr} z_{a}+M_{I}^{2} g_p^{ll} z_{a}^{2} \left(g_q^{lr} \overline{g_q^{ll}} + g_q^{rr} \overline{g_q^{rl}}\right)
 GPLL
-- d_{pq}^{lr} g_q^{rl} z_{2} \overline{z_{1}}+- d_{pq}^{ll} g_q^{ll} z_{2} \overline{z_{1}}+g_p^{lr} \left(g_q^{ll} z_{2}^{2} \overline{g_q^{lr}} \overline{z_{1}}^{2} + g_q^{rl} z_{2}^{2} \overline{g_q^{rr}} \overline{z_{1}}^{2}\right)+g_p^{ll} \left(g_q^{ll} z_{1} z_{2} \overline{g_q^{ll}} \overline{z_{1}} \overline{z_{2}} + g_q^{rl} z_{1} z_{2} \overline{g_q^{rl}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_p^{ll} \left(g_q^{ll} \overline{g_q^{ll}} + g_q^{rl} \overline{g_q^{rl}}\right)+- M_{I} d_{pq}^{lr} g_q^{rl} z_{b}+- M_{I} d_{pq}^{ll} g_q^{ll} z_{b}+M_{I}^{2} g_p^{lr} z_{b}^{2} \left(g_q^{ll} \overline{g_q^{lr}} + g_q^{rl} \overline{g_q^{rr}}\right)
 GQRR
-- g_p^{lr} z_{2} \overline{d_{pq}^{lr}} \overline{z_{1}}+- g_p^{rr} z_{2} \overline{d_{pq}^{rr}} \overline{z_{1}}+g_q^{rl} \left(g_p^{lr} z_{2}^{2} \overline{g_p^{ll}} \overline{z_{1}}^{2} + g_p^{rr} z_{2}^{2} \overline{g_p^{rl}} \overline{z_{1}}^{2}\right)+g_q^{rr} \left(g_p^{lr} z_{1} z_{2} \overline{g_p^{lr}} \overline{z_{1}} \overline{z_{2}} + g_p^{rr} z_{1} z_{2} \overline{g_p^{rr}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_q^{rr} \left(g_p^{lr} \overline{g_p^{lr}} + g_p^{rr} \overline{g_p^{rr}}\right)+- M_{I} g_p^{lr} z_{b} \overline{d_{pq}^{lr}}+- M_{I} g_p^{rr} z_{b} \overline{d_{pq}^{rr}}+M_{I}^{2} g_q^{rl} z_{b}^{2} \left(g_p^{lr} \overline{g_p^{ll}} + g_p^{rr} \overline{g_p^{rl}}\right)
 GQRL
-- g_p^{ll} z_{1} \overline{d_{pq}^{lr}} \overline{z_{2}}+- g_p^{rl} z_{1} \overline{d_{pq}^{rr}} \overline{z_{2}}+g_q^{rr} \left(g_p^{ll} z_{1}^{2} \overline{g_p^{lr}} \overline{z_{2}}^{2} + g_p^{rl} z_{1}^{2} \overline{g_p^{rr}} \overline{z_{2}}^{2}\right)+g_q^{rl} \left(g_p^{ll} z_{1} z_{2} \overline{g_p^{ll}} \overline{z_{1}} \overline{z_{2}} + g_p^{rl} z_{1} z_{2} \overline{g_p^{rl}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_q^{rl} \left(g_p^{ll} \overline{g_p^{ll}} + g_p^{rl} \overline{g_p^{rl}}\right)+- M_{I} g_p^{ll} z_{a} \overline{d_{pq}^{lr}}+- M_{I} g_p^{rl} z_{a} \overline{d_{pq}^{rr}}+M_{I}^{2} g_q^{rr} z_{a}^{2} \left(g_p^{ll} \overline{g_p^{lr}} + g_p^{rl} \overline{g_p^{rr}}\right)
 GQLR
-- g_p^{lr} z_{2} \overline{d_{pq}^{ll}} \overline{z_{1}}+- g_p^{rr} z_{2} \overline{d_{pq}^{rl}} \overline{z_{1}}+g_q^{ll} \left(g_p^{lr} z_{2}^{2} \overline{g_p^{ll}} \overline{z_{1}}^{2} + g_p^{rr} z_{2}^{2} \overline{g_p^{rl}} \overline{z_{1}}^{2}\right)+g_q^{lr} \left(g_p^{lr} z_{1} z_{2} \overline{g_p^{lr}} \overline{z_{1}} \overline{z_{2}} + g_p^{rr} z_{1} z_{2} \overline{g_p^{rr}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_q^{lr} \left(g_p^{lr} \overline{g_p^{lr}} + g_p^{rr} \overline{g_p^{rr}}\right)+- M_{I} g_p^{lr} z_{b} \overline{d_{pq}^{ll}}+- M_{I} g_p^{rr} z_{b} \overline{d_{pq}^{rl}}+M_{I}^{2} g_q^{ll} z_{b}^{2} \left(g_p^{lr} \overline{g_p^{ll}} + g_p^{rr} \overline{g_p^{rl}}\right)
 GQLL
-- g_p^{ll} z_{1} \overline{d_{pq}^{ll}} \overline{z_{2}}+- g_p^{rl} z_{1} \overline{d_{pq}^{rl}} \overline{z_{2}}+g_q^{lr} \left(g_p^{ll} z_{1}^{2} \overline{g_p^{lr}} \overline{z_{2}}^{2} + g_p^{rl} z_{1}^{2} \overline{g_p^{rr}} \overline{z_{2}}^{2}\right)+g_q^{ll} \left(g_p^{ll} z_{1} z_{2} \overline{g_p^{ll}} \overline{z_{1}} \overline{z_{2}} + g_p^{rl} z_{1} z_{2} \overline{g_p^{rl}} \overline{z_{1}} \overline{z_{2}}\right)
+M_{I}^{2} g_q^{ll} \left(g_p^{ll} \overline{g_p^{ll}} + g_p^{rl} \overline{g_p^{rl}}\right)+- M_{I} g_p^{ll} z_{a} \overline{d_{pq}^{ll}}+- M_{I} g_p^{rl} z_{a} \overline{d_{pq}^{rl}}+M_{I}^{2} g_q^{lr} z_{a}^{2} \left(g_p^{ll} \overline{g_p^{lr}} + g_p^{rl} \overline{g_p^{rr}}\right)
 -----MODELFORWARDPASS----
 RR
-gprl*z1*conj(gqrl)*conj(z2) + gprr*z2*conj(gqrr)*conj(z1)
+MI*gprl*exp(1j*theta1)*exp(-1j*theta2)*cgqrl + MI*gprr*exp(-1j*theta1)*exp(1j*theta2)*cgqrr
 RL
-gprl*z1*conj(gqll)*conj(z2) + gprr*z2*conj(gqlr)*conj(z1)
+MI*gprl*exp(1j*theta1)*exp(-1j*theta2)*cgqll + MI*gprr*exp(-1j*theta1)*exp(1j*theta2)*cgqlr
 LR
-gpll*z1*conj(gqrl)*conj(z2) + gplr*z2*conj(gqrr)*conj(z1)
+MI*gpll*exp(1j*theta1)*exp(-1j*theta2)*cgqrl + MI*gplr*exp(-1j*theta1)*exp(1j*theta2)*cgqrr
 LL
-gpll*z1*conj(gqll)*conj(z2) + gplr*z2*conj(gqlr)*conj(z1)
+MI*gpll*exp(1j*theta1)*exp(-1j*theta2)*cgqll + MI*gplr*exp(-1j*theta1)*exp(1j*theta2)*cgqlr
 -----MODELFORWARDPASS----
--------------------------
-const complex_type Dgprr_coeff_dpqrr = -gqrr*z1*conj(z2) ; 
-const complex_type Dgprr_coeff_gprr = gqlr*z1*z2*conj(gqlr)*conj(z1)*conj(z2) + gqrr*z1*z2*conj(gqrr)*conj(z1)*conj(z2) ; 
-const complex_type Dgqrr_coeff_dqprr = -gprr*z2*conj(z1) ; 
-const complex_type Dgqrr_coeff_gqrr = gplr*z1*z2*conj(gplr)*conj(z1)*conj(z2) + gprr*z1*z2*conj(gprr)*conj(z1)*conj(z2) ; 
-const complex_type Dgprl_coeff_dpqrr = -gqrl*z2*conj(z1) ; 
-const complex_type Dgprl_coeff_gprr = gqll*(z2 * z2)*conj(gqlr)*(conj(z1) * conj(z1)) + gqrl*(z2 * z2)*conj(gqrr)*(conj(z1) * conj(z1)) ; 
-const complex_type Dgqrl_coeff_dqprr = -gprl*z1*conj(z2) ; 
-const complex_type Dgqrl_coeff_gqrr = gpll*(z1 * z1)*conj(gplr)*(conj(z2) * conj(z2)) + gprl*(z1 * z1)*conj(gprr)*(conj(z2) * conj(z2)) ; 
--------------------------
-const complex_type Dgprr_coeff_dpqrl = -gqlr*z1*conj(z2) ; 
-const complex_type Dgprr_coeff_gprl = gqlr*(z1 * z1)*conj(gqll)*(conj(z2) * conj(z2)) + gqrr*(z1 * z1)*conj(gqrl)*(conj(z2) * conj(z2)) ; 
-const complex_type Dgqrr_coeff_gqrl = gplr*(z2 * z2)*conj(gpll)*(conj(z1) * conj(z1)) + gprr*(z2 * z2)*conj(gprl)*(conj(z1) * conj(z1)) ; 
-const complex_type Dgprl_coeff_dpqrl = -gqll*z2*conj(z1) ; 
-const complex_type Dgprl_coeff_gprl = gqll*z1*z2*conj(gqll)*conj(z1)*conj(z2) + gqrl*z1*z2*conj(gqrl)*conj(z1)*conj(z2) ; 
-const complex_type Dgqrl_coeff_gqrl = gpll*z1*z2*conj(gpll)*conj(z1)*conj(z2) + gprl*z1*z2*conj(gprl)*conj(z1)*conj(z2) ; 
-const complex_type Dgqlr_coeff_dqprl = -gprr*z2*conj(z1) ; 
-const complex_type Dgqll_coeff_dqprl = -gprl*z1*conj(z2) ; 
--------------------------
-const complex_type Dgqrr_coeff_dqplr = -gplr*z2*conj(z1) ; 
-const complex_type Dgqrl_coeff_dqplr = -gpll*z1*conj(z2) ; 
-const complex_type Dgplr_coeff_dpqlr = -gqrr*z1*conj(z2) ; 
-const complex_type Dgplr_coeff_gplr = gqlr*z1*z2*conj(gqlr)*conj(z1)*conj(z2) + gqrr*z1*z2*conj(gqrr)*conj(z1)*conj(z2) ; 
-const complex_type Dgqlr_coeff_gqlr = gplr*z1*z2*conj(gplr)*conj(z1)*conj(z2) + gprr*z1*z2*conj(gprr)*conj(z1)*conj(z2) ; 
-const complex_type Dgpll_coeff_dpqlr = -gqrl*z2*conj(z1) ; 
-const complex_type Dgpll_coeff_gplr = gqll*(z2 * z2)*conj(gqlr)*(conj(z1) * conj(z1)) + gqrl*(z2 * z2)*conj(gqrr)*(conj(z1) * conj(z1)) ; 
-const complex_type Dgqll_coeff_gqlr = gpll*(z1 * z1)*conj(gplr)*(conj(z2) * conj(z2)) + gprl*(z1 * z1)*conj(gprr)*(conj(z2) * conj(z2)) ; 
--------------------------
-const complex_type Dgplr_coeff_dpqll = -gqlr*z1*conj(z2) ; 
-const complex_type Dgplr_coeff_gpll = gqlr*(z1 * z1)*conj(gqll)*(conj(z2) * conj(z2)) + gqrr*(z1 * z1)*conj(gqrl)*(conj(z2) * conj(z2)) ; 
-const complex_type Dgqlr_coeff_dqpll = -gplr*z2*conj(z1) ; 
-const complex_type Dgqlr_coeff_gqll = gplr*(z2 * z2)*conj(gpll)*(conj(z1) * conj(z1)) + gprr*(z2 * z2)*conj(gprl)*(conj(z1) * conj(z1)) ; 
-const complex_type Dgpll_coeff_dpqll = -gqll*z2*conj(z1) ; 
-const complex_type Dgpll_coeff_gpll = gqll*z1*z2*conj(gqll)*conj(z1)*conj(z2) + gqrl*z1*z2*conj(gqrl)*conj(z1)*conj(z2) ; 
-const complex_type Dgqll_coeff_dqpll = -gpll*z1*conj(z2) ; 
-const complex_type Dgqll_coeff_gqll = gpll*z1*z2*conj(gpll)*conj(z1)*conj(z2) + gprl*z1*z2*conj(gprl)*conj(z1)*conj(z2) ; 
+----------   RR   ------------
+const complex_type Dgprr_coeff_gprr = MI2*(gqlr*cgqlr + gqrr*cgqrr) ; 
+Dgprr_coeff_gprr*gprr
+const complex_type Dgprr_coeff_dpqrr = -MI*gqrr*za ; 
+Dgprr_coeff_dpqrr*dpqrr
+const complex_type Dgprr_coeff_dpqrl = -MI*gqlr*za ; 
+Dgprr_coeff_dpqrl*dpqrl
+const complex_type Dgprr_coeff_gprl = MI2*za2*(gqlr*cgqll + gqrr*cgqrl) ; 
+Dgprr_coeff_gprl*gprl
+const complex_type Dgqrr_coeff_gqrr = MI2*(gplr*cgplr + gprr*cgprr) ; 
+Dgqrr_coeff_gqrr*gqrr
+const complex_type Dgqrr_coeff_dqplr = -MI*gplr*zb ; 
+Dgqrr_coeff_dqplr*dqplr
+const complex_type Dgqrr_coeff_dqprr = -MI*gprr*zb ; 
+Dgqrr_coeff_dqprr*dqprr
+const complex_type Dgqrr_coeff_gqrl = MI2*zb2*(gplr*cgpll + gprr*cgprl) ; 
+Dgqrr_coeff_gqrl*gqrl
+----------   RL   ------------
+const complex_type Dgprl_coeff_gprl = MI2*(gqll*cgqll + gqrl*cgqrl) ; 
+Dgprl_coeff_gprl*gprl
+const complex_type Dgprl_coeff_dpqrr = -MI*gqrl*zb ; 
+Dgprl_coeff_dpqrr*dpqrr
+const complex_type Dgprl_coeff_dpqrl = -MI*gqll*zb ; 
+Dgprl_coeff_dpqrl*dpqrl
+const complex_type Dgprl_coeff_gprr = MI2*zb2*(gqll*cgqlr + gqrl*cgqrr) ; 
+Dgprl_coeff_gprr*gprr
+const complex_type Dgqrl_coeff_gqrl = MI2*(gpll*cgpll + gprl*cgprl) ; 
+Dgqrl_coeff_gqrl*gqrl
+const complex_type Dgqrl_coeff_dqplr = -MI*gpll*za ; 
+Dgqrl_coeff_dqplr*dqplr
+const complex_type Dgqrl_coeff_dqprr = -MI*gprl*za ; 
+Dgqrl_coeff_dqprr*dqprr
+const complex_type Dgqrl_coeff_gqrr = MI2*za2*(gpll*cgplr + gprl*cgprr) ; 
+Dgqrl_coeff_gqrr*gqrr
+----------   LR   ------------
+const complex_type Dgplr_coeff_gplr = MI2*(gqlr*cgqlr + gqrr*cgqrr) ; 
+Dgplr_coeff_gplr*gplr
+const complex_type Dgplr_coeff_dpqlr = -MI*gqrr*za ; 
+Dgplr_coeff_dpqlr*dpqlr
+const complex_type Dgplr_coeff_dpqll = -MI*gqlr*za ; 
+Dgplr_coeff_dpqll*dpqll
+const complex_type Dgplr_coeff_gpll = MI2*za2*(gqlr*cgqll + gqrr*cgqrl) ; 
+Dgplr_coeff_gpll*gpll
+const complex_type Dgqlr_coeff_gqlr = MI2*(gplr*cgplr + gprr*cgprr) ; 
+Dgqlr_coeff_gqlr*gqlr
+const complex_type Dgqlr_coeff_dqpll = -MI*gplr*zb ; 
+Dgqlr_coeff_dqpll*dqpll
+const complex_type Dgqlr_coeff_dqprl = -MI*gprr*zb ; 
+Dgqlr_coeff_dqprl*dqprl
+const complex_type Dgqlr_coeff_gqll = MI2*zb2*(gplr*cgpll + gprr*cgprl) ; 
+Dgqlr_coeff_gqll*gqll
+----------   LL   ------------
+const complex_type Dgpll_coeff_gpll = MI2*(gqll*cgqll + gqrl*cgqrl) ; 
+Dgpll_coeff_gpll*gpll
+const complex_type Dgpll_coeff_dpqlr = -MI*gqrl*zb ; 
+Dgpll_coeff_dpqlr*dpqlr
+const complex_type Dgpll_coeff_dpqll = -MI*gqll*zb ; 
+Dgpll_coeff_dpqll*dpqll
+const complex_type Dgpll_coeff_gplr = MI2*zb2*(gqll*cgqlr + gqrl*cgqrr) ; 
+Dgpll_coeff_gplr*gplr
+const complex_type Dgqll_coeff_gqll = MI2*(gpll*cgpll + gprl*cgprl) ; 
+Dgqll_coeff_gqll*gqll
+const complex_type Dgqll_coeff_dqpll = -MI*gpll*za ; 
+Dgqll_coeff_dqpll*dqpll
+const complex_type Dgqll_coeff_dqprl = -MI*gprl*za ; 
+Dgqll_coeff_dqprl*dqprl
+const complex_type Dgqll_coeff_gqlr = MI2*za2*(gpll*cgplr + gprl*cgprr) ; 
+Dgqll_coeff_gqlr*gqlr

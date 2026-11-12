@@ -14,7 +14,7 @@ from collections import defaultdict
 
 import sys
 import pandas as pd
-from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex, cos, sin)
+from sympy import (symbols, Matrix, I, re, im, expand, conjugate, Derivative, latex, cos, sin, exp, simplify)
 from sympy.printing.pycode import PythonCodePrinter
 # from sympy.printing.ccode import CCodePrinter
 
@@ -24,10 +24,14 @@ class CustomPythonPrinter(PythonCodePrinter):
         # Intercept when the exponent is exactly 2
         if exp == 2:
             base_str = self._print(base)
-            return f"({base_str} * {base_str})"
+            return f"{base_str}2"
         elif exp == 3:
             base_str = self._print(base)
             return f"({base_str} * {base_str} * {base_str})"
+
+    def _print_conjugate(self, expr):
+        ist = self._print(expr.args[0])
+        return f"c{ist}"
 
         # Fall back to default behavior for all other powers
         return super()._print_Pow(expr)
@@ -40,7 +44,8 @@ d_rr, d_rl, d_lr, d_ll     = symbols('d_{pq}^{rr} d_{pq}^{rl} d_{pq}^{lr} d_{pq}
 
 ## parang
 ## taken from math_parang.py
-# t1, t2                     = symbols('theta_1 theta_2', real=True)
+p1, p2                     = symbols('theta_1 theta_2', real=True)
+za, zb                     = symbols('z_a z_b')
 # c1,c2         = cos(t1), cos(t2)
 # s1,s2         = sin(t1), sin(t2)
 
@@ -50,10 +55,19 @@ d_rr, d_rl, d_lr, d_ll     = symbols('d_{pq}^{rr} d_{pq}^{rl} d_{pq}^{lr} d_{pq}
 # z1   = c1 + I*s1
 # z2   = c2 + I*s2
 
-z1, z2 = symbols('z_1 z_2')
+z1   = exp(I*p1) 
+z2   = exp(I*p2) 
+
+# za   = exp(I*(p1-p2))
+# zb   = exp(I*(p2-p1))
+
+# z1, z2 = symbols('z_1 z_2')
 
 z1c  = conjugate(z1)
 z2c  = conjugate(z2)
+
+z12  = z1c*z2
+z21  = z1*z2c
 
 # z1c  = c1 - I*s1
 # z2c  = c2 - I*s2
@@ -61,16 +75,37 @@ z2c  = conjugate(z2)
 r1   = Matrix([[z1c, 0],[0, z1]])
 r2   = Matrix([[z2c, 0],[0, z2]])
 
+"""
+r1 = [z1c, 0, 0, z1]
+r2h= [z2,  0, 0, z2c]
+
+|z1c 0 | | z2  0 |
+|0  z1 | | 0  z2c|
+=
+|z1c*z2 0 |
+|0 z1*z2c |
+"""
+
 r2h  = r2.transpose().conjugate()
 
 gp   = Matrix([[gp_rr, gp_rl], [gp_lr, gp_ll]])
 gq   = Matrix([[gq_rr, gq_rl], [gq_lr, gq_ll]])
 # mm   = Matrix([[m_rr, m_rl], [m_lr, m_ll]])
-# mm   = Matrix([[iunpol, 0], [0, iunpol]])
-mm   = r1 * Matrix([[1, 0], [0, 1]]) * r2h
+#mm   = Matrix([[iunpol, 0], [0, iunpol]])
+#mm   = r1 * Matrix([[1, 0], [0, 1]]) * r2h
+mi   = symbols('M_I', real=True)
+# mm   = r1 * Matrix([[mi, 0], [0, mi]]) * r2h
+mm   = Matrix([[mi*z12, 0],[0, mi*z21]])
+
+
 gqh  = gq.transpose().conjugate()
 
 fff  = gp * mm * gqh
+
+# frr  = simplify(expand ( fff[0,0] ))
+# frl  = simplify(expand ( fff[0,1] ))
+# flr  = simplify(expand ( fff[1,0] ))
+# fll  = simplify(expand ( fff[1,1] ))
 
 frr  = expand ( fff[0,0] )
 frl  = expand ( fff[0,1] )
@@ -96,7 +131,7 @@ sss   = srr + srl + slr + sll
 ## i want to print cxxcode
 ## using python because the expressing is simple
 ## using std::conj;
-print_settings  = CustomPythonPrinter (settings={'user_functions':{'conjugate':'conj','sin':'sin', 'cos':'cos'}})
+print_settings  = CustomPythonPrinter (settings={'user_functions':{'sin':'sin', 'cos':'cos', 'exp':'exp'}})
 # print_settings  = CCodePrinter (settings={'user_functions':{'conjugate':'conj'}})
 printer     = lambda p : print_settings.doprint(p).replace("_","").replace("^","")
 ## replace sub/super scripts because my variable names do not have them
@@ -120,7 +155,18 @@ def arger (t, terms, popdkey=True):
     if popdkey:
         kv.pop ( dkey )
     ###
-    tv    = {conjugate(k):conjugate(v) for k,v in kv.items()}
+    def mysimplify(e):
+        """
+        need to put za or zb depending on term
+        """
+        se = simplify(e)
+        if exp(I*(p1-p2)) in se.args or exp(2*I*(p1-p2)) in se.args:
+            return se.subs({exp(I*(p1-p2)):za})
+        elif exp(-I*(p1-p2)) in se.args or exp(2*I*(-p1+p2)) in se.args:
+            return se.subs({exp(-I*(p1-p2)):zb, exp(2*I*(-p1+p2)):zb*zb})
+        else:
+            return se
+    tv    = {conjugate(k):mysimplify(conjugate(v)) for k,v in kv.items()}
     lv    = "+".join([latex(k*v) for k,v in tv.items()])
     dv    = {printer(k):printer(v) for k,v in tv.items()}
     return lv,dv,tv
@@ -162,10 +208,10 @@ print ("-----MODELFORWARDPASS----")
 ### coefficient printing
 locs = defaultdict(list)
 catamap = {
-    'conj(dpqrr)':'dqprr',
-    'conj(dpqrl)':'dqprl',
-    'conj(dpqlr)':'dqplr',
-    'conj(dpqll)':'dqpll',
+    'cdpqrr':'dqprr',
+    'cdpqrl':'dqprl',
+    'cdpqlr':'dqplr',
+    'cdpqll':'dqpll',
 }
 
 groups = {
@@ -194,35 +240,37 @@ def codeprintaction ( k, v, tag ):
 
     stmt = f"const complex_type {ptag}_coeff_{pk} = {v} ; "
 
-    for k,v in groups.items():
-        if pk in v:
-            locs[k].append ( stmt )
-            continue
+    utmt = f"{ptag}_coeff_{pk}*{pk}"
 
+    # for k,v in groups.items():
+        # if pk in v:
+            # locs[k].append ( stmt )
+            # continue
 
     # locs[pk].append (stmt)
     # locs[ptag].append (stmt)
 
-    # print ( stmt )
+    print ( stmt )
+    print (utmt)
 
     # print (f"const complex_type {swapper(tag)}_coeff_{swapper(k)} = {swapper(v)} ; ")
 
-# print ("----------   RR   ------------")
+print ("----------   RR   ------------")
 for k,v in p_rr[1].items(): codeprintaction ( k, v,"Dgprr" )
 for k,v in q_rr[1].items(): codeprintaction ( k, v,"Dgqrr" )
-# print ("----------   RL   ------------")
+print ("----------   RL   ------------")
 for k,v in p_rl[1].items(): codeprintaction ( k, v,"Dgprl" )
 for k,v in q_rl[1].items(): codeprintaction ( k, v,"Dgqrl" )
-# print ("----------   LR   ------------")
+print ("----------   LR   ------------")
 for k,v in p_lr[1].items(): codeprintaction ( k, v,"Dgplr" )
 for k,v in q_lr[1].items(): codeprintaction ( k, v,"Dgqlr" )
-# print ("----------   LL   ------------")
+print ("----------   LL   ------------")
 for k,v in p_ll[1].items(): codeprintaction ( k, v,"Dgpll" )
 for k,v in q_ll[1].items(): codeprintaction ( k, v,"Dgqll" )
 
 ##########################
 
-for k,v in locs.items():
-    print ("-------------------------")
+# for k,v in locs.items():
+    # print ("-------------------------")
     # print (k)
-    for iv in v: print (iv)
+    # for iv in v: print (iv)

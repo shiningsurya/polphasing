@@ -78,10 +78,10 @@ def get_parallactic_angle ( sc, tobs, el ):
     """
 
     lst   = tobs.sidereal_time ( 'mean', longitude=el.lon, model=None )
-    lst2  = get_sla_lst ( tobs.mjd, el.lon )
-    print ( lst.to_string(au.hourangle), lst2.to_string(au.hourangle), sep='\t' )
+    # lst2  = get_sla_lst ( tobs.mjd, el.lon )
+    # print ( lst.to_string(au.hourangle), lst2.to_string(au.hourangle), sep='\t' )
     h     = (lst - sc.ra).radian
-    print ( lst.radian, h, sep='\t' )
+    # print ( lst.radian, h, sep='\t' )
     q     = np.arctan2 ( 
             np.sin ( h ), 
             np.tan ( el.lat.radian ) * np.cos ( sc.dec.radian ) - 
@@ -91,9 +91,9 @@ def get_parallactic_angle ( sc, tobs, el ):
 
 if __name__ == "__main__":
     ### write_code only when we need to update code
-    write_code()
-    import sys
-    sys.exit(0)
+    # write_code()
+    # import sys
+    # sys.exit(0)
     ### write_code only when we need to update code
 
     args = get_args()
@@ -106,12 +106,16 @@ if __name__ == "__main__":
     print ( f" At Time [UTC] = {tobs.isot}" )
     print ( f" At Time [IST] = {ist.isot}" )
 
+
+    pard = dict()
     ###
     par  = get_parallactic_angle ( src, tobs, gmrt_el )
     print ( f"GMRT   {par:.3f} deg" )
+    pard['GMRT'] = par
     ###
-    # for name, el in zip(singles['name'], singles_el):
-        # par  = get_parallactic_angle ( src, tobs, el )
-        # print ( f"{name}    {par:.3f} deg" )
+    for name, el in zip(singles['oname'], singles_el):
+        par  = get_parallactic_angle ( src, tobs, el )
+        print ( f"{name}    {np.deg2rad(par):.3f} rad" )
+        pard[name] = par
 
 

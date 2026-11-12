@@ -18,94 +18,83 @@ of the solutions read by GWB is the same throughout
 import os
 import sys
 import math
+import cmath
 
-BADANTS = ['E04','E05','E06','S04','S05','S06','W04','W05','W06', 'C07']
+MAXNCHAN = 16384
+
+class GainTable:
+    """
+    _??.gains file
+    """
+    def __init__ (self, cfile, default=complex('1.00+0.00j')):
+        """
+        gain_file 
+        """
+        self.ichan     = 0
+        self.cgains    = dict()
+
+        self.gain_file = cfile
+
+        with open(cfile, 'r') as f:
+            lines = [a.strip() for a in f.readlines()]
+        ## first line has antennas
+        self.ants  = [a.strip()[:3] for a in lines[0].split()]
+        self.nants = len(self.ants)
+        ## initilaize cgains
+        for ant in self.ants: 
+            self.cgains[ant] = []
+        ## read rest of lines
+        for l in lines[1:]:
+            _toks = l.split()
+            # print ( "line ", _toks, sep='\t' )
+            if len(_toks) != self.nants:
+                raise RuntimeError("cgains_file is off")
+            for ant,cg in zip (self.ants, _toks):
+                __cg        = complex ( cg )
+                self.cgains[ant].append ( __cg )
+            self.ichan += 1
+        ##
+        for i in range(self.ichan, MAXNCHAN):
+            for ant,cg in zip (self.ants, _toks):
+                __cg   = default
+                self.cgains[ant].append ( __cg )
+
+    def __getitem__(self, key):
+        """
+        key is (ant, chan)
+        """
+        ant, ichan = key
+        return self.cgains[ant][ichan]
 
 def get_args():
     import argparse
     agp = argparse.ArgumentParser("write_gwb_solutions", description="Writing solutions in GWB format")
     add = agp.add_argument
     add ('tag', help="Stem/tag that was passed to polphase")
+    add ('-a','--amp', help='amplitude scaling, computed using :find_gainamp_scaling:', required=True, type=float, dest='ampscaling')
     add ('-O', '--outdir', help='Create an output directory here', default='./', dest='odir')
-    add ('-f', '--fullpolphase', help='If to use fullpolphase', action='store_true', dest='fullpolphase')
-    add ('-a','--amp', help='amplitude scaling, computed using :find_gainamp_scaling:', required=True, type=float, dest='amp')
+    add ('-x', '--xphase', help='Put xphase into GWB tables', action='store_true', dest='xphase')
+    add ('-l', '--leakage', help='Put determinant of leakages into GWB table', action='store_true', dest='leakage')
     return agp.parse_args()
 
 def process_amp ( c, amp ):
     """ complex to amp in string """
     mag = math.sqrt ( c.real*c.real + c.imag*c.imag )
     if mag <= 1E-3 : mag = 1.0
-    return "%.5f" % (amp/mag)
+    return "%.5f" % (amp*mag)
 
 def process_phs ( c ):
     """ complex to phs in string """
     phs = math.degrees ( math.atan2 ( c.imag, c.real ) )
     return "%.3f" % phs
 
-def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
+def writer( wfile, wdict ):
     """
-    read from cgains_file
-    write to amp and phs file
+    writes to :wfile: given in :wdict:
     """
-    cgains    = dict()
-    ## amp, phs : antenna : [channels]
-    amp       = dict()
-    phs       = dict()
-    ichan     = 0
-    with open(cgains_file, 'r') as f:
-        lines = [a.strip() for a in f.readlines()]
-        ##
-        ## first line has antennas
-        ants  = [a.strip()[:3] for a in lines[0].split()]
-        nants = len(ants)
-        #print (" read ants", ants, sep='\t')
-        ## initilaize cgains
-        for ant in ants: 
-            cgains[ant] = []
-            amp[ant]    = []
-            phs[ant]    = []
-        ## read rest of lines
-        for l in lines[1:]:
-            _toks = l.split()
-            # print ( "line ", _toks, sep='\t' )
-            if len(_toks) != nants:
-                raise RuntimeError("cgains_file is off")
-            for ant,cg in zip (ants, _toks):
-                __cg        = modifier ( complex ( cg ) )
-                if ant in BADANTS: 
-                    __cg = complex('1.00+0.00j')
-                """
-                in GWB correlator, we need to apply the inverse of the gain we compute from polphase.
-                Which in case of diagonal complex is simply the reciprocal.
-                That is, exp(-j phi_pp)
-
-                in GWB correlator, the conjugate of the phase table is applied
-                exp(-j phi_tt)
-
-                That means phi_pp = phi_tt
-
-                But when i compare rantsol and polphase, 
-                there is a phase difference.
-
-                so we do trial and error.
-                """
-                cgains[ant].append ( __cg )
-                amp[ant].append ( process_amp ( __cg, ampscaling ) )
-                phs[ant].append ( process_phs ( __cg ) )
-                # print ( __cg, process_amp(__cg), process_phs(__cg), sep='\t' )
-            ichan += 1
-        # print (" read nchans = ", ichan)
-    #######################
-    ## the amp,phs need to go until 16K
-    ## the max channel limit
-    for _ in range(ichan,16384):
-        __cg   = complex('1.00+0.00j')
-        for ant in ants:
-            amp[ant].append ( process_amp ( __cg, ampscaling ) )
-            phs[ant].append ( process_phs ( __cg ) )
-    #######################
+    ants  = list(wdict.keys())
     ## write amp and phs_file
-    with open(amp_file, 'w') as f:
+    with open(wfile, 'w') as f:
         ## write header
         line = "# "
         for ant in ants:
@@ -114,43 +103,30 @@ def action ( cgains_file, amp_file, phs_file, modifier, ampscaling ):
         line += "\n"
         f.write ( line )
         ## write solutions
-        for _i in range(16384):
+        for _i in range(MAXNCHAN):
             line = ""
             for ant in ants:
-                line += amp[ant][_i]
+                line += wdict[ant][_i]
                 line += " "
             line += "\n"
             f.write ( line )
-
-    with open(phs_file, 'w') as f:
-        ## write header
-        line = "# "
-        for ant in ants:
-            line += ant
-            line += " "
-        line += "\n"
-        f.write ( line )
-        ## write solutions
-        for _i in range(16384):
-            line = ""
-            for ant in ants:
-                line += phs[ant][_i]
-                line += " "
-            line += "\n"
-            f.write ( line )
-
-    return cgains, amp, phs
-
 
 if __name__ == "__main__":
     args = get_args ()
 
-    if args.fullpolphase:
-        cgains_130   = args.tag + "_rr.gains"
-        cgains_175   = args.tag + "_ll.gains"
-    else:
-        cgains_130   = args.tag + "_r.gains"
-        cgains_175   = args.tag + "_l.gains"
+    grr  = GainTable ( args.tag + "_rr.gains" )
+    gll  = GainTable ( args.tag + "_ll.gains" )
+
+    gxp  = None
+    if args.xphase:
+        gxp  = GainTable ( args.tag + "_xp.gains" )
+
+    drl  = None
+    dlr  = None
+    if args.leakage:
+        drl  = GainTable ( args.tag + "_drl.gains", default=complex('0.00+0.00j') )
+        dlr  = GainTable ( args.tag + "_dlr.gains", default=complex('0.00+0.00j') )
+
 
     # ODIR = os.path.join ( args.odir, "testtest" )
     ODIR = os.path.join ( args.odir, args.tag )
@@ -158,28 +134,55 @@ if __name__ == "__main__":
     if not os.path.exists(ODIR):
         os.mkdir (ODIR)
 
-    ##
-    ## modifier
+    """
     modifier = lambda c : c.conjugate()
-    """
     Just conjugation works. 
-    """
-    #modifier = lambda c : c
-    #print (f" conjugating seems to work for GWB.")
-    #print (f" However, for offline correlator, we need to pass identity.")
 
-    #print (" disabling the following antennas: ", BADANTS, sep='\n')
+    but in the updated (20261112) logic,
+    we do inversion
+
+    so conjugation happens automatically
+    """
+    ##############################################
+    ###    BUILD AMP AND PHASE
+    ##############################################
+    def action( gt, amp_file, phs_file, add_xphase=False ):
+        amp     = dict()
+        phs     = dict()
+        for a in gt.ants:
+            amp[a] = list()
+            phs[a] = list()
+        ##
+        for ichan in range(MAXNCHAN):
+            for ant in gt.ants:
+
+                if cmath.isclose ( gt[ant,ichan], 0., abs_tol=1E-7 ):
+                    gain = 1.0
+                else:
+                    gain = 1.0 / gt[ant,ichan]
+
+                if args.leakage:
+                    leakrl = drl [ ant, ichan ] 
+                    leaklr = dlr [ ant, ichan ]
+                    det    = 1.0 - leakrl*leaklr
+                    gain   = gain / det
+
+                if add_xphase and args.xphase:
+                    _xp    = xp[ant, ichan]
+                    gain   = gain / _xp
+
+                amp[ant].append ( process_amp ( gain, args.ampscaling ) )
+                phs[ant].append ( process_phs ( gain ) )
+
+        writer ( amp_file, amp )
+        writer ( phs_file, phs )
+    ##############################################
 
     sol_amp_130  = os.path.join ( ODIR, "amp.130.dat" )
     sol_amp_175  = os.path.join ( ODIR, "amp.175.dat" )
     sol_phs_130  = os.path.join ( ODIR, "phas.130.dat" )
     sol_phs_175  = os.path.join ( ODIR, "phas.175.dat" )
 
-    rgains, ramps, rphs = action ( cgains_130, sol_amp_130, sol_phs_130, modifier, args.amp )
-    rgains, ramps, rphs = action ( cgains_175, sol_amp_175, sol_phs_175, modifier, args.amp )
-
-
-
-
-
+    action ( grr, sol_amp_130, sol_phs_130, True )
+    action ( gll, sol_amp_175, sol_phs_175 )
 
