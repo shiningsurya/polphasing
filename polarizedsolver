@@ -25,6 +25,6 @@ if [ "$#" -ne 1 ]; then
 	exit 1
 fi
 
-TAG="SCAN_$1"
+TAG="PCAN_$1"
 
-src/diagpolphaselbfgs -t $TAG -m $MODEL -s $SCAN $LTA
+src/diagpolphaselbfgsleakage -t $TAG -m $MODEL -s $SCAN $LTA

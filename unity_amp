@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $(basename $0)" >&2
+	echo "Only do if argument is confirm."
+	echo "It is a costly mistake to unity amp when we should not."
+	exit 1
+fi
+
+if [[ "$1" == "confirm" ]]; then
+	cp /home/gpuuser/GWB/common/equalizing/amp.unity.dat  /home/gpuuser/GWB/common/equalizing/amp.130.dat
+	cp /home/gpuuser/GWB/common/equalizing/amp.unity.dat  /home/gpuuser/GWB/common/equalizing/amp.175.dat
+fi
