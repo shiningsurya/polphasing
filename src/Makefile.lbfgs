@@ -1,0 +1,32 @@
+
+.PHONY: all
+
+LBFGSSOLVER=mylbfgs.c
+
+LTA=lta_file.C myltasub.c mycorrsub.c sort.c
+
+MISC=gaintable.C selftable.C models.C logsolve.C ants.C
+
+fullpolphaselbfgsunity: fullpolphaselbfgsunity.C $(LBFGSSOLVER) 
+	g++ -O2 -o $@ -g -std=c++11 -DLBFGS_FLOAT=64 -DLBFGS_IEEE_FLOAT=1 -DTIMING  fullpolphaselbfgsunity.C LBFGSsuperiterative.C $(LBFGSSOLVER) $(LTA) $(MISC) 
+
+diagpolphaselbfgsleakage: diagpolphaselbfgsleakage.C $(LBFGSSOLVER) 
+	g++ -O2 -o $@ -g -std=c++11 -DLBFGS_FLOAT=64 -DLBFGS_IEEE_FLOAT=1 -DTIMING  diagpolphaselbfgsleakage.C LBFGSpolarizediterative.C $(LBFGSSOLVER) $(LTA) $(MISC) 
+
+measurecrosshandphase: 
+	g++ -O2 -o $@ -g -std=c++11 -DLBFGS_FLOAT=64 -DLBFGS_IEEE_FLOAT=1 -DTIMING  measurecrosshandphase.C $(LTA) $(MISC) 
+
+findgainampscaling: 
+	g++ -O2 -o $@ -g -std=c++11 -DLBFGS_FLOAT=64 -DLBFGS_IEEE_FLOAT=1 -DTIMING  findgainampscaling.C gaintable.C $(LTA) 
+
+write_baselines: write_baselines.C
+	g++ -O0 -o $@ -g -std=c++11 write_baselines.C $(LTA)
+
+save_baseline: save_baseline.C
+	g++ -O0 -o $@ -g -std=c++11 save_baseline.C $(LTA)
+
+write_self: write_self.C
+	g++ -O0 -o $@ -g -std=c++11 write_self.C $(LTA)
+
+all: fullpolphaselbfgsunity diagpolphaselbfgsleakage measurecrosshandphase findgainampscaling write_baselines write_self
+
