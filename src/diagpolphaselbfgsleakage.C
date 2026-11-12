@@ -355,7 +355,7 @@ int main(int argc, char *argv[]) {
 			/* ib only for reading */
 			const int ipb     = noself_baselines[ii];
 
-			const int ib ( ipb / 4 );
+			const int ib ( ii / 4 );
 
 			/* index in (baseline, channel) complex<float> */
 			const int _i     = ichan + nchannels * ipb;
@@ -425,7 +425,9 @@ int main(int argc, char *argv[]) {
 #endif
 
 		LBFGS::IterativePolarizedDiagonalSolver     solver (nantennas);
-		auto cost = solver.solve ( pkg, 20 );
+		LBFGS::precompute ( &pkg );
+		solver.allsolve ( pkg );
+		auto cost = solver.solve ( pkg, 8 );
 
 #ifdef TIMING
 		end   = std::chrono::high_resolution_clock::now();
@@ -446,7 +448,6 @@ int main(int argc, char *argv[]) {
 		/*
 		 * Should i zerophase by dividing only the grr and gll by reference grr?
 		*/
-		const LBFGS::complex_type xp  ( pkg.cgains[0] / pkg.cgains[1] );
 		for (auto _i = ant2idx.begin(); _i != ant2idx.end(); ++_i) {
 
 			const auto& iant = _i->first;
@@ -463,6 +464,8 @@ int main(int argc, char *argv[]) {
 			// fetch leakage terms
 			const LBFGS::complex_type drl ( leakage_r[iant][ichan] );
 			const LBFGS::complex_type dlr ( leakage_l[iant][ichan] );
+
+			const LBFGS::complex_type xp  ( grr / gll );
 
 			// rr
 			const LBFGS::complex_type rr ( grr );

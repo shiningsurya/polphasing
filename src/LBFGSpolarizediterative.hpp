@@ -68,6 +68,15 @@ namespace LBFGS {
 		vc_type                  par_model_lr;
 		vc_type                  par_model_ll;
 
+		/*
+		 * Precomputed
+		* size of npolarbaselines
+		*/
+		vc_type                  precompute_prr;
+		vc_type                  precompute_pll;
+		vc_type                  precompute_qrr;
+		vc_type                  precompute_qll;
+
 		/* state */
 		real_type                cost;
 		real_type                gnorm;
@@ -81,6 +90,8 @@ namespace LBFGS {
 			leakrl (nantennas), leaklr(nantennas),
 			par_model_rr (nbaselines), par_model_rl (nbaselines),
 			par_model_lr (nbaselines), par_model_ll (nbaselines), 
+			precompute_prr (npbl), precompute_pll(npbl),
+			precompute_qrr (npbl), precompute_qll(npbl),
 			cost (0.0f), gnorm(0.0f), niter(0) {}
 	}; 
 
@@ -92,6 +103,7 @@ namespace LBFGS {
 	*/
 	lbfgsfloatval_t diagpolarized_rr (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 	lbfgsfloatval_t diagpolarized_ll (void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+	lbfgsfloatval_t diagpolarized_all(void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
 	/*
 	 * Solver interfaces
@@ -111,6 +123,7 @@ namespace LBFGS {
 		const int             nantennas;
 		const int             n_rr; 
 		const int             n_ll; 
+		const int            n_all; 
 
 		/* all parameters of the solver */
 		lbfgs_parameter_t    param;
@@ -129,11 +142,17 @@ namespace LBFGS {
 		lbfgsfloatval_t      rcode_ll;
 		int                  niter_ll;
 
+		lbfgsfloatval_t     *xpar_all;
+		lbfgsfloatval_t      cost_all;
+		lbfgsfloatval_t     gnorm_all;
+		lbfgsfloatval_t     rcode_all;
+		int                 niter_all;
+
 		// ctor
-		IterativePolarizedDiagonalSolver (int _nant, int n_hessian_corrections = 32, int max_iterations = 1000) : 
+		IterativePolarizedDiagonalSolver (int _nant, int n_hessian_corrections = 24, int max_iterations = 1000) : 
 			nantennas(_nant), 
-			n_rr ( nantennas*2 ),  n_ll ( nantennas*2 ),
-			niter_rr(0), niter_ll(0)
+			n_rr ( nantennas*2 ),  n_ll ( nantennas*2 ), n_all ( nantennas*4 ),
+			niter_rr(0), niter_ll(0), niter_all(0)
 		{
 			/* load default first*/
 			lbfgs_parameter_init(&param);
@@ -143,14 +162,16 @@ namespace LBFGS {
 			/* max iterations */
 			param.max_iterations    = max_iterations;
 			/* max linesearch */
-			param.max_linesearch    = 64;
+			param.max_linesearch    = 24;
 
 			xpar_rr   = lbfgs_malloc ( n_rr );
 			xpar_ll   = lbfgs_malloc ( n_ll );
+			xpar_all  = lbfgs_malloc ( n_all );
 
 			/* initialize xpar */
 			std::fill ( xpar_rr, xpar_rr + n_rr, 0.0f ); 
 			std::fill ( xpar_ll, xpar_ll + n_ll, 0.0f ); 
+			std::fill ( xpar_all, xpar_all + n_all, 0.0f ); 
 		}
 
 		void loadgains ( const data_t &pkg ) {
@@ -192,12 +213,16 @@ namespace LBFGS {
 		~IterativePolarizedDiagonalSolver() {
 			if (xpar_rr) lbfgs_free ( xpar_rr );
 			if (xpar_ll) lbfgs_free ( xpar_ll );
+			if (xpar_all) lbfgs_free ( xpar_all );
 		}
 
 		/* solving methods */
 		diagcost_t solve (data_t& pkg, int n = 3);
+		real_type allsolve (data_t& pkg);
 
 	}; // solver
+		 //
+	void precompute (data_t* pkg);
 
 } // namespace LBFGS
 
