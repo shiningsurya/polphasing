@@ -24,8 +24,10 @@ using complex_type = LBFGS::complex_type;
 #endif
 
 //#define CHANDEBUG
+#include <iomanip>
 
-double get_median ( const std::vector<double>& vrr ) {
+
+double get_sqrt_median ( const std::vector<double>& vrr ) {
 	// copy
 	std::vector<double> rr ( vrr );
 
@@ -35,7 +37,7 @@ double get_median ( const std::vector<double>& vrr ) {
 	// take mid
 	const int nn ( rr.size () / 2 );
 
-	return rr [ nn ];
+	return std::sqrt(rr [ nn ]);
 }
 
 std::ostream& operator<< (std::ostream& os, const LBFGS::complex_type& g ) {
@@ -63,6 +65,7 @@ void print_help () {
 }
 
 int main(int argc, char *argv[]) {
+	//std::cout << std::fixed << std::showpos;
 
 	/* hello getopt, my old friend */
 	int opt;
@@ -174,7 +177,7 @@ int main(int argc, char *argv[]) {
 	
 #ifdef CHANDEBUG
 	/* channel 458 has high loss.*/
-	for (int ichan = 501; ichan < 502; ichan++) {
+	for (int ichan = 500; ichan < 501; ichan++) {
 #else
 //	#pragma omp parallel for num_threads(4) 
 	for (int ichan = 0; ichan < nchannels; ichan++) {
@@ -225,18 +228,26 @@ int main(int argc, char *argv[]) {
 			const LBFGS::complex_type g2lr ( g_lr[ant2][ichan] );
 			const LBFGS::complex_type g2ll ( g_ll[ant2][ichan] );
 
-			const LBFGS::complex_type det1 ( 1.0 - (g1rl/g1rr)*(g1lr/g1ll) );
-			const LBFGS::complex_type det2 ( 1.0 - (g2rl/g2rr)*(g2lr/g2ll) );
+			//const LBFGS::complex_type det1 ( 1.0 - (g1rl/g1rr)*(g1lr/g1ll) );
+			//const LBFGS::complex_type det2 ( 1.0 - (g2rl/g2rr)*(g2lr/g2ll) );
 
 			LBFGS::complex_type _iata;
 			if ( pb2corr == 0 ) {
-					_iata  =  _data / g1rr / std::conj(g2rr) / det1 / std::conj(det2) ; 
+					//_iata  =  _data / g1rr / std::conj(g2rr) / det1 / std::conj(det2) ; 
+					_iata  =  _data / g1rr / std::conj(g2rr) ;
 			} else if ( pb2corr == 3 ) {
-					_iata  =  _data / g1ll / std::conj(g2ll) / det1 / std::conj(det2) ; 
+					//_iata  =  _data / g1ll / std::conj(g2ll) / det1 / std::conj(det2) ; 
+					_iata  =  _data / g1ll / std::conj(g2ll) ;
 			}
 
 			// write to file
 			of << ichan << " " << ant1[0] << ant1[1] << ant1[2] << " " << ant2[0] << ant2[1] << ant2[2] << " " << bandmap[band1] <<  bandmap[band2] << " " << _data << " " << _iata << std::endl;
+
+			// if nan
+			// just skip
+			// skip after writing to file
+			// for bookkeeping
+			if ( ! std::isfinite(_iata.real()) ) _iata = complex_type(0.0, 0.0);
 
 			// if self term
 			if ( ant1 == ant2 ) {
@@ -272,8 +283,12 @@ int main(int argc, char *argv[]) {
 		frr_ap[ichan] = rr_applied;
 		fll_ap[ichan] = ll_applied;
 
-		if ( std::isnan ( rr_applied ) ) rr_applied = rr_unapplied;
-		if ( std::isnan ( ll_applied ) ) ll_applied = ll_unapplied;
+		// we should not get any nan here then
+		//if ( std::isnan ( rr_applied ) ) rr_applied = rr_unapplied;
+		//if ( std::isnan ( ll_applied ) ) ll_applied = ll_unapplied;
+		
+		//std::cout << " rr unapplied=" << rr_unapplied << " applied=" << rr_applied << std::endl;
+		//std::cout << " ll unapplied=" << ll_unapplied << " applied=" << ll_applied << std::endl;
 
 		ratio_rr[ichan] = rr_unapplied/rr_applied;
 		ratio_ll[ichan] = ll_unapplied/ll_applied;
@@ -281,10 +296,10 @@ int main(int argc, char *argv[]) {
 	} // channel
 	
 	// find median of ratio
-	const LBFGS::real_type scale_rr ( get_median ( ratio_rr ) );
-	const LBFGS::real_type scale_ll ( get_median ( ratio_ll ) );
+	const LBFGS::real_type scale_rr ( get_sqrt_median ( ratio_rr ) );
+	const LBFGS::real_type scale_ll ( get_sqrt_median ( ratio_ll ) );
 
-	std::cout << " scaling rr=" << scale_rr << " ll=" << scale_ll << std::endl;
+	std::cout << std::scientific << " scaling rr=" << scale_rr << " ll=" << scale_ll << std::endl;
 
 	return 0;
 }
